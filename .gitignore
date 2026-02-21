@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+**/build/
+
+# Kotlin
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+out/
+
+# Android
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+
+.DS_Store
+
+# Distributions
+*.dmg
+*.msi
+*.deb
+*.exe
+
+# Logs
+*.log
+
+# Node
+node_modules/
