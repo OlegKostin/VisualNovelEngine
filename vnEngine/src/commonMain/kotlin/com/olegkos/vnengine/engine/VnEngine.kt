@@ -2,11 +2,13 @@ package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.Option
 
 class VnEngine(
   private val scenes: Map<String, Scene>,
   val state: GameState
 ) {
+
   fun currentNode(): SceneNode {
     val scene = scenes[state.currentSceneId]
       ?: error("Сцена '${state.currentSceneId}' не найдена")
@@ -14,24 +16,16 @@ class VnEngine(
       ?: error("Узел с индексом ${state.nodeIndex} в сцене '${state.currentSceneId}' не найден")
   }
 
-  fun next(choice: String? = null) {
+  fun next(selectedOption: Option? = null) {
     val node = currentNode()
     when (node) {
-      is SceneNode.Text -> {
-        // Переход к следующему узлу
-        if (node.next != null) {
-          state.currentSceneId = node.next
-          state.nodeIndex = 0
-        } else {
-          state.nodeIndex++
-        }
-      }
+      is SceneNode.Text -> state.nodeIndex++
       is SceneNode.Choice -> {
-        if (choice != null && choice == node.text) {
-          state.currentSceneId = node.next
-          state.nodeIndex = 0
+        selectedOption?.let { option ->
+          jumpToScene(option.nextSceneId)
         }
       }
+      is SceneNode.Jump -> jumpToScene(node.targetSceneId)
     }
   }
 

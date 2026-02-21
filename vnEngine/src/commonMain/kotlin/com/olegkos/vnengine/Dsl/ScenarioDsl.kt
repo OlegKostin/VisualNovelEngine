@@ -2,6 +2,7 @@ package com.olegkos.vnengine.dsl
 
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.Option
 
 @DslMarker
 annotation class ScenarioDslMarker
@@ -11,12 +12,17 @@ class SceneBuilder(val id: String) {
   private val _nodes = mutableListOf<SceneNode>()
   val nodes: List<SceneNode> get() = _nodes
 
-  fun text(content: String, next: String? = null) {
-    _nodes += SceneNode.Text(content, next)
+  fun text(content: String) {
+    _nodes += SceneNode.Text(content)
   }
 
-  fun choice(text: String, next: String) {
-    _nodes += SceneNode.Choice(text, next)
+  fun choice(vararg opts: Pair<String, String>) {
+    val options = opts.map { Option(it.first, it.second) }
+    _nodes += SceneNode.Choice(options)
+  }
+
+  fun jump(targetSceneId: String) {
+    _nodes += SceneNode.Jump(targetSceneId)
   }
 }
 

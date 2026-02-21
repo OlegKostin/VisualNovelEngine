@@ -1,6 +1,6 @@
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
-  alias(libs.plugins.androidKotlinMultiplatformLibrary)
+  alias(libs.plugins.androidKmpLibrary)
 }
 
 kotlin {
@@ -22,7 +22,7 @@ kotlin {
   sourceSets {
     commonMain {
       dependencies {
-        implementation(libs.kotlin.stdlib)
+
         // Add KMP dependencies here
       }
     }
