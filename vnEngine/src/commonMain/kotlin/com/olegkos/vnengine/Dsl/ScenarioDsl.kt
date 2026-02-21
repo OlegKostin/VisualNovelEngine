@@ -24,6 +24,10 @@ class SceneBuilder(val id: String) {
   fun jump(targetSceneId: String) {
     _nodes += SceneNode.Jump(targetSceneId)
   }
+
+  fun dice(name: String, sides: Int = 6) {
+    _nodes += SceneNode.DiceRoll(name, sides)
+  }
 }
 
 class ScenarioBuilder {

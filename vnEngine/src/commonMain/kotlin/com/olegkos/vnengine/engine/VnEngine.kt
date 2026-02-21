@@ -26,6 +26,11 @@ class VnEngine(
         }
       }
       is SceneNode.Jump -> jumpToScene(node.targetSceneId)
+      is SceneNode.DiceRoll -> {
+        val value = Dice(state).roll(node.name, node.sides)
+        node.result = value
+        state.nodeIndex++
+      }
     }
   }
 

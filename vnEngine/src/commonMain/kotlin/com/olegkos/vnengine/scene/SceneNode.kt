@@ -13,4 +13,10 @@ sealed interface SceneNode {
   data class Jump(
     val targetSceneId: String
   ) : SceneNode
+
+  data class DiceRoll(
+    val name: String,
+    val sides: Int,
+    var result: Int? = null
+  ) : SceneNode
 }

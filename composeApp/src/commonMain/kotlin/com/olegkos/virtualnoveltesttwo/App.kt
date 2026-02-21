@@ -18,8 +18,9 @@ fun App(viewModel: GameViewModel? = null) {
                 choice("Встать" to "hall", "Лежать" to "sleep")
             }
             scene("hall") {
-                text("Ты в коридоре.")
-                choice("Идти дальше" to "end")
+                text("Ты в коридоре. Нужно бросить кубик, чтобы решить дальнейший путь.")
+                dice("Кубик судьбы", 20) // d20
+                choice("Продолжить" to "end")
             }
             scene("sleep") {
                 text("Ты снова засыпаешь...")
@@ -68,5 +69,18 @@ fun App(viewModel: GameViewModel? = null) {
                 vm.next()
             }
         }
-    }
+
+        is SceneNode.DiceRoll -> {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                val resultText = node.result?.toString() ?: "ещё не бросили"
+                Text("Бросок ${node.name} d${node.sides}: $resultText")
+                Spacer(Modifier.height(16.dp))
+                Button(onClick = { vm.next() }) {
+                    Text("Бросить кубик")
+                }
+            }
+        }    }
 }
