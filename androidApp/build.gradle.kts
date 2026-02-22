@@ -33,6 +33,7 @@ android {
 
 dependencies {
   implementation(projects.composeApp)
+  implementation(projects.coreDI)
 
   implementation(platform(libs.androidx.compose.bom))
   debugImplementation(libs.androidx.compose.ui.tooling)

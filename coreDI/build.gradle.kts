@@ -9,7 +9,7 @@ kotlin {
   // which platforms this KMP module supports.
   // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
   androidLibrary {
-    namespace = "com.olegkos.vnengine"
+    namespace = "com.olegkos.coreDI"
     compileSdk = 36
     minSdk = 26
   }
@@ -23,7 +23,7 @@ kotlin {
     commonMain {
       dependencies {
         implementation(libs.koin.core)
-
+        implementation(libs.koin.android)
         implementation(projects.composeApp)
         implementation(projects.vnEngine)
         implementation(projects.composeApp)
@@ -35,6 +35,7 @@ kotlin {
 
     androidMain {
       dependencies {
+        implementation(libs.koin.android)
         // Add Android-specific dependencies here. Note that this source set depends on
         // commonMain by default and will correctly pull the Android artifacts of any KMP
         // dependencies declared in commonMain.
