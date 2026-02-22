@@ -7,80 +7,57 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.dsl.scenario
+import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.scene.SceneNode
 
 @Composable
 fun App(viewModel: GameViewModel? = null) {
-    val scenes = remember {
-        scenario {
-            scene("intro") {
-                text("Ты просыпаешься в темноте.")
-                choice("Встать" to "hall", "Лежать" to "sleep")
-            }
-            scene("hall") {
-                text("Ты в коридоре. Нужно бросить кубик, чтобы решить дальнейший путь.")
-                dice("Кубик судьбы", 20) // d20
-                choice("Продолжить" to "end")
-            }
-            scene("sleep") {
-                text("Ты снова засыпаешь...")
-                jump("end")
-            }
-            scene("end") {
-                text("Конец истории.")
-            }
-        }
+  val scenes = remember {
+    scenario {
+      scene("intro") {
+        text("Ты просыпаешься в темноте.")
+        choice("Встать" to "hall", "Лежать" to "sleep")
+      }
+      scene("hall") {
+        text("Ты в коридоре. Нужно бросить кубик, чтобы решить дальнейший путь.")
+        dice("Кубик судьбы", 20)
+        choice("Продолжить" to "end")
+      }
+      scene("sleep") {
+        text("Ты снова засыпаешь...")
+        jump("end")
+      }
+      scene("end") {
+        text("Конец истории.")
+      }
     }
+  }
 
-    // Если ViewModel передали, используем её, иначе создаём локально
-    val vm = viewModel ?: remember { GameViewModel(scenes) }
-    val currentNode by remember { derivedStateOf { vm.currentNode } }
+  val vm = viewModel ?: remember { GameViewModel(scenes) }
+  val output = vm.currentOutput // напрямую наблюдаем mutableStateOf
 
-    when (val node = currentNode) {
-        is SceneNode.Text -> {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(node.text)
-                Spacer(Modifier.height(16.dp))
-                Button(onClick = { vm.next() }) {
-                    Text("Далее")
-                }
-            }
+  Column(
+    modifier = Modifier.fillMaxSize().padding(16.dp),
+    verticalArrangement = Arrangement.Center
+  ) {
+    when (val o = output) {
+      is EngineOutput.ShowText -> {
+        Text(o.text)
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = { vm.next() }) {
+          Text("Далее")
         }
-        is SceneNode.Choice -> {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                node.options.forEach { option ->
-                    Button(
-                        onClick = { vm.next(option) },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                    ) {
-                        Text(option.text)
-                    }
-                }
-            }
+      }
+      is EngineOutput.ShowChoices -> {
+        o.options.forEach { option ->
+          Button(
+            onClick = { vm.next(option) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+          ) {
+            Text(option.text)
+          }
         }
-        is SceneNode.Jump -> {
-            LaunchedEffect(Unit) {
-                vm.next()
-            }
-        }
-
-        is SceneNode.DiceRoll -> {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                val resultText = node.result?.toString() ?: "ещё не бросили"
-                Text("Бросок ${node.name} d${node.sides}: $resultText")
-                Spacer(Modifier.height(16.dp))
-                Button(onClick = { vm.next() }) {
-                    Text("Бросить кубик")
-                }
-            }
-        }    }
+      }
+    }
+  }
 }

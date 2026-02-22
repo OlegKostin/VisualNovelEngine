@@ -35,3 +35,4 @@ plugins {
 include(":composeApp")
 include(":vnEngine")
 include(":androidApp")
+include(":coreDI")

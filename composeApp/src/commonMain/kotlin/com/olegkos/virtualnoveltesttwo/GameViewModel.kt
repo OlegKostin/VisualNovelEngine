@@ -15,7 +15,7 @@ class GameViewModel(scenes: Map<String, Scene>) : ViewModel() {
   private val engine = VnEngine(scenes, GameState("intro"))
 
   // Compose автоматически реагирует на изменения currentNode
-  var currentNode by mutableStateOf(engine.currentNode())
+  var currentOutput by mutableStateOf(engine.currentOutput())
     private set
 
   /**
@@ -24,6 +24,6 @@ class GameViewModel(scenes: Map<String, Scene>) : ViewModel() {
    */
   fun next(option: Option? = null) {
     engine.next(option)
-    currentNode = engine.currentNode()
+    currentOutput = engine.currentOutput() // Compose реагирует на изменения
   }
 }

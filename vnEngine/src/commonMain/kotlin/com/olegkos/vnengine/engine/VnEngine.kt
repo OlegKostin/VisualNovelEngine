@@ -39,4 +39,15 @@ class VnEngine(
     state.currentSceneId = sceneId
     state.nodeIndex = 0
   }
+  fun currentOutput(): EngineOutput {
+    return when (val node = currentNode()) {
+      is SceneNode.Text -> EngineOutput.ShowText(node.text)
+      is SceneNode.Choice -> EngineOutput.ShowChoices(node.options)
+      is SceneNode.DiceRoll -> {
+        val resultText = node.result?.toString() ?: "ещё не бросили"
+        EngineOutput.ShowText("Бросок ${node.name} d${node.sides}: $resultText")
+      }
+      is SceneNode.Jump -> EngineOutput.ShowText("") // jump обрабатывается в next()
+    }
+  }
 }
