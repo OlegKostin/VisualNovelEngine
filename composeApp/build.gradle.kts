@@ -15,25 +15,34 @@ kotlin {
 
     }
 
-    jvm() // Desktop target
+    jvm()
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(project(":vnEngine"))
-
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.ui)
-                implementation(compose.components.resources)
-                implementation(compose.preview)
+                implementation(libs.runtime)
+                implementation(libs.foundation)
+                implementation(libs.material3)
+                implementation(libs.ui)
+                implementation(libs.components.resources)
+                implementation(libs.ui.tooling.preview)
                 implementation(libs.androidx.lifecycle.viewmodelCompose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
+
+                api(libs.koin.core)
+                implementation(libs.koin.compose)
+                implementation(libs.koin.compose.viewmodel)
+                implementation(libs.lifecycle.viewmodel)
+                implementation(libs.navigation.compose)
             }
         }
 
-        val androidMain by getting
+        val androidMain by getting {
+            dependencies{
+                implementation(libs.koin.android)
+            }
+        }
 
         val jvmMain by getting {
             dependencies {
