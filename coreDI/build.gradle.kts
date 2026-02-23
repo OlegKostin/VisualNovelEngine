@@ -24,7 +24,11 @@ kotlin {
       dependencies {
         implementation(libs.koin.core)
         implementation(projects.vnEngine)
-        implementation(projects.composeApp)
+        implementation(projects.shared)
+        implementation(libs.koin.compose)
+        implementation(libs.koin.compose.viewmodel)
+        implementation(libs.lifecycle.viewmodel)
+        implementation(libs.navigation.compose)
         // Add KMP dependencies here
       }
     }

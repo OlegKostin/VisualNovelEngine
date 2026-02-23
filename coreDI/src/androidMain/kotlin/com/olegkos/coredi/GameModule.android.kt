@@ -5,10 +5,8 @@ import com.olegkos.virtualnoveltesttwo.GameLoader
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.VnEngine
 import org.koin.core.module.Module
-import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
-import kotlin.coroutines.EmptyCoroutineContext.get
 
 actual val platformModule: Module = module {
   single { GameLoader() }

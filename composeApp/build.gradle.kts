@@ -20,7 +20,6 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":vnEngine"))
                 implementation(libs.runtime)
                 implementation(libs.foundation)
                 implementation(libs.material3)
@@ -29,7 +28,9 @@ kotlin {
                 implementation(libs.ui.tooling.preview)
                 implementation(libs.androidx.lifecycle.viewmodelCompose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
-
+implementation(projects.coreDI)
+implementation(projects.vnEngine)
+implementation(projects.shared)
                 api(libs.koin.core)
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)

@@ -6,9 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.olegkos.vnengine.dsl.scenario
 import com.olegkos.vnengine.engine.EngineOutput
-import com.olegkos.vnengine.scene.SceneNode
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
