@@ -12,6 +12,7 @@ class GameLoader {
       }
       scene("hall") {
         text("Ты в коридоре.")
+        dice("test",4)
         jump("end")
       }
       scene("sleep") {

@@ -18,4 +18,8 @@ class GameViewModel(
     engine.next(option)
     currentOutput = engine.currentOutput()
   }
+
+  fun rollDice() {
+    next() // внутри next обрабатывается DiceRoll
+  }
 }

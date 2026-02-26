@@ -35,9 +35,12 @@ class VnEngine(
       }
       is SceneNode.Jump -> jumpToScene(node.targetSceneId)
       is SceneNode.DiceRoll -> {
-        val value = Dice(state).roll(node.name, node.sides)
-        node.result = value
-        state.nodeIndex++
+        if (node.result == null) {
+          val value = Dice(state).roll(node.name, node.sides)
+          node.result = value
+        } else {
+          state.nodeIndex++
+        }
       }
     }
   }
@@ -55,8 +58,11 @@ class VnEngine(
       is SceneNode.Text -> EngineOutput.ShowText(node.text)
       is SceneNode.Choice -> EngineOutput.ShowChoices(node.options)
       is SceneNode.DiceRoll -> {
-        val resultText = node.result?.toString() ?: "ещё не бросили"
-        EngineOutput.ShowText("Бросок ${node.name} d${node.sides}: $resultText")
+        EngineOutput.ShowDice(
+          name = node.name,
+          sides = node.sides,
+          result = node.result
+        )
       }
       is SceneNode.Jump -> EngineOutput.ShowText("")
     }

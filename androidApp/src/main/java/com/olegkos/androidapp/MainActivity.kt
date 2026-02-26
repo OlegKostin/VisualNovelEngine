@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.olegkos.virtualnovelapp.App
+import com.olegkos.virtualnoveltesttwo.App
 
 
 class MainActivity : ComponentActivity() {

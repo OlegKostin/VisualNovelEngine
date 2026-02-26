@@ -2,7 +2,6 @@ package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.olegkos.virtualnovelapp.App
 import org.koin.core.context.startKoin
 import com.olegkos.coredi.platformModule
 
