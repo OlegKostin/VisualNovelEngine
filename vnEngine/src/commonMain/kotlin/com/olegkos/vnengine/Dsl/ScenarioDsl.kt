@@ -25,8 +25,26 @@ class SceneBuilder(val id: String) {
     _nodes += SceneNode.Jump(targetSceneId)
   }
 
-  fun dice(name: String, sides: Int = 6) {
-    _nodes += SceneNode.DiceRoll(name, sides)
+  fun dice(
+    name: String,
+    sides: Int = 20,
+    difficulty: Int,
+    modifier: Int = 0,
+    success: String,
+    fail: String,
+    critSuccess: String? = null,
+    critFail: String? = null
+  ) {
+    _nodes += SceneNode.DiceRoll(
+      name = name,
+      sides = sides,
+      difficulty = difficulty,
+      modifier = modifier,
+      successScene = success,
+      failScene = fail,
+      critSuccessScene = critSuccess,
+      critFailScene = critFail
+    )
   }
 }
 

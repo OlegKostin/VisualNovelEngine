@@ -49,13 +49,15 @@ fun App(
       }
 
       is EngineOutput.ShowDice ->{
-        DiceScreen(        name = o.name,
-          sides = o.sides,
-          result = o.result,
+        DiceScreen(
+          name = output.name,
+          sides = output.sides,
+          result = output.result,
+          modifier = output.modifier,
+          difficulty = output.difficulty,
           onRoll = { viewModel.rollDice() },
           onContinue = { viewModel.next() }
-        )
-      }
+        )      }
     }
   }
 }

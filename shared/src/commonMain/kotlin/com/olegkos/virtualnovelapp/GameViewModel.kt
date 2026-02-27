@@ -20,6 +20,6 @@ class GameViewModel(
   }
 
   fun rollDice() {
-    next() // внутри next обрабатывается DiceRoll
+    next()
   }
 }

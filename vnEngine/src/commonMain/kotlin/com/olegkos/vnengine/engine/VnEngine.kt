@@ -35,14 +35,32 @@ class VnEngine(
       }
       is SceneNode.Jump -> jumpToScene(node.targetSceneId)
       is SceneNode.DiceRoll -> {
+
         if (node.result == null) {
-          val value = Dice(state).roll(node.name, node.sides)
-          node.result = value
-        } else {
-          state.nodeIndex++
+          node.result = Dice().roll(node.sides)
+          return
         }
-      }
-    }
+
+        val roll = node.result!!
+        val total = roll + node.modifier
+
+        when {
+
+
+          roll == 1 && node.critFailScene != null ->
+            jumpToScene(node.critFailScene)
+
+
+          roll == node.sides && node.critSuccessScene != null ->
+            jumpToScene(node.critSuccessScene)
+
+          total >= node.difficulty!! ->
+            jumpToScene(node.successScene!!)
+
+          else ->
+            jumpToScene(node.failScene!!)
+        }
+      }    }
   }
 
   fun jumpToScene(sceneId: String) {
@@ -61,7 +79,9 @@ class VnEngine(
         EngineOutput.ShowDice(
           name = node.name,
           sides = node.sides,
-          result = node.result
+          result = node.result,
+          modifier = node.modifier,
+          difficulty = node.difficulty
         )
       }
       is SceneNode.Jump -> EngineOutput.ShowText("")

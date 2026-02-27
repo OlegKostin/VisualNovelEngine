@@ -16,7 +16,16 @@ sealed interface SceneNode {
 
   data class DiceRoll(
     val name: String,
-    val sides: Int,
+    val sides: Int = 20,
+    val difficulty: Int = 10,
+    val modifier: Int = 0,
+
+    val successScene: String? = null,
+    val failScene: String? = null,
+
+    val critSuccessScene: String? = null,
+    val critFailScene: String? = null,
+
     var result: Int? = null
   ) : SceneNode
 }

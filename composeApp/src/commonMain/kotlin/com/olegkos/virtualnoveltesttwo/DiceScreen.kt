@@ -1,97 +1,98 @@
 package com.olegkos.virtualnoveltesttwo
 
-
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import virtualnoveltesttwo.composeapp.generated.resources.Res
-import virtualnoveltesttwo.composeapp.generated.resources.d10
-import virtualnoveltesttwo.composeapp.generated.resources.d12
-import virtualnoveltesttwo.composeapp.generated.resources.d14
-import virtualnoveltesttwo.composeapp.generated.resources.d18
-import virtualnoveltesttwo.composeapp.generated.resources.d20
-import virtualnoveltesttwo.composeapp.generated.resources.d4
-import virtualnoveltesttwo.composeapp.generated.resources.d8
+import virtualnoveltesttwo.composeapp.generated.resources.*
 
 @Composable
 fun DiceScreen(
   name: String,
   sides: Int,
   result: Int?,
+  modifier: Int,
+  difficulty: Int,
   onRoll: () -> Unit,
   onContinue: () -> Unit
 ) {
 
-  val allowed = listOf(20, 14, 4, 18, 12, 10) // реально существующие грани
-
   var isRolling by remember { mutableStateOf(false) }
-  var currentFace by remember { mutableStateOf(allowed.first()) }
+  var rotation by remember { mutableStateOf(0f) }
+  var showResult by remember { mutableStateOf(false) }
 
+  /**
+   * 🎲 Dice spin animation
+   */
   LaunchedEffect(isRolling) {
-    if (isRolling) {
-      val steps = 30
-      for (i in 0 until steps) {
-        // цикл по allowed, повторяем несколько раз
-        val index = i % allowed.size
-        currentFace = allowed[index]
+    if (!isRolling) return@LaunchedEffect
 
-        // замедляем к концу
-        val delayMs = 20 + i * 10
-        delay(delayMs.toLong())
-      }
+    var speed = 70f
 
-      isRolling = false
-      onRoll() // engine выдаёт финальный результат
+    repeat(40) {
+      rotation += speed
+      speed *= 0.92f // плавное замедление
+      delay(16)
     }
+
+    onRoll()        // engine бросает кубик
+    showResult = true
+    isRolling = false
   }
 
   Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-    Text("Бросок: $name d$sides")
+    Text("Проверка: $name d$sides")
+
     Spacer(Modifier.height(24.dp))
 
-    val faceToShow = result ?: currentFace
-
-    val image = when (faceToShow) {
-      20 -> Res.drawable.d20
-      14 -> Res.drawable.d14
-      4 -> Res.drawable.d4
-      18 -> Res.drawable.d18
-      12 -> Res.drawable.d12
-      10 -> Res.drawable.d10
-      else -> Res.drawable.d20
-    }
+    val image =
+      if (result == null)
+        Res.drawable.d20
+      else
+        diceImageOrDefault(result)
 
     Image(
       painter = painterResource(image),
-      contentDescription = null
+      contentDescription = null,
+      modifier = Modifier
+        .size(160.dp)
+        .graphicsLayer {
+          rotationZ = if (result == null) rotation else 0f
+        }
     )
 
     Spacer(Modifier.height(24.dp))
 
     when {
+
       result == null && !isRolling -> {
-        Button(onClick = { isRolling = true }) {
+        Button(onClick = {
+          showResult = false
+          isRolling = true
+        }) {
           Text("Бросить")
         }
       }
-      result != null -> {
-        Text("Результат: $result")
+
+      result != null && showResult -> {
+
+        val total = result + modifier
+
+        Text("Бросок: $result")
+        Text("Модификатор: $modifier")
+        Text("Итого: $total / $difficulty")
+
         Spacer(Modifier.height(16.dp))
+
         Button(onClick = onContinue) {
           Text("Продолжить")
         }
@@ -99,3 +100,13 @@ fun DiceScreen(
     }
   }
 }
+fun diceImageOrDefault(value: Int): DrawableResource =
+  when (value) {
+    20 -> Res.drawable.d20
+    18 -> Res.drawable.d18
+    14 -> Res.drawable.d14
+    12 -> Res.drawable.d12
+    10 -> Res.drawable.d10
+    4 -> Res.drawable.d4
+    else -> Res.drawable.d20
+  }
