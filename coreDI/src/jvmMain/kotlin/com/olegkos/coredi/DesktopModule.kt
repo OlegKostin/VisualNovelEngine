@@ -1,22 +1,23 @@
 package com.olegkos.coredi
 
 import com.olegkos.virtualnovelapp.GameViewModel
-import com.olegkos.virtualnoveltesttwo.GameLoader
-import com.olegkos.vnengine.engine.GameState
-import com.olegkos.vnengine.engine.VnEngine
+import com.olegkos.virtualnoveltesttwo.GameLoading.DevScenarioProvider
+import com.olegkos.virtualnoveltesttwo.GameLoading.DiceRoller
+import com.olegkos.virtualnoveltesttwo.GameLoading.RandomDiceRoller
+import com.olegkos.virtualnoveltesttwo.GameLoading.ScenarioProvider
 import org.koin.core.module.Module
-import org.koin.core.context.startKoin
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
-import kotlin.coroutines.EmptyCoroutineContext.get
 
 actual val platformModule: Module = module {
-  single { GameLoader() }
-  single {
-    val loader: GameLoader = get()
-    val engine = VnEngine(GameState("intro"))
-    engine.addScenes(loader.load())
-    engine
+
+  single<ScenarioProvider> { DevScenarioProvider() }
+  single<DiceRoller> { RandomDiceRoller() }
+
+  viewModel {
+    GameViewModel(
+      provider = get(),
+      dice = get()
+    )
   }
-  viewModelOf(::GameViewModel)
 }

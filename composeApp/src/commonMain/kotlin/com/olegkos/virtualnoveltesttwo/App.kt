@@ -58,6 +58,8 @@ fun App(
           onRoll = { viewModel.rollDice() },
           onContinue = { viewModel.next() }
         )      }
+
+      else -> {Text("Загрузка...")}
     }
   }
 }
