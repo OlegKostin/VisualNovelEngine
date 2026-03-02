@@ -5,6 +5,7 @@ plugins {
   alias(libs.plugins.composeMultiplatform)
   alias(libs.plugins.composeCompiler)
   alias(libs.plugins.androidKmpLibrary)
+  alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -36,6 +37,7 @@ kotlin {
         implementation(libs.lifecycle.viewmodel)
         implementation(libs.navigation.compose)
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
+        implementation(libs.kotlinx.serialization.json)
       }
     }
 
