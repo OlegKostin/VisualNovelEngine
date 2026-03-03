@@ -1,22 +1,38 @@
 package com.olegkos.coredi
 
 import com.olegkos.virtualnovelapp.GameViewModel
-import com.olegkos.virtualnoveltesttwo.GameLoading.DevScenarioProvider
-import com.olegkos.virtualnoveltesttwo.GameLoading.DiceRoller
-import com.olegkos.virtualnoveltesttwo.GameLoading.RandomDiceRoller
-import com.olegkos.virtualnoveltesttwo.GameLoading.ScenarioProvider
-import org.koin.core.module.Module
+import com.olegkos.vnengine.GameLoading.AssetReader
+import com.olegkos.vnengine.GameLoading.DiceRoller
+import com.olegkos.vnengine.GameLoading.JsonScenarioParser
+import com.olegkos.vnengine.GameLoading.RandomDiceRoller
+import com.olegkos.vnengine.GameLoading.ScenarioParser
+import com.olegkos.vnengine.game.GameLoader
+import com.olegkos.vnengine.DesktopAssetReader
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-actual val platformModule: Module = module {
+actual val platformModule = module {
 
-  single<ScenarioProvider> { DevScenarioProvider() }
+  single<AssetReader> {
+    DesktopAssetReader()
+  }
+
+  single<ScenarioParser> {
+    JsonScenarioParser()
+  }
+
+  single {
+    GameLoader(
+      assets = get(),
+      parser = get()
+    )
+  }
+
   single<DiceRoller> { RandomDiceRoller() }
 
   viewModel {
     GameViewModel(
-      provider = get(),
+      loader = get(),
       dice = get()
     )
   }

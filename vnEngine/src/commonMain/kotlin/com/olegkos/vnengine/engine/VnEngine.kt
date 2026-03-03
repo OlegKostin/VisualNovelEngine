@@ -1,7 +1,7 @@
 package com.olegkos.vnengine.engine
 
-import com.olegkos.virtualnoveltesttwo.GameLoading.DiceRoller
-import com.olegkos.virtualnoveltesttwo.GameLoading.NodePointer
+import com.olegkos.vnengine.GameLoading.DiceRoller
+import com.olegkos.vnengine.GameLoading.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput.*
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode

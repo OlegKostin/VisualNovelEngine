@@ -1,4 +1,4 @@
-package com.olegkos.virtualnoveltesttwo.GameLoading
+package com.olegkos.vnengine.GameLoading
 
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
@@ -76,7 +76,7 @@ data class SceneJson(
 @Serializable
 sealed class SceneNodeJson {
 
-  @kotlinx.serialization.Serializable
+  @Serializable
   @SerialName("text")
   data class Text(
     val text: String

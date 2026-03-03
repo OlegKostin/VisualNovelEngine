@@ -1,4 +1,4 @@
-package com.olegkos.virtualnoveltesttwo.GameLoading
+package com.olegkos.vnengine.GameLoading
 
 interface DiceRoller {
   fun roll(sides: Int): Int

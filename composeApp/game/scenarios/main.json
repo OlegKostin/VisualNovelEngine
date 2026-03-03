@@ -1,0 +1,89 @@
+{
+  "startSceneId": "intro",
+  "scenes": {
+    "intro": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Добро пожаловать в твою первую визуальную новеллу!"
+        },
+        {
+          "type": "text",
+          "text": "Ты стоишь в комнате. Что делать дальше?"
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "text": "Осмотреться",
+              "nextSceneId": "look_around"
+            },
+            {
+              "text": "Выйти из комнаты",
+              "nextSceneId": "exit_room"
+            }
+          ]
+        }
+      ]
+    },
+    "look_around": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты внимательно осматриваешь комнату и находишь странный предмет."
+        },
+        {
+          "type": "dice",
+          "name": "Проверка внимательности",
+          "sides": 20,
+          "modifier": 2,
+          "difficulty": 12,
+          "successScene": "found_item",
+          "failScene": "nothing_found",
+          "critSuccessScene": "found_rare_item",
+          "critFailScene": "trip_and_fail"
+        }
+      ]
+    },
+    "exit_room": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты выходишь из комнаты и оказываешься в коридоре."
+        }
+      ]
+    },
+    "found_item": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты нашёл обычный предмет."
+        }
+      ]
+    },
+    "nothing_found": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты ничего не нашёл."
+        }
+      ]
+    },
+    "found_rare_item": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ух ты! Редкий предмет найден!"
+        }
+      ]
+    },
+    "trip_and_fail": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты споткнулся и упал. Ничего не получилось."
+        }
+      ]
+    }
+  }
+}

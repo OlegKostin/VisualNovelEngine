@@ -1,7 +1,7 @@
 package com.olegkos.vnengine.engine
 
-import com.olegkos.virtualnoveltesttwo.GameLoading.GameValue
-import com.olegkos.virtualnoveltesttwo.GameLoading.NodePointer
+import com.olegkos.vnengine.GameLoading.GameValue
+import com.olegkos.vnengine.GameLoading.NodePointer
 
 
 data class GameState(

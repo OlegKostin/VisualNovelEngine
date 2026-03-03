@@ -1,4 +1,4 @@
-package com.olegkos.virtualnoveltesttwo.GameLoading
+package com.olegkos.vnengine.GameLoading
 
 import com.olegkos.vnengine.dsl.scenario
 

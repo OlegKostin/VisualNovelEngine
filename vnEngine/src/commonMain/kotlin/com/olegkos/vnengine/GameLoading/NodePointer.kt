@@ -1,4 +1,4 @@
-package com.olegkos.virtualnoveltesttwo.GameLoading
+package com.olegkos.vnengine.GameLoading
 
 data class NodePointer(
   val sceneId: String,

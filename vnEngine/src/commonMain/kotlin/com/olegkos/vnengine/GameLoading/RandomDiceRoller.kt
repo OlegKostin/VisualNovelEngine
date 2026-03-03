@@ -1,4 +1,4 @@
-package com.olegkos.virtualnoveltesttwo.GameLoading
+package com.olegkos.vnengine.GameLoading
 
 class RandomDiceRoller : DiceRoller {
   override fun roll(sides: Int): Int =
