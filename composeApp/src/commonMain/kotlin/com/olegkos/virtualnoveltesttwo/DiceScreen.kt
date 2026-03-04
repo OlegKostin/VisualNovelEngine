@@ -26,7 +26,7 @@ fun DiceScreen(
 ) {
 
   var isRolling by remember { mutableStateOf(false) }
-  var rotation by remember { mutableStateOf(0f) }
+  var rotation by remember { mutableFloatStateOf(0f) }
   var showResult by remember { mutableStateOf(false) }
 
   /**

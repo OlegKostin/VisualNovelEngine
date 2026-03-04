@@ -2,10 +2,12 @@ package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.GameLoading.NodePointer
-import com.olegkos.vnengine.engine.EngineOutput.*
+import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
+import com.olegkos.vnengine.engine.EngineOutput.ShowDice
+import com.olegkos.vnengine.engine.EngineOutput.ShowText
+import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
-import com.olegkos.vnengine.scene.Option
 
 class VnEngine(
   val state: GameState,
@@ -51,7 +53,6 @@ class VnEngine(
     when (node) {
 
       is SceneNode.Text -> {
-        // просто идём к следующему узлу
         state.pointer = state.pointer.copy(
           nodeIndex = state.pointer.nodeIndex + 1
         )
@@ -65,7 +66,6 @@ class VnEngine(
 
       is SceneNode.DiceRoll -> {
         if (state.diceResult == null) {
-          // бросок ещё не сделан
           state.diceResult = dice.roll(node.sides)
           return
         }
