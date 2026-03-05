@@ -26,24 +26,42 @@ fun DiceScreen(
 ) {
 
   var isRolling by remember { mutableStateOf(false) }
-  var rotation by remember { mutableFloatStateOf(0f) }
   var showResult by remember { mutableStateOf(false) }
+  var rollingValue by remember { mutableIntStateOf(1) }
 
   /**
-   * 🎲 Dice spin animation
+   * 🎲 Dice roll animation
    */
   LaunchedEffect(isRolling) {
+
     if (!isRolling) return@LaunchedEffect
 
-    var speed = 70f
+    onRoll() // сразу получаем результат
 
-    repeat(40) {
-      rotation += speed
-      speed *= 0.92f // плавное замедление
-      delay(16)
+    val final = result ?: (1..sides).random()
+
+    var delayMs = 40L
+
+    repeat(20) {
+      rollingValue = (1..sides).random()
+      delay(delayMs)
+      delayMs += 10
     }
 
-    onRoll()        // engine бросает кубик
+    // последние кадры — замедление к результату
+    val nearValues = listOf(
+      (1..sides).random(),
+      (1..sides).random(),
+      final
+    )
+
+    for (v in nearValues) {
+      rollingValue = v
+      delay(delayMs)
+      delayMs += 40
+    }
+
+    rollingValue = final
     showResult = true
     isRolling = false
   }
@@ -54,20 +72,17 @@ fun DiceScreen(
 
     Spacer(Modifier.height(24.dp))
 
-    val image =
-      if (result == null)
-        Res.drawable.d20
-      else
-        diceImageOrDefault(result)
+    val valueToShow =
+      when {
+        isRolling -> rollingValue
+        result != null -> result
+        else -> 20
+      }
 
     Image(
-      painter = painterResource(image),
+      painter = painterResource(diceImage(valueToShow)),
       contentDescription = null,
-      modifier = Modifier
-        .size(160.dp)
-        .graphicsLayer {
-          rotationZ = if (result == null) rotation else 0f
-        }
+      modifier = Modifier.size(160.dp)
     )
 
     Spacer(Modifier.height(24.dp))
@@ -75,10 +90,12 @@ fun DiceScreen(
     when {
 
       result == null && !isRolling -> {
-        Button(onClick = {
-          showResult = false
-          isRolling = true
-        }) {
+        Button(
+          onClick = {
+            showResult = false
+            isRolling = true
+          }
+        ) {
           Text("Бросить")
         }
       }
@@ -100,13 +117,28 @@ fun DiceScreen(
     }
   }
 }
-fun diceImageOrDefault(value: Int): DrawableResource =
+
+fun diceImage(value: Int): DrawableResource =
   when (value) {
-    20 -> Res.drawable.d20
-    18 -> Res.drawable.d18
-    14 -> Res.drawable.d14
-    12 -> Res.drawable.d12
-    10 -> Res.drawable.d10
+    1 -> Res.drawable.d1
+    2 -> Res.drawable.d2
+    3 -> Res.drawable.d3
     4 -> Res.drawable.d4
+    5 -> Res.drawable.d5
+    6 -> Res.drawable.d6
+    7 -> Res.drawable.d7
+    8 -> Res.drawable.d8
+    9 -> Res.drawable.d9
+    10 -> Res.drawable.d10
+    11 -> Res.drawable.d11
+    12 -> Res.drawable.d12
+    13 -> Res.drawable.d13
+    14 -> Res.drawable.d14
+    15 -> Res.drawable.d15
+    16 -> Res.drawable.d16
+    17 -> Res.drawable.d17
+    18 -> Res.drawable.d18
+    19 -> Res.drawable.d19
+    20 -> Res.drawable.d20
     else -> Res.drawable.d20
   }
