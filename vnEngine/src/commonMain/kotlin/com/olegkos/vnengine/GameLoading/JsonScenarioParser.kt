@@ -39,12 +39,17 @@ class JsonScenarioParser : ScenarioParser {
                     )
                   }
                 )
+              is SceneNodeJson.SetVar ->
+                SceneNode.SetVar(nodeJson.varName, nodeJson.value.toGameValue())
+
+              is SceneNodeJson.ModifyVar ->
+                SceneNode.ModifyVar(nodeJson.varName, nodeJson.value.toGameValue())
 
               is SceneNodeJson.DiceRoll ->
                 SceneNode.DiceRoll(
                   name = nodeJson.name,
                   sides = nodeJson.sides,
-                  modifier = nodeJson.modifier,
+                  modifierVar = nodeJson.modifierVar,
                   difficulty = nodeJson.difficulty,
                   successScene = nodeJson.successScene,
                   failScene = nodeJson.failScene,
@@ -88,12 +93,21 @@ sealed class SceneNodeJson {
     val options: List<OptionJson>
   ) : SceneNodeJson()
 
+
+  @Serializable
+  @SerialName("set")
+  data class SetVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("modify")
+  data class ModifyVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
+
   @Serializable
   @SerialName("dice")
   data class DiceRoll(
     val name: String,
     val sides: Int,
-    val modifier: Int,
+    val modifierVar: String,
     val difficulty: Int,
     val successScene: String,
     val failScene: String,
@@ -101,7 +115,32 @@ sealed class SceneNodeJson {
     val critFailScene: String? = null
   ) : SceneNodeJson()
 }
+@Serializable
+sealed class GameValueJson {
 
+  @Serializable
+  @SerialName("int")
+  data class IntVal(val value: Int) : GameValueJson()
+
+  @Serializable
+  @SerialName("float")
+  data class FloatVal(val value: Float) : GameValueJson()
+
+  @Serializable
+  @SerialName("bool")
+  data class BoolVal(val value: Boolean) : GameValueJson()
+
+  @Serializable
+  @SerialName("string")
+  data class StringVal(val value: String) : GameValueJson()
+
+  fun toGameValue(): com.olegkos.vnengine.engine.variables.GameValue = when (this) {
+    is IntVal -> com.olegkos.vnengine.engine.variables.GameValue.IntVal(value)
+    is FloatVal -> com.olegkos.vnengine.engine.variables.GameValue.FloatVal(value)
+    is BoolVal -> com.olegkos.vnengine.engine.variables.GameValue.Bool(value)
+    is StringVal -> com.olegkos.vnengine.engine.variables.GameValue.StringVal(value)
+  }
+}
 @Serializable
 data class OptionJson(
   val text: String,

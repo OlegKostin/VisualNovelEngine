@@ -5,7 +5,7 @@ import com.olegkos.vnengine.GameLoading.ScenarioParser
 import kotlinx.serialization.json.Json
 
 class GameLoader(
-  private val assets: AssetReader,
+  val assets: AssetReader,
   private val parser: ScenarioParser
 ) {
 

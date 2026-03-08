@@ -29,14 +29,11 @@ fun DiceScreen(
   var showResult by remember { mutableStateOf(false) }
   var rollingValue by remember { mutableIntStateOf(1) }
 
-  /**
-   * 🎲 Dice roll animation
-   */
   LaunchedEffect(isRolling) {
 
     if (!isRolling) return@LaunchedEffect
 
-    onRoll() // сразу получаем результат
+    onRoll()
 
     val final = result ?: (1..sides).random()
 
@@ -48,7 +45,6 @@ fun DiceScreen(
       delayMs += 10
     }
 
-    // последние кадры — замедление к результату
     val nearValues = listOf(
       (1..sides).random(),
       (1..sides).random(),

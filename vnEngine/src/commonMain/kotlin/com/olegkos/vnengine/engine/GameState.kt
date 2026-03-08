@@ -1,6 +1,6 @@
 package com.olegkos.vnengine.engine
 
-import com.olegkos.vnengine.GameLoading.GameValue
+import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.GameLoading.NodePointer
 
 

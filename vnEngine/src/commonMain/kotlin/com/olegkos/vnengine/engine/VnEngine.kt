@@ -5,6 +5,8 @@ import com.olegkos.vnengine.GameLoading.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
+import com.olegkos.vnengine.engine.variables.GameValue
+import com.olegkos.vnengine.engine.variables.VariableStore
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
@@ -13,7 +15,7 @@ class VnEngine(
   val state: GameState,
   private val dice: DiceRoller
 ) {
-
+  val variables = VariableStore(state.variables)
   private val scenes = mutableMapOf<String, Scene>()
 
   fun addScene(id: String, scene: Scene) {
@@ -64,6 +66,23 @@ class VnEngine(
         }
       }
 
+      is SceneNode.SetVar -> {
+        state.variables[node.varName] = node.value
+        state.pointer = state.pointer.copy(nodeIndex = state.pointer.nodeIndex + 1)
+      }
+
+      is SceneNode.ModifyVar -> {
+        val old = state.variables[node.varName]
+        state.variables[node.varName] = when {
+          old is GameValue.IntVal && node.value is GameValue.IntVal ->
+            GameValue.IntVal(old.value + node.value.value)
+          old is GameValue.FloatVal && node.value is GameValue.FloatVal ->
+            GameValue.FloatVal(old.value + node.value.value)
+          else -> node.value
+        }
+        state.pointer = state.pointer.copy(nodeIndex = state.pointer.nodeIndex + 1)
+      }
+
       is SceneNode.DiceRoll -> {
         if (state.diceResult == null) {
           state.diceResult = dice.roll(node.sides)
@@ -71,7 +90,8 @@ class VnEngine(
         }
 
         val roll = state.diceResult!!
-        val total = roll + node.modifier
+        val mod = variables.getInt(node.modifierVar)
+        val total = roll + mod
 
         when {
           // критическая неудача
@@ -113,14 +133,20 @@ class VnEngine(
       is SceneNode.Choice ->
         ShowChoices(node.options)
 
-      is SceneNode.DiceRoll ->
+      is SceneNode.DiceRoll -> {
+        val mod = variables.getInt(node.modifierVar)
         ShowDice(
           name = node.name,
           sides = node.sides,
           result = state.diceResult,
-          modifier = node.modifier,
+          modifier = mod,
           difficulty = node.difficulty
         )
-
+      }
+      is SceneNode.SetVar,
+      is SceneNode.ModifyVar -> {
+        next()
+        currentOutput()
+      }
       is SceneNode.Jump -> error("Jump should never reach output")
     }}

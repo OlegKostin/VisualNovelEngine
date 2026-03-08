@@ -4,14 +4,6 @@
     "intro": {
       "nodes": [
         {
-          "type": "text",
-          "text": "Добро пожаловать в твою первую визуальную новеллу!"
-        },
-        {
-          "type": "text",
-          "text": "Ты стоишь в комнате. Что делать дальше?"
-        },
-        {
           "type": "choice",
           "options": [
             {
@@ -33,10 +25,15 @@
           "text": "Ты внимательно осматриваешь комнату и находишь странный предмет."
         },
         {
+          "type": "modify",
+          "varName": "opt_str",
+          "value": { "type": "int", "value": 6 }
+        },
+        {
           "type": "dice",
           "name": "Проверка внимательности",
           "sides": 20,
-          "modifier": 2,
+          "modifierVar": "opt_str",
           "difficulty": 12,
           "successScene": "found_item",
           "failScene": "nothing_found",
