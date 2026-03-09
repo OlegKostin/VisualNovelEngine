@@ -68,18 +68,16 @@ class GameViewModel(
     val output = engine.step(option)
 
     if (output is EngineOutput.JumpScenarioOutput) {
-      viewModelScope.launch(ioDispatcher) {
-        val newScenario = loader.load(output.scenarioFile)
+      viewModelScope.launch {
+        val newScenario = withContext(ioDispatcher) { loader.load(output.scenarioFile) }
         engine.addScenes(newScenario.scenario.scenes)
         engine.state.pointer = NodePointer(newScenario.scenario.startSceneId, 0)
-
         currentOutput = engine.step()
       }
     } else {
       currentOutput = output
     }
   }
-
   fun rollDice() {
     engine?.state?.diceResult = engine?.dice?.roll(engine!!.currentNode().let { it as SceneNode.DiceRoll }.sides)
     currentOutput = engine?.step() ?: EngineOutput.Loading
