@@ -22,4 +22,10 @@ sealed interface SceneNode {
   ) : SceneNode
   data class SetVar(val varName: String, val value: GameValue) : SceneNode
   data class ModifyVar(val varName: String, val value: GameValue) : SceneNode
+  data class If(
+    val variable: String,
+    val equals: GameValue,
+    val successScene: String,
+    val failScene: String
+  ) : SceneNode
 }

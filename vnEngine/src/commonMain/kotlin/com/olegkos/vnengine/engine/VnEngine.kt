@@ -6,6 +6,7 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
 import com.olegkos.vnengine.engine.variables.GameValue
+import com.olegkos.vnengine.engine.variables.GameValue.*
 import com.olegkos.vnengine.engine.variables.VariableStore
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
@@ -75,9 +76,9 @@ class VnEngine(
         val old = state.variables[node.varName]
         state.variables[node.varName] = when {
           old is GameValue.IntVal && node.value is GameValue.IntVal ->
-            GameValue.IntVal(old.value + node.value.value)
+            IntVal(old.value + node.value.value)
           old is GameValue.FloatVal && node.value is GameValue.FloatVal ->
-            GameValue.FloatVal(old.value + node.value.value)
+            FloatVal(old.value + node.value.value)
           else -> node.value
         }
         state.pointer = state.pointer.copy(nodeIndex = state.pointer.nodeIndex + 1)
@@ -112,6 +113,15 @@ class VnEngine(
       }
 
       is SceneNode.Jump -> error("Jump should never reach next()")
+      is SceneNode.If -> {
+        val value = state.variables[node.variable]
+
+        if (value == node.equals) {
+          jumpToScene(node.successScene)
+        } else {
+          jumpToScene(node.failScene)
+        }
+      }
     }
   }
   fun jumpToScene(sceneId: String) {
@@ -124,29 +134,63 @@ class VnEngine(
     state.diceResult = null
   }
 
-  fun currentOutput(): EngineOutput =
-    when (val node = resolveNode()) {
+  fun currentOutput(): EngineOutput {
 
-      is SceneNode.Text ->
-        ShowText(node.text)
+    while (true) {
 
-      is SceneNode.Choice ->
-        ShowChoices(node.options)
+      val node = resolveNode()
 
-      is SceneNode.DiceRoll -> {
-        val mod = variables.getInt(node.modifierVar)
-        ShowDice(
-          name = node.name,
-          sides = node.sides,
-          result = state.diceResult,
-          modifier = mod,
-          difficulty = node.difficulty
-        )
+      when (node) {
+
+        is SceneNode.SetVar -> {
+          variables.set(node.varName, node.value)
+          advance()
+        }
+
+        is SceneNode.ModifyVar -> {
+          variables.modify(node.varName, node.value)
+          advance()
+        }
+
+        is SceneNode.Text ->
+          return ShowText(node.text)
+
+        is SceneNode.Choice ->
+          return ShowChoices(node.options)
+
+        is SceneNode.DiceRoll ->
+          return buildDiceOutput(node)
+
+        is SceneNode.Jump ->
+          error("Jump should never reach output")
+
+        is SceneNode.If ->{
+          val value = state.variables[node.variable]
+
+          if (value == node.equals) {
+            jumpToScene(node.successScene)
+          } else {
+            jumpToScene(node.failScene)
+          }
+        }
       }
-      is SceneNode.SetVar,
-      is SceneNode.ModifyVar -> {
-        next()
-        currentOutput()
-      }
-      is SceneNode.Jump -> error("Jump should never reach output")
-    }}
+    }
+  }
+  private fun advance() {
+    state.pointer = state.pointer.copy(
+      nodeIndex = state.pointer.nodeIndex + 1
+    )
+  }
+
+  private fun buildDiceOutput(node: SceneNode.DiceRoll): EngineOutput {
+    val mod = variables.getInt(node.modifierVar)
+
+    return ShowDice(
+      name = node.name,
+      sides = node.sides,
+      result = state.diceResult,
+      modifier = mod,
+      difficulty = node.difficulty
+    )
+  }
+}

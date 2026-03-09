@@ -40,4 +40,23 @@ class VariableStore(
   fun addFloat(name: String, value: Float) {
     setFloat(name, getFloat(name) + value)
   }
+
+  fun set(name: String, value: GameValue) {
+    map[name] = value
+  }
+
+  fun modify(name: String, value: GameValue) {
+
+    val old = map[name]
+
+    map[name] = when {
+      old is GameValue.IntVal && value is GameValue.IntVal ->
+        GameValue.IntVal(old.value + value.value)
+
+      old is GameValue.FloatVal && value is GameValue.FloatVal ->
+        GameValue.FloatVal(old.value + value.value)
+
+      else -> value
+    }
+  }
 }
