@@ -72,12 +72,23 @@ class VnEngine(
           val value = state.variables[node.variable]
           val compareValue = node.equals.resolve()
 
-          if (value == compareValue)
+          val condition = when {
+            value is GameValue.IntVal && compareValue is GameValue.IntVal ->
+              value.value >= compareValue.value
+            value is GameValue.FloatVal && compareValue is GameValue.FloatVal ->
+              value.value.round2() >= compareValue.value.round2()
+            value is GameValue.IntVal && compareValue is GameValue.FloatVal ->
+              value.value.toFloat().round2() >= compareValue.value.round2()
+            value is GameValue.FloatVal && compareValue is GameValue.IntVal ->
+              value.value.round2() >= compareValue.value.toFloat().round2()
+            else -> false
+          }
+
+          if (condition)
             jumpToScene(node.successScene)
           else
             jumpToScene(node.failScene)
-        }
-        is SceneNode.Text -> {
+        }        is SceneNode.Text -> {
           advance()
           return ShowText(node.text)
         }

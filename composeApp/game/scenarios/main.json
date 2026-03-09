@@ -39,10 +39,24 @@
           "sides": 20,
           "modifierVar": "opt_str",
           "difficulty": 12,
+          "successScene": "check_loop",
+          "failScene": "check_loop",
+          "critSuccessScene": "check_loop",
+          "critFailScene": "check_loop"
+        }
+      ]
+    },
+    "check_loop": {
+      "nodes": [
+        {
+          "type": "if",
+          "variable": "opt_str",
+          "equals": {
+            "type": "float",
+            "value": 1.0
+          },
           "successScene": "found_item",
-          "failScene": "nothing_found",
-          "critSuccessScene": "found_rare_item",
-          "critFailScene": "trip_and_fail"
+          "failScene": "look_around"
         }
       ]
     },
