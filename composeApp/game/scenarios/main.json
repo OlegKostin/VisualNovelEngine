@@ -47,6 +47,10 @@
         {
           "type": "text",
           "text": "Ты выходишь из комнаты и оказываешься в коридоре."
+        },
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "game/scenarios/second.json"
         }
       ]
     },

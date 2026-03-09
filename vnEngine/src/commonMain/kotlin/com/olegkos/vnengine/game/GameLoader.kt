@@ -21,7 +21,6 @@ class GameLoader(
     val config =
       json.decodeFromString<GameConfig>(configRaw)
 
-    // читаем сценарий
     val scenarioRaw =
       assets.readText(config.startScenario)
 

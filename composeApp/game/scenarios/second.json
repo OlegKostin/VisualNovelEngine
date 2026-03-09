@@ -1,0 +1,15 @@
+{
+  "startScenario": "game/scenarios/second.json",
+  "assetsRoot": "game/assets/",
+  "startSceneId": "intro",
+  "scenes": {
+    "intro": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Это второй сценарий!"
+        }
+      ]
+    }
+  }
+}

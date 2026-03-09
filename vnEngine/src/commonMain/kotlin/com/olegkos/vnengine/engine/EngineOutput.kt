@@ -13,4 +13,5 @@ sealed interface EngineOutput {
     val modifier: Int,
     val difficulty: Int
   ) : EngineOutput
+  data class JumpScenarioOutput(val scenarioFile: String) : EngineOutput
 }

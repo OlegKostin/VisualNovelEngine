@@ -124,7 +124,13 @@ class VnEngine(
 
           state.diceResult = null
           return resultOutput
-        }        is SceneNode.Jump -> {
+        }
+
+        is SceneNode.JumpScenario -> {
+          return EngineOutput.JumpScenarioOutput(node.scenarioFile)
+        }
+
+        is SceneNode.Jump -> {
           jumpToScene(node.targetSceneId)
         }
       }

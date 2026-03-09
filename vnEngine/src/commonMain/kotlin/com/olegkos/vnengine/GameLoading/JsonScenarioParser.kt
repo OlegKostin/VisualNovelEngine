@@ -3,6 +3,7 @@ package com.olegkos.vnengine.GameLoading
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.SceneNode.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.*
 
@@ -28,10 +29,10 @@ class JsonScenarioParser : ScenarioParser {
             when (nodeJson) {
 
               is SceneNodeJson.Text ->
-                SceneNode.Text(nodeJson.text)
+                Text(nodeJson.text)
 
               is SceneNodeJson.Choice ->
-                SceneNode.Choice(
+                Choice(
                   options = nodeJson.options.map {
                     Option(
                       text = it.text,
@@ -40,13 +41,13 @@ class JsonScenarioParser : ScenarioParser {
                   }
                 )
               is SceneNodeJson.SetVar ->
-                SceneNode.SetVar(nodeJson.varName, nodeJson.value.toGameValue())
+                SetVar(nodeJson.varName, nodeJson.value.toGameValue())
 
               is SceneNodeJson.ModifyVar ->
-                SceneNode.ModifyVar(nodeJson.varName, nodeJson.value.toGameValue())
+                ModifyVar(nodeJson.varName, nodeJson.value.toGameValue())
 
               is SceneNodeJson.DiceRoll ->
-                SceneNode.DiceRoll(
+                DiceRoll(
                   name = nodeJson.name,
                   sides = nodeJson.sides,
                   modifierVar = nodeJson.modifierVar,
@@ -56,6 +57,17 @@ class JsonScenarioParser : ScenarioParser {
                   critSuccessScene = nodeJson.critSuccessScene,
                   critFailScene = nodeJson.critFailScene
                 )
+
+              is SceneNodeJson.If -> If(
+                variable = nodeJson.variable,
+                equals = nodeJson.equals.toGameValue(),
+                successScene = nodeJson.successScene,
+                failScene = nodeJson.failScene
+              )
+
+              is JumpScenario -> SceneNode.JumpScenario(
+                scenarioFile = nodeJson.scenarioFile
+              )
             }
           }
         )
@@ -77,7 +89,11 @@ data class ScenarioJson(
 data class SceneJson(
   val nodes: List<SceneNodeJson>
 )
-
+@Serializable
+@SerialName("jumpScenario")
+data class JumpScenario(
+  val scenarioFile: String
+) : SceneNodeJson()
 @Serializable
 sealed class SceneNodeJson {
 
@@ -101,7 +117,14 @@ sealed class SceneNodeJson {
   @Serializable
   @SerialName("modify")
   data class ModifyVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
-
+  @Serializable
+  @SerialName("if")
+  data class If(
+    val variable: String,
+    val equals: GameValueJson,
+    val successScene: String,
+    val failScene: String
+  ) : SceneNodeJson()
   @Serializable
   @SerialName("dice")
   data class DiceRoll(
