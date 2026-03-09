@@ -14,7 +14,7 @@ import com.olegkos.vnengine.scene.SceneNode
 
 class VnEngine(
   val state: GameState,
-  private val dice: DiceRoller
+  val dice: DiceRoller
 ) {
   val variables = VariableStore(state.variables)
   private val scenes = mutableMapOf<String, Scene>()
@@ -49,92 +49,7 @@ class VnEngine(
     return node
   }
 
-  fun next(selectedOption: Option? = null) {
-
-    val node = resolveNode()
-
-    when (node) {
-
-      is SceneNode.Text -> {
-        state.pointer = state.pointer.copy(
-          nodeIndex = state.pointer.nodeIndex + 1
-        )
-      }
-
-      is SceneNode.Choice -> {
-        selectedOption?.let {
-          jumpToScene(it.nextSceneId)
-        }
-      }
-
-      is SceneNode.SetVar -> {
-        state.variables[node.varName] = node.value
-        state.pointer = state.pointer.copy(nodeIndex = state.pointer.nodeIndex + 1)
-      }
-
-      is SceneNode.ModifyVar -> {
-        val old = state.variables[node.varName]
-        state.variables[node.varName] = when {
-          old is GameValue.IntVal && node.value is GameValue.IntVal ->
-            IntVal(old.value + node.value.value)
-          old is GameValue.FloatVal && node.value is GameValue.FloatVal ->
-            FloatVal(old.value + node.value.value)
-          else -> node.value
-        }
-        state.pointer = state.pointer.copy(nodeIndex = state.pointer.nodeIndex + 1)
-      }
-
-      is SceneNode.DiceRoll -> {
-        if (state.diceResult == null) {
-          state.diceResult = dice.roll(node.sides)
-          return
-        }
-
-        val roll = state.diceResult!!
-        val mod = variables.getInt(node.modifierVar)
-        val total = roll + mod
-
-        when {
-          // критическая неудача
-          roll == 1 && node.critFailScene != null ->
-            jumpToScene(node.critFailScene)
-
-          // критический успех
-          roll == node.sides && node.critSuccessScene != null ->
-            jumpToScene(node.critSuccessScene)
-
-          // обычный успех
-          total >= node.difficulty ->
-            jumpToScene(node.successScene)
-
-          else ->
-            jumpToScene(node.failScene)
-        }
-      }
-
-      is SceneNode.Jump -> error("Jump should never reach next()")
-      is SceneNode.If -> {
-        val value = state.variables[node.variable]
-
-        if (value == node.equals) {
-          jumpToScene(node.successScene)
-        } else {
-          jumpToScene(node.failScene)
-        }
-      }
-    }
-  }
-  fun jumpToScene(sceneId: String) {
-
-    require(scenes.containsKey(sceneId)) {
-      "Scene '$sceneId' not found"
-    }
-
-    state.pointer = NodePointer(sceneId, 0)
-    state.diceResult = null
-  }
-
-  fun currentOutput(): EngineOutput {
+  fun step(selectedOption: Option? = null): EngineOutput {
 
     while (true) {
 
@@ -152,45 +67,84 @@ class VnEngine(
           advance()
         }
 
-        is SceneNode.Text ->
-          return ShowText(node.text)
-
-        is SceneNode.Choice ->
-          return ShowChoices(node.options)
-
-        is SceneNode.DiceRoll ->
-          return buildDiceOutput(node)
-
-        is SceneNode.Jump ->
-          error("Jump should never reach output")
-
-        is SceneNode.If ->{
+        is SceneNode.If -> {
           val value = state.variables[node.variable]
 
-          if (value == node.equals) {
+          if (value == node.equals)
             jumpToScene(node.successScene)
-          } else {
+          else
             jumpToScene(node.failScene)
+        }
+
+        is SceneNode.Text -> {
+          advance()
+          return ShowText(node.text)
+        }
+
+        is SceneNode.Choice -> {
+          if (selectedOption != null) {
+            jumpToScene(selectedOption.nextSceneId)
+            continue
           }
+          return ShowChoices(node.options)
+        }
+
+        is SceneNode.DiceRoll -> {
+          if (state.diceResult == null) {
+            // Кубик ещё не бросан
+            return EngineOutput.ShowDice(
+              name = node.name,
+              sides = node.sides,
+              result = null, // сигнал UI показать кнопку броска
+              modifier = variables.getInt(node.modifierVar),
+              difficulty = node.difficulty
+            )
+          }
+
+          // Кубик уже бросан — продолжаем сцену
+          val roll = state.diceResult!!
+          val mod = variables.getInt(node.modifierVar)
+          val total = roll + mod
+
+          val resultOutput = EngineOutput.ShowDice(
+            name = node.name,
+            sides = node.sides,
+            result = roll,
+            modifier = mod,
+            difficulty = node.difficulty
+          )
+
+          // Сразу переходим по сценам
+          when {
+            roll == 1 && node.critFailScene != null -> jumpToScene(node.critFailScene)
+            roll == node.sides && node.critSuccessScene != null -> jumpToScene(node.critSuccessScene)
+            total >= node.difficulty -> jumpToScene(node.successScene)
+            else -> jumpToScene(node.failScene)
+          }
+
+          state.diceResult = null
+          return resultOutput
+        }        is SceneNode.Jump -> {
+          jumpToScene(node.targetSceneId)
         }
       }
     }
   }
+
+  fun jumpToScene(sceneId: String) {
+
+    require(scenes.containsKey(sceneId)) {
+      "Scene '$sceneId' not found"
+    }
+
+    state.pointer = NodePointer(sceneId, 0)
+    state.diceResult = null
+  }
+
   private fun advance() {
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )
   }
 
-  private fun buildDiceOutput(node: SceneNode.DiceRoll): EngineOutput {
-    val mod = variables.getInt(node.modifierVar)
-
-    return ShowDice(
-      name = node.name,
-      sides = node.sides,
-      result = state.diceResult,
-      modifier = mod,
-      difficulty = node.difficulty
-    )
-  }
 }

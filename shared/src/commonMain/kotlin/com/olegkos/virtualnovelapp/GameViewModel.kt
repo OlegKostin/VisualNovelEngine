@@ -13,6 +13,7 @@ import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.game.GameLoader
 import com.olegkos.vnengine.scene.Option
+import com.olegkos.vnengine.scene.SceneNode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,27 +32,21 @@ class GameViewModel(
   private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
-  var currentOutput by mutableStateOf<EngineOutput>(
-    EngineOutput.Loading
-  )
+  var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
     private set
 
   private var engine: VnEngine? = null
 
-  init {
-    loadGame()
-  }
+  init { loadGame() }
 
   private fun loadGame() {
     viewModelScope.launch {
-
-      val game = withContext(ioDispatcher) {
-        loader.load("game/game.json")
-      }
+      val game = withContext(ioDispatcher) { loader.load("game/game.json") }
       val varsRaw = loader.assets.readText("game/variables/variables.json")
       val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
       val varsMap = json.decodeFromString<Map<String, kotlinx.serialization.json.JsonElement>>(varsRaw)
       val state = GameState(NodePointer(game.scenario.startSceneId, 0))
+
       varsMap.forEach { (key, value) ->
         state.variables[key] = when {
           value.jsonPrimitive.isString -> GameValue.StringVal(value.jsonPrimitive.content)
@@ -62,26 +57,17 @@ class GameViewModel(
         }
       }
 
-      engine = VnEngine(
-        state = state,
-        dice = dice
-      ).apply {
-        addScenes(game.scenario.scenes)
-      }
-
-      currentOutput =
-        engine!!.currentOutput()
+      engine = VnEngine(state, dice).apply { addScenes(game.scenario.scenes) }
+      currentOutput = engine?.step() ?: EngineOutput.Loading
     }
   }
 
   fun next(option: Option? = null) {
-    engine?.next(option)
-    currentOutput =
-      engine?.currentOutput()
-        ?: EngineOutput.Loading
+    currentOutput = engine?.step(option) ?: EngineOutput.Loading
   }
 
   fun rollDice() {
-    next()
+    engine?.state?.diceResult = engine?.dice?.roll(engine!!.currentNode().let { it as SceneNode.DiceRoll }!!.sides)
+    currentOutput = engine?.step() ?: EngineOutput.Loading
   }
 }
