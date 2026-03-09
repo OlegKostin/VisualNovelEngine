@@ -41,6 +41,14 @@ class VariableStore(
     setFloat(name, getFloat(name) + value)
   }
 
+  fun getModifier(name: String): Float {
+    val v = map[name] ?: return 0f
+    return when (v) {
+      is GameValue.IntVal -> v.value.toFloat()
+      is GameValue.FloatVal -> v.value
+      else -> 0f
+    }
+  }
   fun set(name: String, value: GameValue) {
     map[name] = value
   }
@@ -55,6 +63,12 @@ class VariableStore(
 
       old is GameValue.FloatVal && value is GameValue.FloatVal ->
         GameValue.FloatVal(old.value + value.value)
+
+      old is GameValue.FloatVal && value is GameValue.IntVal ->
+        GameValue.FloatVal(old.value + value.value.toFloat())
+
+      old is GameValue.IntVal && value is GameValue.FloatVal ->
+        GameValue.FloatVal(old.value.toFloat() + value.value)
 
       else -> value
     }

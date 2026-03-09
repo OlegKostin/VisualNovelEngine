@@ -19,7 +19,7 @@ fun DiceScreen(
   name: String,
   sides: Int,
   result: Int?,
-  modifier: Int,
+  modifier: Float,
   difficulty: Int,
   onRoll: () -> Unit,
   onContinue: () -> Unit

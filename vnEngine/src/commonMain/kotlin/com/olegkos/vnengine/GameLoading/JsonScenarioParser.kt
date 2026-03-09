@@ -1,5 +1,6 @@
 package com.olegkos.vnengine.GameLoading
 
+import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
@@ -111,11 +112,11 @@ sealed class SceneNodeJson {
 
 
   @Serializable
-  @SerialName("set")
+  @SerialName("setVar")
   data class SetVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
 
   @Serializable
-  @SerialName("modify")
+  @SerialName("modifyVar")
   data class ModifyVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
   @Serializable
   @SerialName("if")
@@ -157,11 +158,23 @@ sealed class GameValueJson {
   @SerialName("string")
   data class StringVal(val value: String) : GameValueJson()
 
-  fun toGameValue(): com.olegkos.vnengine.engine.variables.GameValue = when (this) {
-    is IntVal -> com.olegkos.vnengine.engine.variables.GameValue.IntVal(value)
-    is FloatVal -> com.olegkos.vnengine.engine.variables.GameValue.FloatVal(value)
-    is BoolVal -> com.olegkos.vnengine.engine.variables.GameValue.Bool(value)
-    is StringVal -> com.olegkos.vnengine.engine.variables.GameValue.StringVal(value)
+  @Serializable
+  @SerialName("randomInt")
+  data class RandomInt(val min: Int, val max: Int) : GameValueJson()
+
+  @Serializable
+  @SerialName("randomFloat")
+  data class RandomFloat(
+    val min: Float,
+    val max: Float
+  ) : GameValueJson()
+  fun toGameValue(): GameValue = when (this) {
+    is IntVal -> GameValue.IntVal(value)
+    is FloatVal -> GameValue.FloatVal(value)
+    is BoolVal -> GameValue.Bool(value)
+    is StringVal -> GameValue.StringVal(value)
+    is RandomInt -> GameValue.RandomInt(min, max)
+    is RandomFloat -> GameValue.RandomFloat(min, max)
   }
 }
 @Serializable

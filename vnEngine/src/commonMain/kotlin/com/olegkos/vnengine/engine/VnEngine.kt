@@ -8,6 +8,7 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowText
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.engine.variables.GameValue.*
 import com.olegkos.vnengine.engine.variables.VariableStore
+import com.olegkos.vnengine.engine.variables.resolve
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
@@ -58,24 +59,24 @@ class VnEngine(
       when (node) {
 
         is SceneNode.SetVar -> {
-          variables.set(node.varName, node.value)
+          variables.set(node.varName, node.value.resolve())
           advance()
         }
 
         is SceneNode.ModifyVar -> {
-          variables.modify(node.varName, node.value)
+          variables.modify(node.varName, node.value.resolve())
           advance()
         }
 
         is SceneNode.If -> {
           val value = state.variables[node.variable]
+          val compareValue = node.equals.resolve()
 
-          if (value == node.equals)
+          if (value == compareValue)
             jumpToScene(node.successScene)
           else
             jumpToScene(node.failScene)
         }
-
         is SceneNode.Text -> {
           advance()
           return ShowText(node.text)
@@ -96,15 +97,15 @@ class VnEngine(
               name = node.name,
               sides = node.sides,
               result = null, // сигнал UI показать кнопку броска
-              modifier = variables.getInt(node.modifierVar),
+              modifier = variables.getModifier(node.modifierVar),
               difficulty = node.difficulty
             )
           }
 
           // Кубик уже бросан — продолжаем сцену
           val roll = state.diceResult!!
-          val mod = variables.getInt(node.modifierVar)
-          val total = roll + mod
+          val mod = variables.getModifier(node.modifierVar).round2()
+          val total = (roll.toFloat() + mod).round2()
 
           val resultOutput = EngineOutput.ShowDice(
             name = node.name,
@@ -154,3 +155,4 @@ class VnEngine(
   }
 
 }
+fun Float.round2(): Float = (this * 100).toInt() / 100f

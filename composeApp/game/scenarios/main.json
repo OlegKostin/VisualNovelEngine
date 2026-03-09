@@ -25,9 +25,13 @@
           "text": "Ты внимательно осматриваешь комнату и находишь странный предмет."
         },
         {
-          "type": "modify",
+          "type": "modifyVar",
           "varName": "opt_str",
-          "value": { "type": "int", "value": 6 }
+          "value": {
+            "type": "randomFloat",
+            "min": 1.0,
+            "max": 6.0
+          }
         },
         {
           "type": "dice",

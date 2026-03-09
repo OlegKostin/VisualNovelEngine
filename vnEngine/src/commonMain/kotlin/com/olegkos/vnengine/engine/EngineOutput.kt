@@ -10,7 +10,7 @@ sealed interface EngineOutput {
     val name: String,
     val sides: Int,
     val result: Int?,
-    val modifier: Int,
+    val modifier: Float,
     val difficulty: Int
   ) : EngineOutput
   data class JumpScenarioOutput(val scenarioFile: String) : EngineOutput
