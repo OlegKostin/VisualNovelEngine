@@ -1,5 +1,8 @@
 package com.olegkos.coredi
 
+import com.olegkos.save.DesktopSaveStorage
+import com.olegkos.save.SaveManager
+import com.olegkos.save.SaveStorage
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
@@ -12,6 +15,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 actual val platformModule = module {
+
+  single<SaveStorage> {
+    DesktopSaveStorage()
+  }
+
+  single {
+    SaveManager(get())
+  }
 
   single<AssetReader> {
     DesktopAssetReader()
@@ -33,7 +44,8 @@ actual val platformModule = module {
   viewModel {
     GameViewModel(
       loader = get(),
-      dice = get()
+      dice = get(),
+      get()
     )
   }
 }

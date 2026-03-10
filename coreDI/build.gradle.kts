@@ -25,6 +25,7 @@ kotlin {
         implementation(libs.koin.core)
         implementation(projects.vnEngine)
         implementation(projects.shared)
+        implementation(projects.save)
         implementation(libs.koin.compose)
         implementation(libs.koin.compose.viewmodel)
         implementation(libs.lifecycle.viewmodel)

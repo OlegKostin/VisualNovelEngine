@@ -1,68 +1,46 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
-  alias(libs.plugins.composeMultiplatform)
-  alias(libs.plugins.composeCompiler)
   alias(libs.plugins.androidKmpLibrary)
   alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
+
+  // Target declarations - add or remove as needed below. These define
+  // which platforms this KMP module supports.
+  // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
   androidLibrary {
     namespace = "com.olegkos.save"
     compileSdk = 36
     minSdk = 26
-
   }
 
-  jvm()
-
+  // Source set declarations.
+  // Declaring a target automatically creates a source set with the same name. By default, the
+  // Kotlin Gradle Plugin creates additional source sets that depend on each other, since it is
+  // common to share sources between related targets.
+  // See: https://kotlinlang.org/docs/multiplatform-hierarchy.html
   sourceSets {
-    val commonMain by getting {
+    commonMain {
       dependencies {
         implementation(projects.vnEngine)
-        implementation(libs.runtime)
-        implementation(libs.foundation)
-        implementation(libs.material3)
-        implementation(libs.ui)
-        implementation(libs.components.resources)
-        implementation(libs.ui.tooling.preview)
-        implementation(libs.androidx.lifecycle.viewmodelCompose)
-        implementation(libs.androidx.lifecycle.runtimeCompose)
-
-        api(libs.koin.core)
-        implementation(libs.koin.compose)
-        implementation(libs.koin.compose.viewmodel)
-        implementation(libs.lifecycle.viewmodel)
-        implementation(libs.navigation.compose)
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
         implementation(libs.kotlinx.serialization.json)
       }
     }
 
-    val androidMain by getting {
-      dependencies{
-        implementation(libs.koin.android)
-      }
-    }
+    jvm()
 
-    val jvmMain by getting {
+    androidMain {
       dependencies {
-        implementation(compose.desktop.currentOs)
+        // Add Android-specific dependencies here. Note that this source set depends on
+        // commonMain by default and will correctly pull the Android artifacts of any KMP
+        // dependencies declared in commonMain.
       }
     }
-  }
-}
 
-compose.desktop {
-  application {
-    mainClass = "com.olegkos.virtualnoveltesttwo.MainKt"
-
-    nativeDistributions {
-      targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-      packageName = "com.olegkos.virtualnoveltesttwo"
-      packageVersion = "1.0.0"
-    }
   }
+  sourceSets.jvmMain.dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+  }
+
 }

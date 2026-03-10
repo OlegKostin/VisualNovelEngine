@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.olegkos.save.SaveManager
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput
@@ -29,9 +30,10 @@ import kotlinx.serialization.json.jsonPrimitive
 class GameViewModel(
   private val loader: GameLoader,
   private val dice: DiceRoller,
+  private val saveManager: SaveManager,
   private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
-
+  private var currentScenario: String = "game/game.json"
   var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
     private set
 
@@ -69,6 +71,7 @@ class GameViewModel(
 
     if (output is EngineOutput.JumpScenarioOutput) {
       viewModelScope.launch {
+        currentScenario = output.scenarioFile
         val newScenario = withContext(ioDispatcher) { loader.load(output.scenarioFile) }
         engine.addScenes(newScenario.scenario.scenes)
         engine.state.pointer = NodePointer(newScenario.scenario.startSceneId, 0)
@@ -82,4 +85,34 @@ class GameViewModel(
     engine?.state?.diceResult = engine?.dice?.roll(engine!!.currentNode().let { it as SceneNode.DiceRoll }.sides)
     currentOutput = engine?.step() ?: EngineOutput.Loading
   }
+  fun saveGame(slot: String) {
+
+    val engine = engine ?: return
+
+    val node = engine.currentNode()
+
+    saveManager.save(
+      slot = slot,
+      state = engine.state,
+      scenario = currentScenario
+    )
+  }  fun loadSave(slot: String) {
+
+    viewModelScope.launch {
+
+      val state = saveManager.load(slot) ?: return@launch
+
+      val scenario = withContext(ioDispatcher) {
+        loader.load(currentScenario)
+      }
+
+      engine = VnEngine(state, dice).apply {
+        addScenes(scenario.scenario.scenes)
+      }
+
+      currentOutput = engine?.step() ?: EngineOutput.Loading
+    }
+  }
+  fun listSaves(): List<String> =
+    saveManager.listSaves()
 }

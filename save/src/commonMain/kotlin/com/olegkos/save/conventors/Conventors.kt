@@ -1,21 +1,13 @@
 package com.olegkos.save.conventors
 
+import com.olegkos.save.GameStateSerializable
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.GameValueSerializable
-import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.variables.GameValue
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 
-@Serializable
-data class GameStateSerializable(
-  val pointer: NodePointer,
-  val variables: Map<String, GameValueSerializable>,
-  val diceResult: Int? = null,
-  val timestamp: Long,
-  val scenario: String
-)
+
 fun GameValue.toSerializable(): GameValueSerializable = when(this) {
   is GameValue.IntVal -> GameValueSerializable.IntVal(value)
   is GameValue.FloatVal -> GameValueSerializable.FloatVal(value)
@@ -30,14 +22,18 @@ fun GameValueSerializable.toGameValue(): GameValue = when(this) {
   is GameValueSerializable.BoolVal -> GameValue.Bool(value)
   is GameValueSerializable.StringVal -> GameValue.StringVal(value)
 }
-fun GameState.toSerializable(): GameStateSerializable =
+fun GameState.toSerializable(
+  scenario: String,
+  timestamp: Long = System.currentTimeMillis()
+): GameStateSerializable =
   GameStateSerializable(
     pointer = pointer,
     variables = variables.mapValues { it.value.toSerializable() },
     diceResult = diceResult,
-    timestamp = TODO(),
-    scenario = TODO(),
+    timestamp = timestamp,
+    scenario = scenario
   )
+
 fun GameStateSerializable.toGameState(): GameState =
   GameState(
     pointer = pointer,

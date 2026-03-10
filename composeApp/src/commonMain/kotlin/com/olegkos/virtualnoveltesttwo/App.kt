@@ -61,5 +61,18 @@ fun App(
 
       else -> {Text("Загрузка...")}
     }
+    Spacer(Modifier.height(24.dp))
+
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+      Button(onClick = { viewModel.saveGame("slot1") }) {
+        Text("Сохранить")
+      }
+
+      Button(onClick = { viewModel.loadSave("slot1") }) {
+        Text("Загрузить")
+      }
+    }
   }
-}
+  }

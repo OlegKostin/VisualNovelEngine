@@ -22,6 +22,7 @@ kotlin {
     val commonMain by getting {
       dependencies {
         implementation(projects.vnEngine)
+        implementation(projects.save)
         implementation(libs.runtime)
         implementation(libs.foundation)
         implementation(libs.material3)
