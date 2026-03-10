@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.olegkos.vnengine.GameLoading.DiceRoller
-import com.olegkos.vnengine.GameLoading.NodePointer
+import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.VnEngine

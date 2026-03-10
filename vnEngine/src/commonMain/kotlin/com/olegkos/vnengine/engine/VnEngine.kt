@@ -1,7 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.GameLoading.DiceRoller
-import com.olegkos.vnengine.GameLoading.NodePointer
+import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
