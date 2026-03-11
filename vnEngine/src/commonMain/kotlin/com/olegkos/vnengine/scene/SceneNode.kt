@@ -29,4 +29,11 @@ sealed interface SceneNode {
     val failScene: String
   ) : SceneNode
   data class JumpScenario(val scenarioFile: String) : SceneNode
+  data class Background(
+    val image: String
+  ) : SceneNode
+
+  data class Image(
+    val image: String
+  ) : SceneNode
 }
