@@ -4,6 +4,10 @@
     "intro": {
       "nodes": [
         {
+          "type": "background",
+          "image": "backgrounds/test.png"
+        },
+        {
           "type": "choice",
           "options": [
             {

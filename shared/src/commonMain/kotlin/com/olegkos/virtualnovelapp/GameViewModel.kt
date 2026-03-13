@@ -26,6 +26,7 @@ import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 
 class GameViewModel(
   private val loader: GameLoader,
@@ -36,7 +37,10 @@ class GameViewModel(
   private var currentScenario: String = "game/game.json"
   var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
     private set
-
+  val currentNode: SceneNode?
+    get() = engine?.currentNode()
+  private var _assetsRoot: String = ""
+  val assetsRoot: String get() = _assetsRoot
   private var engine: VnEngine? = null
 
   init { loadGame() }
@@ -44,6 +48,7 @@ class GameViewModel(
   private fun loadGame() {
     viewModelScope.launch {
       val game = withContext(ioDispatcher) { loader.load("game/game.json") }
+      _assetsRoot = game.assetsRoot
       val varsRaw = loader.assets.readText("game/variables/variables.json")
       val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
       val varsMap = json.decodeFromString<Map<String, kotlinx.serialization.json.JsonElement>>(varsRaw)

@@ -14,4 +14,18 @@ sealed interface EngineOutput {
     val difficulty: Int
   ) : EngineOutput
   data class JumpScenarioOutput(val scenarioFile: String) : EngineOutput
+  data class ShowBackground(
+    val image: String
+  ) : EngineOutput
+
+  data class ShowImage(
+    val image: String
+  ) : EngineOutput
+  data class ShowCharacter(
+    val image: String
+  ) : EngineOutput
+
+  data class ShowEffect(
+    val image: String
+  ) : EngineOutput
 }

@@ -69,6 +69,10 @@ class JsonScenarioParser : ScenarioParser {
               is JumpScenario -> SceneNode.JumpScenario(
                 scenarioFile = nodeJson.scenarioFile
               )
+              is BackgroundNode -> Background(nodeJson.image)
+              is ImageNode -> Image(nodeJson.image)
+              is CharacterNode -> Image(nodeJson.image)
+              is EffectNode -> Image(nodeJson.image)
             }
           }
         )
@@ -182,3 +186,16 @@ data class OptionJson(
   val text: String,
   val nextSceneId: String
 )
+@Serializable
+@SerialName("background")
+data class BackgroundNode(val image: String) : SceneNodeJson()
+
+@Serializable
+@SerialName("image")
+data class ImageNode(val image: String) : SceneNodeJson()
+@Serializable
+@SerialName("character")
+data class CharacterNode(val image: String) : SceneNodeJson()
+@Serializable
+@SerialName("effect")
+data class EffectNode(val image: String) : SceneNodeJson()

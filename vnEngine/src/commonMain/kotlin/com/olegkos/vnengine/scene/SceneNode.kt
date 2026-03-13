@@ -36,4 +36,12 @@ sealed interface SceneNode {
   data class Image(
     val image: String
   ) : SceneNode
+
+  data class Character(
+    val image: String
+  ) : SceneNode
+
+  data class Effect(
+    val image: String
+  ) : SceneNode
 }

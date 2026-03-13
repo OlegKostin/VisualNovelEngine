@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.GameLoading.DiceRoller
+import com.olegkos.vnengine.engine.EngineOutput.*
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
@@ -73,13 +74,13 @@ class VnEngine(
           val compareValue = node.equals.resolve()
 
           val condition = when {
-            value is GameValue.IntVal && compareValue is GameValue.IntVal ->
+            value is IntVal && compareValue is IntVal ->
               value.value >= compareValue.value
-            value is GameValue.FloatVal && compareValue is GameValue.FloatVal ->
+            value is FloatVal && compareValue is FloatVal ->
               value.value.round2() >= compareValue.value.round2()
-            value is GameValue.IntVal && compareValue is GameValue.FloatVal ->
+            value is IntVal && compareValue is FloatVal ->
               value.value.toFloat().round2() >= compareValue.value.round2()
-            value is GameValue.FloatVal && compareValue is GameValue.IntVal ->
+            value is FloatVal && compareValue is IntVal ->
               value.value.round2() >= compareValue.value.toFloat().round2()
             else -> false
           }
@@ -104,7 +105,7 @@ class VnEngine(
         is SceneNode.DiceRoll -> {
           if (state.diceResult == null) {
             // Кубик ещё не бросан
-            return EngineOutput.ShowDice(
+            return ShowDice(
               name = node.name,
               sides = node.sides,
               result = null, // сигнал UI показать кнопку броска
@@ -118,7 +119,7 @@ class VnEngine(
           val mod = variables.getModifier(node.modifierVar).round2()
           val total = (roll.toFloat() + mod).round2()
 
-          val resultOutput = EngineOutput.ShowDice(
+          val resultOutput = ShowDice(
             name = node.name,
             sides = node.sides,
             result = roll,
@@ -139,11 +140,29 @@ class VnEngine(
         }
 
         is SceneNode.JumpScenario -> {
-          return EngineOutput.JumpScenarioOutput(node.scenarioFile)
+          return JumpScenarioOutput(node.scenarioFile)
         }
 
         is SceneNode.Jump -> {
           jumpToScene(node.targetSceneId)
+        }
+        is SceneNode.Background -> {
+          advance()
+          return ShowBackground(node.image)
+        }
+
+        is SceneNode.Image -> {
+          advance()
+          return ShowImage(node.image)
+        }
+
+        is SceneNode.Character -> {
+          advance()
+          return ShowImage(node.image)
+        }
+        is SceneNode.Effect -> {
+          advance()
+          return ShowImage(node.image)
         }
       }
     }

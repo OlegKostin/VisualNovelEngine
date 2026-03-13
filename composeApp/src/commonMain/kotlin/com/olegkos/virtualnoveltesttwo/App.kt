@@ -1,14 +1,21 @@
 package com.olegkos.virtualnoveltesttwo
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.vnengine.engine.EngineOutput
+import com.olegkos.vnengine.scene.SceneNode
 import org.koin.compose.viewmodel.koinViewModel
+import java.io.File
 
 @Composable
 fun App(
@@ -16,7 +23,44 @@ fun App(
 ) {
 
   val output = viewModel.currentOutput
+  var background by remember { mutableStateOf<String?>(null) }
+  var image by remember { mutableStateOf<String?>(null) }
+  LaunchedEffect(output) {
+    when (val o = output) {
 
+      is EngineOutput.ShowBackground -> {
+        background = o.image
+        viewModel.next()
+      }
+
+      is EngineOutput.ShowImage -> {
+        image = o.image
+        viewModel.next()
+      }
+
+      else -> {}
+    }
+  }
+
+  Box(Modifier.fillMaxSize()) {
+
+    background?.let { bg ->
+      Image(
+        painter = loadPainter(bg, viewModel.assetsRoot),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize()
+      )
+    }
+
+    image?.let { img ->
+      Image(
+        painter = loadPainter(img, viewModel.assetsRoot),
+        contentDescription = null,
+        modifier = Modifier
+          .fillMaxHeight()
+          .align(Alignment.BottomCenter)
+      )
+    }
   Column(
     modifier = Modifier
       .fillMaxSize()
@@ -66,3 +110,11 @@ fun App(
     SaveSlotsMenu(viewModel)
   }
   }
+
+}
+fun loadPainter(path: String, assetsRoot: String): BitmapPainter {
+
+  val file = File("$assetsRoot/$path")
+  println("File not found11 : ${file.absolutePath}")
+  return BitmapPainter(loadImageBitmap(file.inputStream()))
+}
