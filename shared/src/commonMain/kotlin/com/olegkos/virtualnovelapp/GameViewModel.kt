@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.olegkos.save.SaveManager
 import com.olegkos.vnengine.GameLoading.DiceRoller
-import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
+import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.game.GameLoader
@@ -26,7 +26,6 @@ import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
 
 class GameViewModel(
   private val loader: GameLoader,
