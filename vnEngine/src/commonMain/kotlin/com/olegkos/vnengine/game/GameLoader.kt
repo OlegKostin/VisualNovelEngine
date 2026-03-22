@@ -3,6 +3,7 @@ package com.olegkos.vnengine.game
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.ScenarioParser
 import kotlinx.serialization.json.Json
+import java.io.File
 
 class GameLoader(
   val assets: AssetReader,
@@ -15,21 +16,22 @@ class GameLoader(
 
   suspend fun load(configPath: String): LoadedGame {
 
-
     val configRaw = assets.readText(configPath)
 
-    val config =
-      json.decodeFromString<GameConfig>(configRaw)
+    val config = json.decodeFromString<GameConfig>(configRaw)
 
-    val scenarioRaw =
-      assets.readText(config.startScenario)
+    val baseDir = File(configPath).parent
 
-    val scenario =
-      parser.parse(scenarioRaw)
+    val scenarioPath = "$baseDir/${config.startScenario}"
+
+    val scenarioRaw = assets.readText(scenarioPath)
+
+    val scenario = parser.parse(scenarioRaw)
 
     return LoadedGame(
       scenario = scenario,
-      assetsRoot = config.assetsRoot
+      assetsRoot = config.assetsRoot,
+      variables = config.variables
     )
   }
 }

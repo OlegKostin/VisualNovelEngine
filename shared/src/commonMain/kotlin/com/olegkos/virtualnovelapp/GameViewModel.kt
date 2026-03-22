@@ -11,6 +11,7 @@ import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.VnEngine
+import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.game.GameLoader
 import com.olegkos.vnengine.scene.Option
@@ -33,7 +34,9 @@ class GameViewModel(
   private val saveManager: SaveManager,
   private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
-  private var currentScenario: String = "game/game.json"
+  private var currentScenario: String = "game_demo/game.json"
+  private var _assets: AssetPathResolver? = null
+  val assets get() = _assets!!
   var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
     private set
   val currentNode: SceneNode?
@@ -46,9 +49,10 @@ class GameViewModel(
 
   private fun loadGame() {
     viewModelScope.launch {
-      val game = withContext(ioDispatcher) { loader.load("game/game.json") }
+      val game = withContext(ioDispatcher) { loader.load("game_demo/game.json") }
       _assetsRoot = game.assetsRoot
-      val varsRaw = loader.assets.readText("game/variables/variables.json")
+      _assets = game.assets
+      val varsRaw = game.assets.readText(game.variables)
       val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
       val varsMap = json.decodeFromString<Map<String, kotlinx.serialization.json.JsonElement>>(varsRaw)
       val state = GameState(NodePointer(game.scenario.startSceneId, 0))

@@ -30,3 +30,6 @@ captures/
 
 # Node
 node_modules/
+
+
+**/composeApp/game/
