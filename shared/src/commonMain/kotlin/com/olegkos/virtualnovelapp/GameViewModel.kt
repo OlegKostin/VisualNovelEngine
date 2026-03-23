@@ -32,12 +32,11 @@ class GameViewModel(
 ) : ViewModel() {
   val basePath = "game/"
   private var currentScenario: String = basePath+"game.json"
-
+  val reader get() = assetReader
   private var _assets: AssetPathResolver? = null
   val assets get() = _assets!!
 
   private var _assetsRoot: String = ""
-  val assetsRoot: String get() = _assetsRoot
 
   var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
     private set

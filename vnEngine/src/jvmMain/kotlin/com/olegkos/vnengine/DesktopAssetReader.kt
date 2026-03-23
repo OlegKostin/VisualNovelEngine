@@ -8,23 +8,17 @@ import java.io.FileNotFoundException
 
 class DesktopAssetReader : AssetReader {
 
-  override suspend fun readText(path: String): String =
-    withContext(Dispatchers.IO) {
-      val stream = Thread.currentThread()
-        .contextClassLoader
-        .getResourceAsStream(path)
-        ?: throw FileNotFoundException("Resource not found: $path")
+  override suspend fun readText(path: String): String {
+    return this::class.java.classLoader
+      .getResource(path)
+      ?.readText()
+      ?: throw FileNotFoundException("Resource not found: $path")
+  }
 
-      stream.bufferedReader().use { it.readText() }
-    }
-
-  override suspend fun readBytes(path: String): ByteArray =
-    withContext(Dispatchers.IO) {
-      val stream = Thread.currentThread()
-        .contextClassLoader
-        .getResourceAsStream(path)
-        ?: throw FileNotFoundException("Resource not found: $path")
-
-      stream.readBytes()
-    }
+  override suspend fun readBytes(path: String): ByteArray {
+    return this::class.java.classLoader
+      .getResourceAsStream(path)
+      ?.readBytes()
+      ?: throw FileNotFoundException("Resource not found: $path")
+  }
 }

@@ -2,6 +2,7 @@ package com.olegkos.vnengine.game
 
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.ScenarioParser
+import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -27,7 +28,7 @@ class GameLoader(
     return LoadedGame(
       scenario = scenario,
       assetsRoot = config.assetsRoot,
-      variables = config.variables
-    )
-  }
+      variables = config.variables,
+      assets = AssetPathResolver(config.assetsRoot, assetReader)
+    )  }
 }

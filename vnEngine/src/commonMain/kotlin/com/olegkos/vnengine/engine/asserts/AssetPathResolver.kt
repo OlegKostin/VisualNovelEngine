@@ -4,25 +4,24 @@ import com.olegkos.vnengine.GameLoading.AssetReader
 import java.io.File
 
 class AssetPathResolver(
-  private val root: String
-) : AssetReader {
+  private val root: String,
+  private val reader: AssetReader
+) {
 
-  fun background(name: String): String =
-    "$root/backgrounds/$name"
+  fun background(name: String) =
+    "backgrounds/$name"
 
-  fun character(name: String): String =
-    "$root/characters/$name"
+  fun character(name: String) =
+    "characters/$name"
 
   fun image(path: String): String =
     "$root/$path"
 
-  override suspend fun readText(path: String): String {
-    val file = File(root, path)
-    return file.readText()
+  suspend fun readBytes(path: String): ByteArray {
+    return reader.readBytes("$root/$path")
   }
 
-  override suspend fun readBytes(path: String): ByteArray {
-    val file = File(root, path)
-    return file.readBytes()
+  suspend fun readText(path: String): String {
+    return reader.readText("$root/$path")
   }
 }
