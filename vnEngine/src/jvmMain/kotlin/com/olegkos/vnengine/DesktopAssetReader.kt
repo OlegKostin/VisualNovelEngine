@@ -4,16 +4,27 @@ import com.olegkos.vnengine.GameLoading.AssetReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileNotFoundException
 
 class DesktopAssetReader : AssetReader {
 
-  override suspend fun readText(path: String) =
+  override suspend fun readText(path: String): String =
     withContext(Dispatchers.IO) {
-      File(path).readText()
+      val stream = Thread.currentThread()
+        .contextClassLoader
+        .getResourceAsStream(path)
+        ?: throw FileNotFoundException("Resource not found: $path")
+
+      stream.bufferedReader().use { it.readText() }
     }
 
-  override suspend fun readBytes(path: String) =
+  override suspend fun readBytes(path: String): ByteArray =
     withContext(Dispatchers.IO) {
-      File(path).readBytes()
+      val stream = Thread.currentThread()
+        .contextClassLoader
+        .getResourceAsStream(path)
+        ?: throw FileNotFoundException("Resource not found: $path")
+
+      stream.readBytes()
     }
 }

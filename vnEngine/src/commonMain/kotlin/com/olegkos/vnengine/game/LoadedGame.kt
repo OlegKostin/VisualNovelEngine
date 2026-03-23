@@ -7,6 +7,6 @@ data class LoadedGame(
   val scenario: Scenario,
   val variables: String,
   val assetsRoot: String
-){
+) {
   val assets = AssetPathResolver(assetsRoot)
 }

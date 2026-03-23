@@ -34,7 +34,7 @@ actual val platformModule = module {
 
   single {
     GameLoader(
-      assets = get(),
+      assetReader = get(),
       parser = get()
     )
   }
@@ -45,7 +45,7 @@ actual val platformModule = module {
     GameViewModel(
       loader = get(),
       dice = get(),
-      get()
+      assetReader = get(),
+      saveManager = get()
     )
-  }
-}
+  }}
