@@ -30,8 +30,8 @@ class GameViewModel(
   private val saveManager: SaveManager,
   private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
-
-  private var currentScenario: String = "game_demo/game.json"
+  val basePath = "game/"
+  private var currentScenario: String = basePath+"game.json"
 
   private var _assets: AssetPathResolver? = null
   val assets get() = _assets!!
@@ -55,13 +55,12 @@ class GameViewModel(
     viewModelScope.launch {
 
       val game = withContext(ioDispatcher) {
-        loader.load("game_demo/game.json")
+        loader.load(basePath+"game.json")
       }
 
       _assetsRoot = game.assetsRoot
       _assets = game.assets
 
-      val basePath = "game_demo/"
 
       val varsRaw = assetReader.readText(basePath + game.variables)
 

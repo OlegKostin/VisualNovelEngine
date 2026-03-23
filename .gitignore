@@ -32,4 +32,4 @@ captures/
 node_modules/
 
 
-**/composeApp/game/
+composeApp/src/jvmMain/resources/game/
