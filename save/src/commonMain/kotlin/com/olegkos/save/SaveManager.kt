@@ -21,7 +21,7 @@ class SaveManager(
     storage.save(slot, json)
   }
 
-  fun load(slot: String): GameState? {
+  fun load(slot: String): LoadedSave? {
 
     val json = storage.load(slot)
       ?: return null
@@ -32,7 +32,10 @@ class SaveManager(
         json
       )
 
-    return serializable.toGameState()
+    return LoadedSave(
+      state = serializable.toGameState(),
+      scenario = serializable.scenario
+    )
   }
 
   fun listSaves(): List<String> =
@@ -41,3 +44,8 @@ class SaveManager(
   fun delete(slot: String) =
     storage.delete(slot)
 }
+
+data class LoadedSave(
+  val state: GameState,
+  val scenario: String
+)

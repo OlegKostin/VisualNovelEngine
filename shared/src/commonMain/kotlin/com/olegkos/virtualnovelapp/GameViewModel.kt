@@ -144,21 +144,23 @@ class GameViewModel(
   fun loadSave(slot: String) {
     viewModelScope.launch {
 
-      val state = saveManager.load(slot) ?: return@launch
+      val loaded = saveManager.load(slot) ?: return@launch
 
-      val scenario = withContext(ioDispatcher) {
+      currentScenario = loaded.scenario
+
+      val newScenario = withContext(ioDispatcher) {
         loader.load(currentScenario)
       }
 
-      engine = VnEngine(state, dice).apply {
-        addScenes(scenario.scenario.scenes)
+      engine = VnEngine(loaded.state, dice).apply {
+        addScenes(newScenario.scenario.scenes)
       }
 
       currentOutput = engine!!.step()
       currentNode = engine!!.currentNode()
     }
   }
-
+  
   fun listSaves(): List<String> =
     saveManager.listSaves()
 }
