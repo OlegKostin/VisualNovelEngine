@@ -7,5 +7,6 @@ import com.olegkos.vnengine.engine.NodePointer
 data class GameState(
   var pointer: NodePointer,
   val variables: MutableMap<String, GameValue> = mutableMapOf(),
-  var diceResult: Int? = null
+  var diceResult: Int? = null,
+  val scenarioStack: ArrayDeque<NodePointer> = ArrayDeque()
 )

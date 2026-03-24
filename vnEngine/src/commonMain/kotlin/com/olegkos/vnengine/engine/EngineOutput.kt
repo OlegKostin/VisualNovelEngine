@@ -17,7 +17,7 @@ sealed interface EngineOutput {
   data class ShowBackground(
     val image: String
   ) : EngineOutput
-
+  object EndOfScene : EngineOutput
   data class ShowImage(
     val image: String
   ) : EngineOutput

@@ -66,7 +66,7 @@ class JsonScenarioParser : ScenarioParser {
                 failScene = nodeJson.failScene
               )
 
-              is JumpScenario -> SceneNode.JumpScenario(
+              is JumpScenarioJson -> SceneNode.JumpScenario(
                 scenarioFile = nodeJson.scenarioFile
               )
               is BackgroundNode -> Background(nodeJson.image)
@@ -96,7 +96,7 @@ data class SceneJson(
 )
 @Serializable
 @SerialName("jumpScenario")
-data class JumpScenario(
+data class JumpScenarioJson(
   val scenarioFile: String
 ) : SceneNodeJson()
 @Serializable

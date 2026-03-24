@@ -44,6 +44,7 @@ actual val platformModule = module {
   viewModel {
     GameViewModel(
       loader = get(),
+      get(),
       dice = get(),
       assetReader = get(),
       saveManager = get()

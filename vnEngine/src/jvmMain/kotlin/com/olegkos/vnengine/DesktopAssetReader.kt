@@ -9,6 +9,7 @@ import java.io.FileNotFoundException
 class DesktopAssetReader : AssetReader {
 
   override suspend fun readText(path: String): String {
+    println("READ FILE: $path")
     return this::class.java.classLoader
       .getResource(path)
       ?.readText()
@@ -16,6 +17,7 @@ class DesktopAssetReader : AssetReader {
   }
 
   override suspend fun readBytes(path: String): ByteArray {
+    println("READ FILE: $path")
     return this::class.java.classLoader
       .getResourceAsStream(path)
       ?.readBytes()

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.olegkos.save.SaveManager
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
+import com.olegkos.vnengine.GameLoading.ScenarioParser
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
@@ -25,6 +26,7 @@ import kotlinx.serialization.json.*
 
 class GameViewModel(
   private val loader: GameLoader,
+  private val parser: ScenarioParser,
   private val dice: DiceRoller,
   private val assetReader: AssetReader,
   private val saveManager: SaveManager,
@@ -98,29 +100,39 @@ class GameViewModel(
     val engine = engine ?: return
 
     val output = engine.step(option)
+    currentOutput = output
 
-    currentNode = engine.currentNode()
+    when (output) {
 
-    if (output is EngineOutput.JumpScenarioOutput) {
-      viewModelScope.launch {
+      is EngineOutput.JumpScenarioOutput -> {
+        viewModelScope.launch {
 
-        currentScenario = output.scenarioFile
+          currentScenario = output.scenarioFile
+          println("LOAD SCENARIO: ${output.scenarioFile}")
 
-        val newScenario = withContext(ioDispatcher) {
-          loader.load(output.scenarioFile)
+          val newScenario = withContext(ioDispatcher) {
+            val raw = assetReader.readText(output.scenarioFile)
+            parser.parse(raw)
+          }
+
+          engine.addScenes(newScenario.scenes)
+          engine.state.pointer = NodePointer(newScenario.startSceneId, 0)
+
+          currentOutput = engine.step()
+          currentNode = engine.currentNode()
         }
+      }
 
-        engine.addScenes(newScenario.scenario.scenes)
-        engine.state.pointer = NodePointer(newScenario.scenario.startSceneId, 0)
+      is EngineOutput.EndOfScene -> {
+        println("SCENE ENDED: ${engine.state.pointer.sceneId}")
+        currentNode = null
+      }
 
-        currentOutput = engine.step()
+      else -> {
         currentNode = engine.currentNode()
       }
-    } else {
-      currentOutput = output
     }
   }
-
   fun rollDice() {
     val engine = engine ?: return
     val node = engine.currentNode() as? SceneNode.DiceRoll ?: return
@@ -149,18 +161,19 @@ class GameViewModel(
       currentScenario = loaded.scenario
 
       val newScenario = withContext(ioDispatcher) {
-        loader.load(currentScenario)
+        val raw = assetReader.readText(currentScenario)
+        parser.parse(raw)
       }
 
       engine = VnEngine(loaded.state, dice).apply {
-        addScenes(newScenario.scenario.scenes)
+        addScenes(newScenario.scenes)
       }
 
       currentOutput = engine!!.step()
       currentNode = engine!!.currentNode()
     }
   }
-  
+
   fun listSaves(): List<String> =
     saveManager.listSaves()
 }

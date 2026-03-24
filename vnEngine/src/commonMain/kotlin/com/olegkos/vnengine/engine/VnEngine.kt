@@ -29,19 +29,19 @@ class VnEngine(
     scenes.putAll(newScenes)
   }
 
-  fun currentNode(): SceneNode {
+  fun currentNode(): SceneNode? {
 
     val scene = scenes[state.pointer.sceneId]
-      ?: error("Scene not found")
+      ?: error("Scene not found: ${state.pointer.sceneId}")
 
-    return scene.nodes
-      .getOrNull(state.pointer.nodeIndex)
-      ?: error("Node not found")
+    println("CURRENT NODE → scene=${state.pointer.sceneId}, index=${state.pointer.nodeIndex}, size=${scene.nodes.size}")
+
+    return scene.nodes.getOrNull(state.pointer.nodeIndex)
   }
 
-  private tailrec fun resolveNode(): SceneNode {
+  private tailrec fun resolveNode(): SceneNode? {
 
-    val node = currentNode()
+    val node = currentNode() ?: return null
 
     if (node is SceneNode.Jump) {
       jumpToScene(node.targetSceneId)
@@ -50,12 +50,18 @@ class VnEngine(
 
     return node
   }
-
   fun step(selectedOption: Option? = null): EngineOutput {
 
     while (true) {
 
-      val node = resolveNode()
+      val scene = scenes[state.pointer.sceneId]
+        ?: error("Scene not found")
+
+      if (state.pointer.nodeIndex >= scene.nodes.size) {
+        return EndOfScene
+      }
+
+      val node = resolveNode() ?: return EndOfScene
 
       when (node) {
 
@@ -140,6 +146,8 @@ class VnEngine(
         }
 
         is SceneNode.JumpScenario -> {
+          state.scenarioStack.addLast(state.pointer.copy())
+          advance()
           return JumpScenarioOutput(node.scenarioFile)
         }
 
@@ -179,6 +187,7 @@ class VnEngine(
   }
 
   private fun advance() {
+    println("ADVANCE from ${state.pointer}")
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )
