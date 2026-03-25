@@ -37,6 +37,7 @@ class GameLoader(
 
     return LoadedGame(
       scenario = scenario,
+      scenarioPath = scenarioPath,
       assetsRoot = config.assetsRoot,
       variables = config.variables,
       assets = AssetPathResolver(config.assetsRoot, assetReader)

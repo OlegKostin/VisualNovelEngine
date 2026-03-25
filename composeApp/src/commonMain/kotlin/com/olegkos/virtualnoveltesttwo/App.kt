@@ -39,7 +39,6 @@ fun App(
   var background by remember { mutableStateOf<String?>(null) }
   var image by remember { mutableStateOf<String?>(null) }
 
-  // реагируем на вывод движка
   LaunchedEffect(output) {
     when (val o = output) {
 
