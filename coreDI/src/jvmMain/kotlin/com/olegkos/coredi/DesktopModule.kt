@@ -4,13 +4,13 @@ import com.olegkos.save.DesktopSaveStorage
 import com.olegkos.save.SaveManager
 import com.olegkos.save.SaveStorage
 import com.olegkos.virtualnovelapp.GameViewModel
+import com.olegkos.vnengine.DesktopAssetReader
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.GameLoading.JsonScenarioParser
 import com.olegkos.vnengine.GameLoading.RandomDiceRoller
 import com.olegkos.vnengine.GameLoading.ScenarioParser
 import com.olegkos.vnengine.game.GameLoader
-import com.olegkos.vnengine.DesktopAssetReader
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

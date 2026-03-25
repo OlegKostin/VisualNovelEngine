@@ -1,13 +1,15 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.GameLoading.DiceRoller
-import com.olegkos.vnengine.engine.EngineOutput.*
-import com.olegkos.vnengine.engine.NodePointer
+import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
+import com.olegkos.vnengine.engine.EngineOutput.JumpScenarioOutput
+import com.olegkos.vnengine.engine.EngineOutput.ShowBackground
 import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
+import com.olegkos.vnengine.engine.EngineOutput.ShowImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
-import com.olegkos.vnengine.engine.variables.GameValue
-import com.olegkos.vnengine.engine.variables.GameValue.*
+import com.olegkos.vnengine.engine.variables.GameValue.FloatVal
+import com.olegkos.vnengine.engine.variables.GameValue.IntVal
 import com.olegkos.vnengine.engine.variables.VariableStore
 import com.olegkos.vnengine.engine.variables.resolve
 import com.olegkos.vnengine.scene.Option

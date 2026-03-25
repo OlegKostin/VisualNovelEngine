@@ -22,7 +22,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 class GameViewModel(
   private val loader: GameLoader,
@@ -38,7 +46,6 @@ class GameViewModel(
   private var _assets: AssetPathResolver? = null
   val assets get() = _assets!!
 
-  private var _assetsRoot: String = ""
 
   var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
     private set
@@ -58,16 +65,10 @@ class GameViewModel(
       val game = withContext(ioDispatcher) {
         loader.load(basePath+"game.json")
       }
-
-      _assetsRoot = game.assetsRoot
       _assets = game.assets
-
-
       val varsRaw = assetReader.readText(basePath + game.variables)
-
       val json = Json { ignoreUnknownKeys = true }
       val varsMap = json.decodeFromString<Map<String, JsonElement>>(varsRaw)
-
       val state = GameState(NodePointer(game.scenario.startSceneId, 0))
 
       varsMap.forEach { (key, value) ->
@@ -108,13 +109,7 @@ class GameViewModel(
         viewModelScope.launch {
 
           currentScenario = output.scenarioFile
-          println("LOAD SCENARIO: ${output.scenarioFile}")
-
-          val newScenario = withContext(ioDispatcher) {
-            val raw = assetReader.readText(output.scenarioFile)
-            parser.parse(raw)
-          }
-
+          val newScenario = loadScenario(output.scenarioFile)
           engine.addScenes(newScenario.scenes)
           engine.state.pointer = NodePointer(newScenario.startSceneId, 0)
 
@@ -124,7 +119,7 @@ class GameViewModel(
       }
 
       is EngineOutput.EndOfScene -> {
-        println("SCENE ENDED: ${engine.state.pointer.sceneId}")
+        //todo
         currentNode = null
       }
 
@@ -160,10 +155,7 @@ class GameViewModel(
 
       currentScenario = loaded.scenario
 
-      val newScenario = withContext(ioDispatcher) {
-        val raw = assetReader.readText(currentScenario)
-        parser.parse(raw)
-      }
+      val newScenario = loadScenario(currentScenario)
 
       engine = VnEngine(loaded.state, dice).apply {
         addScenes(newScenario.scenes)
@@ -173,6 +165,12 @@ class GameViewModel(
       currentNode = engine!!.currentNode()
     }
   }
+
+  private suspend fun loadScenario(path: String) =
+    withContext(ioDispatcher) {
+      val raw = assetReader.readText(path)
+      parser.parse(raw)
+    }
 
   fun listSaves(): List<String> =
     saveManager.listSaves()
