@@ -27,7 +27,7 @@ class GameController(
 ) {
 
   private val basePath = "game/"
-  private val gameConfigPath = "game/game.json"
+  private val gameConfigPath = basePath +"game.json"
 
   private var engine: VnEngine? = null
   private var currentScenario: String = ""
@@ -46,7 +46,6 @@ class GameController(
     this.assets = game.assets
     this.reader = assetReader
 
-    // ✅ фикс: сохраняем ПРАВИЛЬНЫЙ путь сценария
     currentScenario = game.scenarioPath
 
     val varsRaw = assetReader.readText(basePath + game.variables)
@@ -149,12 +148,7 @@ class GameController(
 
   private suspend fun loadScenario(path: String) =
     withContext(ioDispatcher) {
-      println("LOAD SCENARIO PATH: $path")
-
       val raw = assetReader.readText(path)
-
-      println("SCENARIO RAW (FIRST 100): ${raw.take(100)}")
-
       parser.parse(raw)
     }
 

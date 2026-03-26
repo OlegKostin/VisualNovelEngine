@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
+import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
@@ -71,7 +72,7 @@ fun App(
           painter = it,
           contentDescription = null,
           modifier = Modifier.fillMaxSize(),
-          contentScale = ContentScale.Crop // 🔥 важно!
+          contentScale = ContentScale.Crop
         )
       }
     }
@@ -95,7 +96,7 @@ fun App(
       }
     }
 
-    // ✅ UI слой
+
     Column(
       modifier = Modifier
         .fillMaxSize()
@@ -106,13 +107,10 @@ fun App(
       when (val o = output) {
 
         is EngineOutput.ShowText -> {
-          Text(o.text)
-
-          Spacer(Modifier.height(16.dp))
-
-          Button(onClick = { viewModel.next() }) {
-            Text("Далее")
-          }
+          VNTextBox(
+            text = o.text,
+            onNext = { viewModel.next() }
+          )
         }
 
         is EngineOutput.ShowChoices -> {
@@ -145,9 +143,6 @@ fun App(
         }
       }
 
-      Spacer(Modifier.height(32.dp))
-
-      SaveSlotsMenu(viewModel)
     }
   }
 }
@@ -162,8 +157,8 @@ fun rememberPainter(
   var painter by remember { mutableStateOf<BitmapPainter?>(null) }
 
   LaunchedEffect(path) {
-    val fullPath = resolver.image(path) // строим путь
-    val bytes = reader.readBytes(fullPath) // читаем
+    val fullPath = resolver.image(path)
+    val bytes = reader.readBytes(fullPath)
     painter = BitmapPainter(loadImageBitmap(bytes.inputStream()))
   }
 
