@@ -1,38 +1,28 @@
 package com.olegkos.virtualnoveltesttwo.composable
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-
 
 @Composable
 fun VNTextBox(
   text: String,
   onNext: () -> Unit
 ) {
-  var visibleCount by remember { mutableStateOf(0) }
+  var visibleCount by remember { mutableIntStateOf(0) }
   var isFullyShown by remember { mutableStateOf(false) }
   var skipRequested by remember { mutableStateOf(false) }
 
@@ -61,11 +51,10 @@ fun VNTextBox(
 
       visibleCount = i + 1
 
-      val char = text[i]
-      val delayTime = when (char) {
+      val delayTime = when (text[i]) {
         '.', '!', '?' -> 200
         ',', ';' -> 120
-        else -> 100
+        else -> 70
       }
 
       kotlinx.coroutines.delay(delayTime.toLong())
@@ -74,52 +63,74 @@ fun VNTextBox(
     isFullyShown = true
   }
 
-  Box(
-    modifier = Modifier
-      .fillMaxSize()
-      .padding(16.dp),
-    contentAlignment = Alignment.BottomCenter
+  BoxWithConstraints(
+    modifier = Modifier.fillMaxSize()
   ) {
+
+    val boxHeight = maxHeight * 0.20f
+
     Box(
       modifier = Modifier
-        .fillMaxWidth()
-        .background(androidx.compose.ui.graphics.Color(0xAA000000))
-        .clickable {
-          if (!isFullyShown) skipRequested = true
-          else onNext()
-        }
-        .padding(16.dp)
+        .fillMaxSize()
+        .padding(16.dp),
+      contentAlignment = Alignment.BottomCenter
     ) {
 
-      Box {
-        Text(
-          text = text,
-          color = androidx.compose.ui.graphics.Color.Transparent,
-          modifier = Modifier.fillMaxWidth()
-        )
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(boxHeight)
+          .clip(  RoundedCornerShape(
+            topStart = 16.dp,
+            topEnd = 16.dp,
+            bottomStart = 4.dp,
+            bottomEnd = 4.dp
+          ))
+          .border(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.2f),
+            shape = RoundedCornerShape(16.dp)
+          )
+          .background(Color(0xCCBBDEFB))
+          .clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+          ) {
+            if (!isFullyShown) skipRequested = true
+            else onNext()
+          }
+          .padding(16.dp)
+      ) {
 
         FlowRow {
           text.forEachIndexed { index, char ->
+
             val targetAlpha = if (index < visibleCount) 1f else 0f
+
             val alpha by animateFloatAsState(
               targetValue = targetAlpha,
-              animationSpec = tween(200),
+              animationSpec = tween(150),
               label = ""
             )
+
             Text(
               text = char.toString(),
-              color = androidx.compose.ui.graphics.Color.White.copy(alpha = alpha)
+              color = Color(0xFF111111).copy(alpha = alpha)
             )
           }
         }
 
-
         if (isFullyShown) {
-          Text(
-            text = "▶",
-            color = androidx.compose.ui.graphics.Color.White.copy(alpha = arrowAlpha),
-            modifier = Modifier.align(Alignment.BottomEnd)
-          )
+          Box(
+            modifier = Modifier
+              .align(Alignment.BottomEnd)
+              .padding(4.dp)
+          ) {
+            Text(
+              text = "▶",
+              color = Color.White.copy(alpha = arrowAlpha)
+            )
+          }
         }
       }
     }
