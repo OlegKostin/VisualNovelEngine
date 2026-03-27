@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun VNTextBox(
@@ -42,7 +43,6 @@ fun VNTextBox(
     skipRequested = false
 
     for (i in text.indices) {
-
       if (skipRequested) {
         visibleCount = text.length
         isFullyShown = true
@@ -66,8 +66,10 @@ fun VNTextBox(
   BoxWithConstraints(
     modifier = Modifier.fillMaxSize()
   ) {
-
+    val fontSize = (maxHeight.value * 0.035f).sp
+    val lineHeight = (fontSize.value * 1.4f).sp
     val boxHeight = maxHeight * 0.20f
+    val arrowSize = (maxHeight.value * 0.04f).sp
 
     Box(
       modifier = Modifier
@@ -75,17 +77,18 @@ fun VNTextBox(
         .padding(16.dp),
       contentAlignment = Alignment.BottomCenter
     ) {
-
       Box(
         modifier = Modifier
           .fillMaxWidth()
           .height(boxHeight)
-          .clip(  RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-            bottomStart = 4.dp,
-            bottomEnd = 4.dp
-          ))
+          .clip(
+            RoundedCornerShape(
+              topStart = 16.dp,
+              topEnd = 16.dp,
+              bottomStart = 4.dp,
+              bottomEnd = 4.dp
+            )
+          )
           .border(
             width = 1.dp,
             color = Color.White.copy(alpha = 0.2f),
@@ -102,11 +105,11 @@ fun VNTextBox(
           .padding(16.dp)
       ) {
 
-        FlowRow {
+        FlowRow(
+          modifier = Modifier.fillMaxWidth()
+        ) {
           text.forEachIndexed { index, char ->
-
             val targetAlpha = if (index < visibleCount) 1f else 0f
-
             val alpha by animateFloatAsState(
               targetValue = targetAlpha,
               animationSpec = tween(150),
@@ -115,6 +118,8 @@ fun VNTextBox(
 
             Text(
               text = char.toString(),
+              fontSize = fontSize,
+              lineHeight = lineHeight,
               color = Color(0xFF111111).copy(alpha = alpha)
             )
           }
@@ -128,6 +133,7 @@ fun VNTextBox(
           ) {
             Text(
               text = "▶",
+              fontSize = arrowSize,
               color = Color.White.copy(alpha = arrowAlpha)
             )
           }
