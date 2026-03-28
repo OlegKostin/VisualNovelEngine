@@ -3,9 +3,22 @@ package com.olegkos.vnengine.GameLoading
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
-import com.olegkos.vnengine.scene.SceneNode.*
+import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.SceneNode.Background
+import com.olegkos.vnengine.scene.SceneNode.Choice
+import com.olegkos.vnengine.scene.SceneNode.DiceRoll
+import com.olegkos.vnengine.scene.SceneNode.If
+import com.olegkos.vnengine.scene.SceneNode.Image
+import com.olegkos.vnengine.scene.SceneNode.Jump
+import com.olegkos.vnengine.scene.SceneNode.JumpScenario
+import com.olegkos.vnengine.scene.SceneNode.ModifyVar
+import com.olegkos.vnengine.scene.SceneNode.SetVar
+import com.olegkos.vnengine.scene.SceneNode.Switch
+import com.olegkos.vnengine.scene.SceneNode.Text
+import com.olegkos.vnengine.scene.SubClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.*
 
 
 class JsonScenarioParser : ScenarioParser {
@@ -77,6 +90,20 @@ class JsonScenarioParser : ScenarioParser {
               is SceneNodeJson.JumpJson -> Jump(
                 targetSceneId = nodeJson.nextSceneId
               )
+
+              is SceneNodeJson.Switch -> Switch(
+                variable = nodeJson.variable,
+                cases = nodeJson.cases,
+                default = nodeJson.default
+              )
+
+              is SceneNodeJson.SwitchRange -> SceneNode.SwitchRange(
+                variable = nodeJson.variable,
+                ranges = nodeJson.ranges.map {
+                  SubClass.RangeCase(it.min, it.max, it.scene)
+                },
+                default = nodeJson.default
+              )
             }
           }
         )
@@ -141,6 +168,30 @@ sealed class SceneNodeJson {
     val successScene: String,
     val failScene: String
   ) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("switch")
+  data class Switch(
+    val variable: String,
+    val cases: Map<String, String>,
+    val default: String
+  ) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("switchRange")
+  data class SwitchRange(
+    val variable: String,
+    val ranges: List<RangeCaseJson>,
+    val default: String
+  ) : SceneNodeJson()
+
+  @Serializable
+  data class RangeCaseJson(
+    val min: Float,
+    val max: Float,
+    val scene: String
+  )
+
   @Serializable
   @SerialName("dice")
   data class DiceRoll(

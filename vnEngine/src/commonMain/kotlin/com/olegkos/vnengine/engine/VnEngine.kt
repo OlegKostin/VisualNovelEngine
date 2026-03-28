@@ -8,6 +8,7 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
 import com.olegkos.vnengine.engine.EngineOutput.ShowImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
+import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.engine.variables.GameValue.FloatVal
 import com.olegkos.vnengine.engine.variables.GameValue.IntVal
 import com.olegkos.vnengine.engine.variables.VariableStore
@@ -177,6 +178,31 @@ class VnEngine(
           advance()
           return ShowImage(node.image)
         }
+
+        is SceneNode.Switch -> {
+          val key = when (val value = state.variables[node.variable]) {
+            is IntVal -> value.value.toString()
+            is FloatVal -> value.value.toInt().toString()
+            is GameValue.StringVal -> value.value
+            else -> null
+          }
+
+          val targetScene = node.cases[key] ?: node.default
+          jumpToScene(targetScene)
+        }
+
+        is SceneNode.SwitchRange -> {
+
+          val value = variables.getModifier(node.variable)
+
+          val found = node.ranges.firstOrNull {
+            value >= it.min && value <= it.max
+          }
+
+          val targetScene = found?.scene ?: node.default
+          jumpToScene(targetScene)
+        }
+
       }
     }
   }
