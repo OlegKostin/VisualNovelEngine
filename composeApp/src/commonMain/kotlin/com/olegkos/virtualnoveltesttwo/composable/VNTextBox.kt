@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -15,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -26,6 +26,7 @@ fun VNTextBox(
   var visibleCount by remember { mutableIntStateOf(0) }
   var isFullyShown by remember { mutableStateOf(false) }
   var skipRequested by remember { mutableStateOf(false) }
+  var isFastMode by remember { mutableStateOf(false) }
 
   val infiniteTransition = rememberInfiniteTransition()
   val arrowAlpha by infiniteTransition.animateFloat(
@@ -46,17 +47,17 @@ fun VNTextBox(
       if (skipRequested) {
         visibleCount = text.length
         isFullyShown = true
-        return@LaunchedEffect
+        break
       }
 
       visibleCount = i + 1
 
-      val delayTime = when (text[i]) {
-        '.', '!', '?' -> 200
-        ',', ';' -> 120
-        else -> 70
+      val baseDelay = when (text[i]) {
+        '.', '!', '?' -> 400
+        ',', ';' -> 250
+        else -> 100
       }
-
+      val delayTime = if (isFastMode) baseDelay / 5 else baseDelay
       kotlinx.coroutines.delay(delayTime.toLong())
     }
 
@@ -66,10 +67,12 @@ fun VNTextBox(
   BoxWithConstraints(
     modifier = Modifier.fillMaxSize()
   ) {
-    val fontSize = (maxHeight.value * 0.035f).sp
+    val fontSize = (maxHeight.value * 0.045f).sp
     val lineHeight = (fontSize.value * 1.4f).sp
-    val boxHeight = maxHeight * 0.20f
-    val arrowSize = (maxHeight.value * 0.04f).sp
+    val boxHeight = maxHeight * 0.25f
+    val arrowSize = (maxHeight.value * 0.06f).sp
+
+    val visibleText = text.take(visibleCount)
 
     Box(
       modifier = Modifier
@@ -94,36 +97,39 @@ fun VNTextBox(
             color = Color.White.copy(alpha = 0.2f),
             shape = RoundedCornerShape(16.dp)
           )
-          .background(Color(0xCCBBDEFB))
+          .background(Color(0x99BBDEFB))
           .clickable(
             indication = null,
             interactionSource = remember { MutableInteractionSource() }
           ) {
-            if (!isFullyShown) skipRequested = true
-            else onNext()
+            when {
+              !isFullyShown && !isFastMode -> {
+                isFastMode = true
+              }
+
+              !isFullyShown && isFastMode -> {
+                skipRequested = true
+              }
+
+              else -> {
+                isFastMode = false
+                onNext()
+              }
+            }
           }
           .padding(16.dp)
       ) {
-
-        FlowRow(
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          text.forEachIndexed { index, char ->
-            val targetAlpha = if (index < visibleCount) 1f else 0f
-            val alpha by animateFloatAsState(
-              targetValue = targetAlpha,
-              animationSpec = tween(150),
-              label = ""
-            )
-
-            Text(
-              text = char.toString(),
-              fontSize = fontSize,
-              lineHeight = lineHeight,
-              color = Color(0xFF111111).copy(alpha = alpha)
-            )
-          }
-        }
+        Text(
+          text = visibleText,
+          fontSize = fontSize,
+          lineHeight = lineHeight,
+          color = Color(0xFF111111),
+          maxLines = 4,
+          overflow = TextOverflow.Clip,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = arrowSize.value.dp + 8.dp)
+        )
 
         if (isFullyShown) {
           Box(
