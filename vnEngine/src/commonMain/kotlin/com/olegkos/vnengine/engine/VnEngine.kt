@@ -100,10 +100,11 @@ class VnEngine(
         }        is SceneNode.Text -> {
           advance()
         val speakerName = node.speakerVar?.let { variables.getString(it) } ?: node.speaker
+        val resolvedText = resolveTextVariables(node.text)
           return ShowText(
             speaker = speakerName,
             speakerVar = node.speakerVar,
-            text = node.text)
+            text = resolvedText)
         }
 
         is SceneNode.Choice -> {
@@ -195,6 +196,14 @@ class VnEngine(
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )
+  }
+
+  private fun resolveTextVariables(rawText: String): String {
+    val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()
+    return regex.replace(rawText) { matchResult ->
+      val varName = matchResult.groupValues[1]
+      variables.getString(varName)
+    }
   }
 
 }
