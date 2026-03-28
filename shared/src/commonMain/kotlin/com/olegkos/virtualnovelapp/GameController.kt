@@ -63,11 +63,11 @@ class GameController(
         value.jsonPrimitive.booleanOrNull != null ->
           GameValue.Bool(value.jsonPrimitive.boolean)
 
-        value.jsonPrimitive.intOrNull != null ->
-          GameValue.IntVal(value.jsonPrimitive.int)
-
         value.jsonPrimitive.floatOrNull != null ->
           GameValue.FloatVal(value.jsonPrimitive.float)
+
+        value.jsonPrimitive.intOrNull != null ->
+          GameValue.IntVal(value.jsonPrimitive.int)
 
         else -> GameValue.IntVal(0)
       }

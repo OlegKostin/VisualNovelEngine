@@ -6,6 +6,7 @@ sealed interface SceneNode {
 
   data class Text(
     val speaker: String? = null,
+    val speakerVar: String? = null,
     val text: String
   ) : SceneNode
 

@@ -99,8 +99,10 @@ class VnEngine(
             jumpToScene(node.failScene)
         }        is SceneNode.Text -> {
           advance()
+        val speakerName = node.speakerVar?.let { variables.getString(it) } ?: node.speaker
           return ShowText(
-            speaker = node.speaker,
+            speaker = speakerName,
+            speakerVar = node.speakerVar,
             text = node.text)
         }
 
