@@ -99,7 +99,9 @@ class VnEngine(
             jumpToScene(node.failScene)
         }        is SceneNode.Text -> {
           advance()
-          return ShowText(node.text)
+          return ShowText(
+            speaker = node.speaker,
+            text = node.text)
         }
 
         is SceneNode.Choice -> {
@@ -112,11 +114,10 @@ class VnEngine(
 
         is SceneNode.DiceRoll -> {
           if (state.diceResult == null) {
-            // Кубик ещё не бросан
             return ShowDice(
               name = node.name,
               sides = node.sides,
-              result = null, // сигнал UI показать кнопку броска
+              result = null,
               modifier = variables.getModifier(node.modifierVar),
               difficulty = node.difficulty
             )
@@ -135,7 +136,6 @@ class VnEngine(
             difficulty = node.difficulty
           )
 
-          // Сразу переходим по сценам
           when {
             roll == 1 && node.critFailScene != null -> jumpToScene(node.critFailScene)
             roll == node.sides && node.critSuccessScene != null -> jumpToScene(node.critSuccessScene)

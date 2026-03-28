@@ -4,7 +4,10 @@ import com.olegkos.vnengine.scene.Option
 
 sealed interface EngineOutput {
   object Loading : EngineOutput
-  data class ShowText(val text: String) : EngineOutput
+  data class ShowText(
+    val speaker: String?,
+    val text: String
+  ) : EngineOutput
   data class ShowChoices(val options: List<Option>) : EngineOutput
   data class ShowDice(
     val name: String,

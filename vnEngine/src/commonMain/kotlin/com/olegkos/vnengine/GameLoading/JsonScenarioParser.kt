@@ -30,7 +30,8 @@ class JsonScenarioParser : ScenarioParser {
             when (nodeJson) {
 
               is SceneNodeJson.Text ->
-                Text(nodeJson.text)
+                Text(speaker = nodeJson.speaker,
+                  text = nodeJson.text)
 
               is SceneNodeJson.Choice ->
                 Choice(
@@ -105,6 +106,7 @@ sealed class SceneNodeJson {
   @Serializable
   @SerialName("text")
   data class Text(
+    val speaker: String? = null,
     val text: String
   ) : SceneNodeJson()
 

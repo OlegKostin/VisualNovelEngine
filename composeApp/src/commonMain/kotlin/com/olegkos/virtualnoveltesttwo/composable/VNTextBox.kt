@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun VNTextBox(
   text: String,
+  speaker: String? = null,
   onNext: () -> Unit
 ) {
   var visibleCount by remember { mutableIntStateOf(0) }
@@ -74,12 +75,30 @@ fun VNTextBox(
 
     val visibleText = text.take(visibleCount)
 
-    Box(
+    Column(
       modifier = Modifier
         .fillMaxSize()
         .padding(16.dp),
-      contentAlignment = Alignment.BottomCenter
+      verticalArrangement = Arrangement.Bottom,
+      horizontalAlignment = Alignment.Start
     ) {
+      speaker?.let {
+        Box(
+          modifier = Modifier
+            .wrapContentWidth()
+            .background(   Color(0xCCBBDDFF), RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(bottom = 8.dp)
+        ) {
+          Text(
+            text = it,
+            fontSize = fontSize,
+            color = Color(0xFF111111),
+          )
+        }
+      }
+
+
       Box(
         modifier = Modifier
           .fillMaxWidth()
@@ -103,14 +122,8 @@ fun VNTextBox(
             interactionSource = remember { MutableInteractionSource() }
           ) {
             when {
-              !isFullyShown && !isFastMode -> {
-                isFastMode = true
-              }
-
-              !isFullyShown && isFastMode -> {
-                skipRequested = true
-              }
-
+              !isFullyShown && !isFastMode -> isFastMode = true
+              !isFullyShown && isFastMode -> skipRequested = true
               else -> {
                 isFastMode = false
                 onNext()

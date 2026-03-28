@@ -108,6 +108,7 @@ fun App(
 
         is EngineOutput.ShowText -> {
           VNTextBox(
+            speaker = o.speaker,
             text = o.text,
             onNext = { viewModel.next() }
           )

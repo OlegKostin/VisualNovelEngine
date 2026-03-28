@@ -4,7 +4,10 @@ import com.olegkos.vnengine.engine.variables.GameValue
 
 sealed interface SceneNode {
 
-  data class Text(val text: String) : SceneNode
+  data class Text(
+    val speaker: String? = null,
+    val text: String
+  ) : SceneNode
 
   data class Choice(val options: List<Option>) : SceneNode
 
