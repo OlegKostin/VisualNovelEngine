@@ -1,23 +1,10 @@
 package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -25,6 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
+import com.olegkos.virtualnoveltesttwo.UiState.CharacterState
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
@@ -39,6 +27,7 @@ fun App(
 
   var background by remember { mutableStateOf<String?>(null) }
   var image by remember { mutableStateOf<String?>(null) }
+  var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
 
   LaunchedEffect(output) {
     when (val o = output) {
@@ -53,12 +42,30 @@ fun App(
         viewModel.next()
       }
 
+      is EngineOutput.ShowCharacter -> {
+        val align = when (o.position) {
+          "left" -> Alignment.BottomStart
+          "right" -> Alignment.BottomEnd
+          else -> Alignment.BottomCenter
+        }
+
+        characters = characters
+          .filterNot { it.id == o.id } +
+            CharacterState(o.id, o.image, align)
+
+        viewModel.next()
+      }
+
+      is EngineOutput.HideCharacter -> {
+        characters = characters.filterNot { it.id == o.id }
+        viewModel.next()
+      }
+
       else -> Unit
     }
   }
 
   Box(modifier = Modifier.fillMaxSize()) {
-
 
     background?.let { bgPath ->
       val painter = rememberPainter(
@@ -77,7 +84,6 @@ fun App(
       }
     }
 
-
     image?.let { imgPath ->
       val painter = rememberPainter(
         path = imgPath,
@@ -91,7 +97,28 @@ fun App(
           contentDescription = null,
           modifier = Modifier
             .fillMaxHeight()
-            .align(Alignment.BottomCenter)
+            .align(Alignment.BottomCenter),
+          contentScale = ContentScale.Fit
+        )
+      }
+    }
+
+    characters.forEach { char ->
+
+      val painter = rememberPainter(
+        path = char.image,
+        resolver = viewModel.assets,
+        reader = viewModel.reader
+      )
+
+      painter?.let {
+        Image(
+          painter = it,
+          contentDescription = null,
+          modifier = Modifier
+            .fillMaxHeight()
+            .align(char.alignment),
+          contentScale = ContentScale.Fit
         )
       }
     }
@@ -143,7 +170,6 @@ fun App(
           Text("Загрузка...")
         }
       }
-
     }
   }
 }

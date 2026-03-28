@@ -26,7 +26,13 @@ sealed interface EngineOutput {
     val image: String
   ) : EngineOutput
   data class ShowCharacter(
-    val image: String
+    val id: String,
+    val image: String,
+    val position: String
+  ) : EngineOutput
+
+  data class HideCharacter(
+    val id: String
   ) : EngineOutput
 
   data class ShowEffect(

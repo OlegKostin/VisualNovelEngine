@@ -4,6 +4,7 @@ import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.SceneNode.*
 import com.olegkos.vnengine.scene.SceneNode.Background
 import com.olegkos.vnengine.scene.SceneNode.Choice
 import com.olegkos.vnengine.scene.SceneNode.DiceRoll
@@ -16,6 +17,7 @@ import com.olegkos.vnengine.scene.SceneNode.SetVar
 import com.olegkos.vnengine.scene.SceneNode.Switch
 import com.olegkos.vnengine.scene.SceneNode.Text
 import com.olegkos.vnengine.scene.SubClass
+import com.olegkos.vnengine.scene.SubClass.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -85,7 +87,6 @@ class JsonScenarioParser : ScenarioParser {
               )
               is BackgroundNode -> Background(nodeJson.image)
               is ImageNode -> Image(nodeJson.image)
-              is CharacterNode -> Image(nodeJson.image)
               is EffectNode -> Image(nodeJson.image)
               is SceneNodeJson.JumpJson -> Jump(
                 targetSceneId = nodeJson.nextSceneId
@@ -97,12 +98,22 @@ class JsonScenarioParser : ScenarioParser {
                 default = nodeJson.default
               )
 
-              is SceneNodeJson.SwitchRange -> SceneNode.SwitchRange(
+              is SceneNodeJson.SwitchRange -> SwitchRange(
                 variable = nodeJson.variable,
                 ranges = nodeJson.ranges.map {
-                  SubClass.RangeCase(it.min, it.max, it.scene)
+                  RangeCase(it.min, it.max, it.scene)
                 },
                 default = nodeJson.default
+              )
+
+              is CharacterNode -> SceneNode.ShowCharacter(
+                id = nodeJson.id,
+                image = nodeJson.image,
+                position = nodeJson.position
+              )
+
+              is CharacterHideNode -> SceneNode.HideCharacter(
+                id = nodeJson.id
               )
             }
           }
@@ -257,7 +268,18 @@ data class BackgroundNode(val image: String) : SceneNodeJson()
 data class ImageNode(val image: String) : SceneNodeJson()
 @Serializable
 @SerialName("character")
-data class CharacterNode(val image: String) : SceneNodeJson()
+data class CharacterNode(
+  val id: String,
+  val image: String,
+  val position: String = "center"
+) : SceneNodeJson()
+
+@Serializable
+@SerialName("characterHide")
+data class CharacterHideNode(
+  val id: String
+) : SceneNodeJson()
 @Serializable
 @SerialName("effect")
 data class EffectNode(val image: String) : SceneNodeJson()
+

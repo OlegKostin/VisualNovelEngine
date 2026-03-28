@@ -170,10 +170,7 @@ class VnEngine(
           return ShowImage(node.image)
         }
 
-        is SceneNode.Character -> {
-          advance()
-          return ShowImage(node.image)
-        }
+
         is SceneNode.Effect -> {
           advance()
           return ShowImage(node.image)
@@ -202,7 +199,19 @@ class VnEngine(
           val targetScene = found?.scene ?: node.default
           jumpToScene(targetScene)
         }
+        is SceneNode.ShowCharacter -> {
+          advance()
+          return EngineOutput.ShowCharacter(
+            id = node.id,
+            image = node.image,
+            position = node.position
+          )
+        }
 
+        is SceneNode.HideCharacter -> {
+          advance()
+          return EngineOutput.HideCharacter(node.id)
+        }
       }
     }
   }
