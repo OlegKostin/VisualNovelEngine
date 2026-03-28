@@ -3,7 +3,6 @@ package com.olegkos.vnengine.GameLoading
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
-import com.olegkos.vnengine.scene.SceneNode
 import com.olegkos.vnengine.scene.SceneNode.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.*
@@ -68,13 +67,16 @@ class JsonScenarioParser : ScenarioParser {
                 failScene = nodeJson.failScene
               )
 
-              is JumpScenarioJson -> SceneNode.JumpScenario(
+              is JumpScenarioJson -> JumpScenario(
                 scenarioFile = nodeJson.scenarioFile
               )
               is BackgroundNode -> Background(nodeJson.image)
               is ImageNode -> Image(nodeJson.image)
               is CharacterNode -> Image(nodeJson.image)
               is EffectNode -> Image(nodeJson.image)
+              is SceneNodeJson.JumpJson -> Jump(
+                targetSceneId = nodeJson.nextSceneId
+              )
             }
           }
         )
@@ -118,6 +120,11 @@ sealed class SceneNodeJson {
     val options: List<OptionJson>
   ) : SceneNodeJson()
 
+  @Serializable
+  @SerialName("jump")
+  data class JumpJson(
+    val nextSceneId: String
+  ) : SceneNodeJson()
 
   @Serializable
   @SerialName("setVar")
