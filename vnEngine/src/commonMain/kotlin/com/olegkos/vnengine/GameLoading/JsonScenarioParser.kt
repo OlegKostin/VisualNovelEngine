@@ -106,16 +106,28 @@ class JsonScenarioParser : ScenarioParser {
                 default = nodeJson.default
               )
 
-              is CharacterNode -> SceneNode.ShowCharacter(
+              is CharacterNode -> ShowCharacter(
                 id = nodeJson.id,
                 image = nodeJson.image,
                 position = nodeJson.position
               )
 
-              is CharacterHideNode -> SceneNode.HideCharacter(
+              is CharacterHideNode -> HideCharacter(
                 id = nodeJson.id
               )
-            }
+
+              is InitGameNode -> InitGame(
+                playerNameVar = nodeJson.playerNameVar,
+                classVar = nodeJson.classVar,
+                classes = nodeJson.classes.map {
+                  GameClass(
+                    id = it.id,
+                    name = it.name,
+                    stats = it.stats
+                  )
+                },
+                nextSceneId = nodeJson.nextSceneId
+              )            }
           }
         )
       }
@@ -279,6 +291,20 @@ data class CharacterNode(
 data class CharacterHideNode(
   val id: String
 ) : SceneNodeJson()
+@Serializable
+@SerialName("initGame")
+data class InitGameNode(
+  val playerNameVar: String,
+  val classVar: String? = null,
+  val classes: List<GameClassJson> = emptyList(),
+  val nextSceneId: String
+) : SceneNodeJson()
+@Serializable
+data class GameClassJson(
+  val id: String,
+  val name: String,
+  val stats: Map<String, Int> = emptyMap()
+)
 @Serializable
 @SerialName("effect")
 data class EffectNode(val image: String) : SceneNodeJson()

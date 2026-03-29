@@ -30,6 +30,8 @@ class GameController(
   private val gameConfigPath = basePath +"game.json"
 
   private var engine: VnEngine? = null
+  val requireEngine: VnEngine
+    get() = engine ?: error("Engine not initialized")
   private var currentScenario: String = ""
 
   lateinit var assets: AssetPathResolver

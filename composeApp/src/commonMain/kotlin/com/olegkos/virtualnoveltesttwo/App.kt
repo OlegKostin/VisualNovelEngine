@@ -13,10 +13,12 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.UiState.CharacterState
+import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.scene.SubClass
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -123,7 +125,6 @@ fun App(
       }
     }
 
-
     Column(
       modifier = Modifier
         .fillMaxSize()
@@ -132,6 +133,20 @@ fun App(
     ) {
 
       when (val o = output) {
+
+        is EngineOutput.ShowInitGame -> {
+          InitGameScreen(
+            classes = o.classes,
+            onConfirm = { name: String, selectedClass: SubClass.GameClass? ->
+              viewModel.initGame(
+                playerName = name,
+                selectedClass = selectedClass,
+                playerNameVar = o.playerNameVar,
+                classVar = o.classVar
+              )
+            }
+          )
+        }
 
         is EngineOutput.ShowText -> {
           VNTextBox(
@@ -172,9 +187,7 @@ fun App(
       }
     }
   }
-}
-
-@Composable
+}@Composable
 fun rememberPainter(
   path: String,
   resolver: AssetPathResolver,

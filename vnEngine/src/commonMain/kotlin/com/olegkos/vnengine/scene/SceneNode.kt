@@ -71,5 +71,12 @@ sealed interface SceneNode {
     val image: String
   ) : SceneNode
 
+  data class InitGame(
+    val playerNameVar: String,
+    val classVar: String?,
+    val classes: List<SubClass.GameClass>,
+    val nextSceneId: String
+  ) : SceneNode
+
 
 }

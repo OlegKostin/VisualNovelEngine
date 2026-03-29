@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.scene.Option
+import com.olegkos.vnengine.scene.SubClass
 
 sealed interface EngineOutput {
   object Loading : EngineOutput
@@ -33,6 +34,12 @@ sealed interface EngineOutput {
 
   data class HideCharacter(
     val id: String
+  ) : EngineOutput
+
+  data class ShowInitGame(
+    val playerNameVar: String,
+    val classVar: String?,
+    val classes: List<SubClass.GameClass>
   ) : EngineOutput
 
   data class ShowEffect(

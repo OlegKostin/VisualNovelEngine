@@ -7,4 +7,9 @@ sealed interface  SubClass {
     val scene: String
   )
 
+  data class GameClass(
+    val id: String,
+    val name: String,
+    val stats: Map<String, Int>
+  )
 }

@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.GameLoading.DiceRoller
+import com.olegkos.vnengine.engine.EngineOutput.*
 import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
 import com.olegkos.vnengine.engine.EngineOutput.JumpScenarioOutput
 import com.olegkos.vnengine.engine.EngineOutput.ShowBackground
@@ -201,7 +202,7 @@ class VnEngine(
         }
         is SceneNode.ShowCharacter -> {
           advance()
-          return EngineOutput.ShowCharacter(
+          return ShowCharacter(
             id = node.id,
             image = node.image,
             position = node.position
@@ -210,7 +211,21 @@ class VnEngine(
 
         is SceneNode.HideCharacter -> {
           advance()
-          return EngineOutput.HideCharacter(node.id)
+          return HideCharacter(node.id)
+        }
+
+        is SceneNode.InitGame -> {
+
+          return if (!state.isGameInitialized) {
+            ShowInitGame(
+              playerNameVar = node.playerNameVar,
+              classVar = node.classVar,
+              classes = node.classes
+            )
+          } else {
+            jumpToScene(node.nextSceneId)
+            continue
+          }
         }
       }
     }

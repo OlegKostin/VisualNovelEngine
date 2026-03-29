@@ -7,13 +7,12 @@
   import androidx.lifecycle.viewModelScope
   import com.olegkos.save.SaveManager
   import com.olegkos.vnengine.GameLoading.AssetReader
-  import com.olegkos.vnengine.GameLoading.DiceRoller
-  import com.olegkos.vnengine.GameLoading.ScenarioParser
   import com.olegkos.vnengine.engine.EngineOutput
   import com.olegkos.vnengine.engine.asserts.AssetPathResolver
-  import com.olegkos.vnengine.game.GameLoader
+  import com.olegkos.vnengine.engine.variables.GameValue
   import com.olegkos.vnengine.scene.Option
   import com.olegkos.vnengine.scene.SceneNode
+  import com.olegkos.vnengine.scene.SubClass
   import kotlinx.coroutines.launch
 
   class GameViewModel(
@@ -72,6 +71,29 @@
         currentOutput = output
         currentNode = node
       }
+    }
+
+    fun initGame(
+      playerName: String,
+      selectedClass: SubClass.GameClass?,
+      playerNameVar: String,
+      classVar: String?
+    ) {
+      val engine = controller.requireEngine
+
+      engine.variables.set(playerNameVar, GameValue.StringVal(playerName))
+
+      if (selectedClass != null && classVar != null) {
+        engine.variables.set(classVar, GameValue.StringVal(selectedClass.id))
+
+        selectedClass.stats.forEach { (key, value) ->
+          engine.variables.set(key, GameValue.IntVal(value))
+        }
+      }
+
+      engine.state.isGameInitialized = true
+
+      next()
     }
 
     fun listSaves(): List<String> =
