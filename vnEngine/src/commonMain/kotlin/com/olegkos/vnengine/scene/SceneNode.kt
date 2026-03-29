@@ -61,7 +61,8 @@ sealed interface SceneNode {
   data class ShowCharacter(
     val id: String,
     val image: String,
-    val position: String
+    val position: String,
+    val scale: Float = 1f,
   ) : SceneNode
   data class HideCharacter(
     val id: String

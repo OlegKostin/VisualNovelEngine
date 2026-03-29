@@ -205,7 +205,8 @@ class VnEngine(
           return ShowCharacter(
             id = node.id,
             image = node.image,
-            position = node.position
+            position = node.position,
+            scale = node.scale,
           )
         }
 

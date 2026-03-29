@@ -7,9 +7,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.UiState.CharacterState
@@ -22,14 +24,21 @@ import com.olegkos.vnengine.scene.SubClass
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun App(
-  viewModel: GameViewModel = koinViewModel()
-) {
+fun App(viewModel: GameViewModel = koinViewModel()) {
   val output = viewModel.currentOutput
 
   var background by remember { mutableStateOf<String?>(null) }
+  var backgroundScale by remember { mutableStateOf(1f) }
   var image by remember { mutableStateOf<String?>(null) }
+  var imageScale by remember { mutableStateOf(1f) }
   var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
+
+  // Получаем смещение по горизонтали для позиции "pos0"..."pos9"
+  fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
+    val index = position.lowercase().removePrefix("pos").toIntOrNull() ?: 0
+    val step = boxWidth * 0.10f // 10% ширины
+    return step * index
+  }
 
   LaunchedEffect(output) {
     when (val o = output) {
@@ -45,15 +54,18 @@ fun App(
       }
 
       is EngineOutput.ShowCharacter -> {
-        val align = when (o.position) {
-          "left" -> Alignment.BottomStart
-          "right" -> Alignment.BottomEnd
-          else -> Alignment.BottomCenter
-        }
+        val scale = o.scale
+        val position = o.position
 
         characters = characters
           .filterNot { it.id == o.id } +
-            CharacterState(o.id, o.image, align)
+            CharacterState(
+              id = o.id,
+              image = o.image,
+              alignment = Alignment.BottomStart,
+              scale = scale,
+              position = position
+            )
 
         viewModel.next()
       }
@@ -67,7 +79,8 @@ fun App(
     }
   }
 
-  Box(modifier = Modifier.fillMaxSize()) {
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val boxWidth = maxWidth
 
     background?.let { bgPath ->
       val painter = rememberPainter(
@@ -75,7 +88,6 @@ fun App(
         resolver = viewModel.assets,
         reader = viewModel.reader
       )
-
       painter?.let {
         Image(
           painter = it,
@@ -92,7 +104,6 @@ fun App(
         resolver = viewModel.assets,
         reader = viewModel.reader
       )
-
       painter?.let {
         Image(
           painter = it,
@@ -106,20 +117,24 @@ fun App(
     }
 
     characters.forEach { char ->
-
       val painter = rememberPainter(
         path = char.image,
         resolver = viewModel.assets,
         reader = viewModel.reader
       )
-
       painter?.let {
+        val xOffset = positionOffsetFromString(char.position, boxWidth)
         Image(
           painter = it,
           contentDescription = null,
           modifier = Modifier
-            .fillMaxHeight()
-            .align(char.alignment),
+            .align(Alignment.BottomStart)
+            .offset(x = xOffset)
+            .graphicsLayer(
+              scaleX = char.scale,
+              scaleY = char.scale,
+              transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+            ),
           contentScale = ContentScale.Fit
         )
       }
@@ -131,9 +146,7 @@ fun App(
         .padding(16.dp),
       verticalArrangement = Arrangement.Center
     ) {
-
       when (val o = output) {
-
         is EngineOutput.ShowInitGame -> {
           InitGameScreen(
             classes = o.classes,
@@ -181,19 +194,18 @@ fun App(
           )
         }
 
-        else -> {
-          Text("Загрузка...")
-        }
+        else -> Text("Загрузка...")
       }
     }
   }
-}@Composable
+}
+
+@Composable
 fun rememberPainter(
   path: String,
   resolver: AssetPathResolver,
   reader: AssetReader
 ): BitmapPainter? {
-
   var painter by remember { mutableStateOf<BitmapPainter?>(null) }
 
   LaunchedEffect(path) {

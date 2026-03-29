@@ -109,7 +109,8 @@ class JsonScenarioParser : ScenarioParser {
               is CharacterNode -> ShowCharacter(
                 id = nodeJson.id,
                 image = nodeJson.image,
-                position = nodeJson.position
+                position = nodeJson.position,
+                scale = nodeJson.scale,
               )
 
               is CharacterHideNode -> HideCharacter(
@@ -283,7 +284,8 @@ data class ImageNode(val image: String) : SceneNodeJson()
 data class CharacterNode(
   val id: String,
   val image: String,
-  val position: String = "center"
+  val position: String = "center",
+  val scale: Float = 1f,
 ) : SceneNodeJson()
 
 @Serializable

@@ -29,7 +29,8 @@ sealed interface EngineOutput {
   data class ShowCharacter(
     val id: String,
     val image: String,
-    val position: String
+    val position: String,
+    val scale: Float = 1f,
   ) : EngineOutput
 
   data class HideCharacter(
