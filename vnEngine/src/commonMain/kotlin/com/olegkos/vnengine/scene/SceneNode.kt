@@ -78,6 +78,6 @@ sealed interface SceneNode {
     val classes: List<SubClass.GameClass>,
     val nextSceneId: String
   ) : SceneNode
-
+  data object HideImage : SceneNode
 
 }

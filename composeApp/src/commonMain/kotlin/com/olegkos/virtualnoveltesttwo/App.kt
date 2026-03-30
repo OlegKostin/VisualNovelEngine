@@ -33,7 +33,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   var imageScale by remember { mutableStateOf(1f) }
   var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
 
-  // Получаем смещение по горизонтали для позиции "pos0"..."pos9"
+
   fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
     val index = position.lowercase().removePrefix("pos").toIntOrNull() ?: 0
     val step = boxWidth * 0.10f // 10% ширины
@@ -67,6 +67,10 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
               position = position
             )
 
+        viewModel.next()
+      }
+      is EngineOutput.HideImage -> {
+        image = null
         viewModel.next()
       }
 
@@ -111,7 +115,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           modifier = Modifier
             .fillMaxHeight()
             .align(Alignment.BottomCenter),
-          contentScale = ContentScale.Fit
+          contentScale = ContentScale.FillHeight
         )
       }
     }

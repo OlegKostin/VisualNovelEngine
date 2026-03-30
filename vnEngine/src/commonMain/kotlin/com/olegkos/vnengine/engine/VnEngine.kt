@@ -228,6 +228,11 @@ class VnEngine(
             continue
           }
         }
+
+        is SceneNode.HideImage -> {
+          advance()
+          return HideImage
+        }
       }
     }
   }

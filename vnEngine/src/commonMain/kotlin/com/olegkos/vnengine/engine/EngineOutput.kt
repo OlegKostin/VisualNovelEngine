@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.scene.Option
+import com.olegkos.vnengine.scene.SceneNode
 import com.olegkos.vnengine.scene.SubClass
 
 sealed interface EngineOutput {
@@ -42,7 +43,7 @@ sealed interface EngineOutput {
     val classVar: String?,
     val classes: List<SubClass.GameClass>
   ) : EngineOutput
-
+  data object HideImage : EngineOutput
   data class ShowEffect(
     val image: String
   ) : EngineOutput

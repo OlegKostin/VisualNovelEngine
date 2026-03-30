@@ -128,7 +128,10 @@ class JsonScenarioParser : ScenarioParser {
                   )
                 },
                 nextSceneId = nodeJson.nextSceneId
-              )            }
+              )
+
+              is HideImageNode -> HideImage
+            }
           }
         )
       }
@@ -287,7 +290,11 @@ data class CharacterNode(
   val position: String = "center",
   val scale: Float = 1f,
 ) : SceneNodeJson()
-
+@Serializable
+@SerialName("hideImage")
+data class HideImageNode(
+  val id: String? = null
+) : SceneNodeJson()
 @Serializable
 @SerialName("characterHide")
 data class CharacterHideNode(
