@@ -77,6 +77,7 @@ class VnEngine(
         is SceneNode.ModifyVar -> {
           variables.modify(node.varName, node.value.resolve())
           advance()
+          return ShowVar(node.varName,node.value.resolve().toString())
         }
 
         is SceneNode.If -> {

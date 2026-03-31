@@ -1,5 +1,6 @@
 package com.olegkos.vnengine.engine.variables
 
+import com.olegkos.vnengine.engine.round2
 import kotlin.random.Random
 
 sealed interface GameValue {
@@ -19,7 +20,7 @@ fun GameValue.resolve(): GameValue {
       GameValue.IntVal(Random.nextInt(min, max + 1))
 
     is GameValue.RandomFloat ->
-      GameValue.FloatVal(min + Random.nextFloat() * (max - min))
+      GameValue.FloatVal(min + Random.nextFloat().round2() * (max - min))
 
     else -> this
   }

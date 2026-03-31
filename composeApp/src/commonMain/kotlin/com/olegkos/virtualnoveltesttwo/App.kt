@@ -164,7 +164,16 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             }
           )
         }
-
+is EngineOutput.ShowVar -> {
+  Button(
+    onClick = { viewModel.next() },
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 4.dp)
+  ) {
+    Text(o.value)
+  }
+}
         is EngineOutput.ShowText -> {
           VNTextBox(
             speaker = o.speaker,
