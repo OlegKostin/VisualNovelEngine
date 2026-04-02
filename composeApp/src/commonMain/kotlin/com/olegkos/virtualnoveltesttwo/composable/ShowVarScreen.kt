@@ -60,7 +60,7 @@ fun ShowVarScreen(
       Spacer(Modifier.height(8.dp))
 
       Text(
-        text = "+$value"
+        text = value
       )
     }
   }

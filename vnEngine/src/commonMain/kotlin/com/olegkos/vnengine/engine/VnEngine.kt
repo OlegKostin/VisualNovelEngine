@@ -75,9 +75,23 @@ class VnEngine(
         }
 
         is SceneNode.ModifyVar -> {
-          variables.modify(node.varName, node.value.resolve())
+          val resolved = node.value.resolve()
+          variables.modify(node.varName, resolved)
           advance()
-          return ShowVar(node.varName,node.value.resolve().toString(), node.text)
+
+          val valueString = when (resolved) {
+            is IntVal -> resolved.value.toString()
+            is FloatVal -> resolved.value.round2().toString()
+            is GameValue.Bool -> resolved.value.toString()
+            is GameValue.StringVal -> resolved.value
+            else -> "0"
+          }
+
+          return ShowVar(
+            node.varName,
+            valueString,
+            node.text
+          )
         }
 
         is SceneNode.If -> {

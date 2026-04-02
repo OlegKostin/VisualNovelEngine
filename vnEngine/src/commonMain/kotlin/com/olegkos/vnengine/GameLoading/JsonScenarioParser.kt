@@ -61,7 +61,7 @@ class JsonScenarioParser : ScenarioParser {
                 SetVar(nodeJson.varName, nodeJson.value.toGameValue())
 
               is SceneNodeJson.ModifyVar ->
-                ModifyVar(nodeJson.varName, nodeJson.value.toGameValue())
+                ModifyVar(nodeJson.varName, nodeJson.value.toGameValue(),nodeJson.text)
 
               is SceneNodeJson.DiceRoll ->
                 DiceRoll(
@@ -186,7 +186,7 @@ sealed class SceneNodeJson {
 
   @Serializable
   @SerialName("modifyVar")
-  data class ModifyVar(val varName: String, val value: GameValueJson,val text: String? = "") : SceneNodeJson()
+  data class ModifyVar(val varName: String, val value: GameValueJson,val text: String) : SceneNodeJson()
   @Serializable
   @SerialName("if")
   data class If(
