@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.UiState.CharacterState
 import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
+import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
@@ -164,16 +165,14 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             }
           )
         }
-is EngineOutput.ShowVar -> {
-  Button(
-    onClick = { viewModel.next() },
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = 4.dp)
-  ) {
-    Text(o.value)
-  }
-}
+        is EngineOutput.ShowVar -> {
+        ShowVarScreen(
+          name = o.name,
+          value = o.value,
+          text = o.text ?: "",
+          onNext = { viewModel.next() }
+        )
+      }
         is EngineOutput.ShowText -> {
           VNTextBox(
             speaker = o.speaker,
