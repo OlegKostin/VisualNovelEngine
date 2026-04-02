@@ -18,7 +18,7 @@ sealed interface EngineOutput {
     val modifier: Float,
     val difficulty: Int
   ) : EngineOutput
-  data class ShowVar(val name: String, val value: String, val text: String?): EngineOutput
+  data class ShowVar(val name: String, val value: String, val text: String): EngineOutput
   data class JumpScenarioOutput(val scenarioFile: String) : EngineOutput
   data class ShowBackground(
     val image: String

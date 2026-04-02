@@ -166,12 +166,12 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
         is EngineOutput.ShowVar -> {
-        ShowVarScreen(
-          name = o.name,
-          value = o.value,
-          text = o.text ?: "",
-          onNext = { viewModel.next() }
-        )
+          ShowVarScreen(
+            name = o.name,
+            value = o.value,
+            description = o.text,
+            onNext = { viewModel.next() }
+          )
       }
         is EngineOutput.ShowText -> {
           VNTextBox(

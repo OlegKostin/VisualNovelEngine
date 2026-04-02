@@ -8,14 +8,12 @@ import virtualnoveltesttwo.composeapp.generated.resources.stat_mental
 
 enum class StatType(
   val key: String,
-  val image: DrawableResource
+  val image: DrawableResource,
+  val title: String
 ) {
-//  STR("opt_str", Res.drawable.stat_str),
-//  WIS("opt_wisdom", Res.drawable.stat_wisdom),
-//  WILL("opt_will", Res.drawable.stat_will),
-  LUCK("opt_luck", Res.drawable.stat_luck),
-  HP("health", Res.drawable.stat_health),
-  MENTAL("mental_health", Res.drawable.stat_mental);
+  LUCK("opt_luck", Res.drawable.stat_luck, "Удача"),
+  HP("health", Res.drawable.stat_health, "Здоровье"),
+  MENTAL("mental_health", Res.drawable.stat_mental, "Психика");
 
   companion object {
     fun fromKey(key: String): StatType? {
