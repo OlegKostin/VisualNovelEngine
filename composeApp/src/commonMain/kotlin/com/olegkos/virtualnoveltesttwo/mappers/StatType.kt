@@ -5,12 +5,16 @@ import virtualnoveltesttwo.composeapp.generated.resources.Res
 import virtualnoveltesttwo.composeapp.generated.resources.stat_health
 import virtualnoveltesttwo.composeapp.generated.resources.stat_luck
 import virtualnoveltesttwo.composeapp.generated.resources.stat_mental
+import virtualnoveltesttwo.composeapp.generated.resources.stat_will
 
 enum class StatType(
   val key: String,
   val image: DrawableResource,
   val title: String
 ) {
+  //  STR("opt_str", Res.drawable.stat_str),
+//  WIS("opt_wisdom", Res.drawable.stat_wisdom),
+  WILL("opt_will", Res.drawable.stat_will, "Воля"),
   LUCK("opt_luck", Res.drawable.stat_luck, "Удача"),
   HP("health", Res.drawable.stat_health, "Здоровье"),
   MENTAL("mental_health", Res.drawable.stat_mental, "Психика");
