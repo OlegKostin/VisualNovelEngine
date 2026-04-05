@@ -50,6 +50,27 @@ sealed interface SceneNode {
 
   data class JumpScenario(val scenarioFile: String) : SceneNode
 
+  data class SceneView(
+    val background: String,
+    val navigation: Navigation?,
+    val hotspots: List<Hotspot>
+  ) : SceneNode
+
+  data class Navigation(
+    val up: String?,
+    val down: String?,
+    val left: String?,
+    val right: String?
+  )
+
+  data class Hotspot(
+    val xPercent: Float,
+    val yPercent: Float,
+    val widthPercent: Float,
+    val heightPercent: Float,
+    val targetScenarioFile: String
+  )
+
   data class Background(
     val image: String
   ) : SceneNode

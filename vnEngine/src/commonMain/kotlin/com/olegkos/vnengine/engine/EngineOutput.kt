@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.scene.Option
+import com.olegkos.vnengine.scene.SceneNode
 import com.olegkos.vnengine.scene.SubClass
 
 sealed interface EngineOutput {
@@ -36,6 +37,12 @@ sealed interface EngineOutput {
 
   data class HideCharacter(
     val id: String
+  ) : EngineOutput
+
+  data class ShowSceneView(
+    val background: String,
+    val navigation: SceneNode.Navigation?,
+    val hotspots: List<SceneNode.Hotspot>
   ) : EngineOutput
 
   data class ShowInitGame(

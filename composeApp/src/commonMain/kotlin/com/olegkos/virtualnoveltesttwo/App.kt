@@ -1,6 +1,7 @@
 package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -12,6 +13,7 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.UiState.CharacterState
@@ -21,6 +23,7 @@ import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SubClass
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -29,10 +32,9 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   val output = viewModel.currentOutput
 
   var background by remember { mutableStateOf<String?>(null) }
-  var backgroundScale by remember { mutableStateOf(1f) }
   var image by remember { mutableStateOf<String?>(null) }
-  var imageScale by remember { mutableStateOf(1f) }
   var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
+  var sceneView by remember { mutableStateOf<EngineOutput.ShowSceneView?>(null) }
 
 
   fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
@@ -42,6 +44,9 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   }
 
   LaunchedEffect(output) {
+    if (output !is EngineOutput.ShowSceneView) {
+      sceneView = null
+    }
     when (val o = output) {
 
       is EngineOutput.ShowBackground -> {
@@ -78,6 +83,11 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       is EngineOutput.HideCharacter -> {
         characters = characters.filterNot { it.id == o.id }
         viewModel.next()
+      }
+
+      is EngineOutput.ShowSceneView -> {
+        sceneView = o
+        background = o.background
       }
 
       else -> Unit
@@ -145,6 +155,56 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
+    sceneView?.let { view ->
+
+
+      background = view.background
+
+      val boxHeight = maxHeight
+
+
+      view.navigation?.let { nav ->
+        nav.left?.let { target ->
+          ArrowButton(Alignment.CenterStart) {
+            viewModel.jumpScenario(target)
+          }
+        }
+        nav.right?.let { target ->
+          ArrowButton(Alignment.CenterEnd) {
+            viewModel.jumpScenario(target)
+          }
+        }
+        nav.up?.let { target ->
+          ArrowButton(Alignment.TopCenter) {
+            viewModel.jumpScenario(target)
+          }
+        }
+        nav.down?.let { target ->
+          ArrowButton(Alignment.BottomCenter) {
+            viewModel.jumpScenario(target)
+          }
+        }
+      }
+
+      view.hotspots.forEach { spot ->
+        Box(
+          modifier = Modifier
+            .offset {
+              IntOffset(
+                (boxWidth.value * spot.xPercent / 100f).toInt(),
+                (boxHeight.value * spot.yPercent / 100f).toInt()
+              )
+            }
+            .size(
+              boxWidth * (spot.widthPercent / 100f),
+              boxHeight * (spot.heightPercent / 100f)
+            )
+            .clickable {
+              viewModel.jumpScenario(spot.targetScenarioFile)
+            }
+        )
+      }
+    }
     Column(
       modifier = Modifier
         .fillMaxSize()
@@ -205,7 +265,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             onContinue = { viewModel.next() }
           )
         }
-
+        is EngineOutput.ShowSceneView -> Unit
         else -> Text("Загрузка...")
       }
     }
@@ -227,4 +287,23 @@ fun rememberPainter(
   }
 
   return painter
+}
+
+@Composable
+fun ArrowButton(
+  alignment: Alignment,
+  onClick: () -> Unit
+) {
+  Box(
+    modifier = Modifier
+      .fillMaxSize(),
+    contentAlignment = alignment
+  ) {
+    Button(
+      onClick = onClick,
+      modifier = Modifier.size(60.dp)
+    ) {
+      Text(">")
+    }
+  }
 }

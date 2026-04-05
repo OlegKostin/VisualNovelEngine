@@ -96,6 +96,14 @@
       next()
     }
 
+    fun jumpScenario(path: String) {
+      viewModelScope.launch {
+        val (output, node) = controller.switchScenario(path)
+        currentOutput = output
+        currentNode = node
+      }
+    }
+
     fun listSaves(): List<String> =
       saveManager.listSaves()
   }

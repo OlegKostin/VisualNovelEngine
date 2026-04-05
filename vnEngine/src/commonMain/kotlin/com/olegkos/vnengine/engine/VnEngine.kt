@@ -126,12 +126,19 @@ class VnEngine(
 
         is SceneNode.Choice -> {
           if (selectedOption != null) {
-            jumpToScene(selectedOption.nextSceneId)
-            continue
+
+            selectedOption.nextScenarioFile?.let {
+              return JumpScenarioOutput(it)
+            }
+
+            selectedOption.nextSceneId?.let {
+              jumpToScene(it)
+              continue
+            }
           }
+
           return ShowChoices(node.options)
         }
-
         is SceneNode.DiceRoll -> {
           if (state.diceResult == null) {
             return ShowDice(
@@ -247,6 +254,14 @@ class VnEngine(
         is SceneNode.HideImage -> {
           advance()
           return HideImage
+        }
+
+        is SceneNode.SceneView -> {
+          return ShowSceneView(
+            background = node.background,
+            navigation = node.navigation,
+            hotspots = node.hotspots
+          )
         }
       }
     }

@@ -131,6 +131,26 @@ class JsonScenarioParser : ScenarioParser {
               )
 
               is HideImageNode -> HideImage
+              is SceneViewNode -> SceneNode.SceneView(
+                background = nodeJson.background,
+                navigation = nodeJson.navigation?.let {
+                  SceneNode.Navigation(
+                    up = it.up,
+                    down = it.down,
+                    left = it.left,
+                    right = it.right
+                  )
+                },
+                hotspots = nodeJson.hotspots.map {
+                  SceneNode.Hotspot(
+                    xPercent = it.xPercent,
+                    yPercent = it.yPercent,
+                    widthPercent = it.widthPercent,
+                    heightPercent = it.heightPercent,
+                    targetScenarioFile = it.targetScenarioFile
+                  )
+                }
+              )
             }
           }
         )
@@ -295,6 +315,31 @@ data class CharacterNode(
 data class HideImageNode(
   val id: String? = null
 ) : SceneNodeJson()
+
+@Serializable
+@SerialName("navigation")
+data class SceneViewNode(
+  val background: String,
+
+  val navigation: NavigationJson? = null,
+  val hotspots: List<HotspotJson> = emptyList()
+) : SceneNodeJson()
+@Serializable
+data class NavigationJson(
+  val up: String? = null,
+  val down: String? = null,
+  val left: String? = null,
+  val right: String? = null
+)
+
+@Serializable
+data class HotspotJson(
+  val xPercent: Float,
+  val yPercent: Float,
+  val widthPercent: Float = 10f,
+  val heightPercent: Float = 10f,
+  val targetScenarioFile: String
+)
 @Serializable
 @SerialName("characterHide")
 data class CharacterHideNode(
