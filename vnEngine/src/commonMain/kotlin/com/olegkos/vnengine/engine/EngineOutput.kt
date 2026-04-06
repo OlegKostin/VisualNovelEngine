@@ -45,6 +45,12 @@ sealed interface EngineOutput {
     val hotspots: List<SceneNode.Hotspot>
   ) : EngineOutput
 
+  data class ShowCardUsage(
+    val diceResult: Int,
+    val cards: List<CardInstance>,
+    val maxCards: Int
+  ) : EngineOutput
+
   data class ShowInitGame(
     val playerNameVar: String,
     val classVar: String?,

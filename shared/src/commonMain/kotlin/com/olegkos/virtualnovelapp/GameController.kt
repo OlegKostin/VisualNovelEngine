@@ -1,6 +1,7 @@
 package com.olegkos.virtualnovelapp
 
 import com.olegkos.save.SaveManager
+import com.olegkos.save.metaStorage.MetaManager
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.GameLoading.ScenarioParser
@@ -23,6 +24,7 @@ class GameController(
   private val dice: DiceRoller,
   private val assetReader: AssetReader,
   private val saveManager: SaveManager,
+  private val metaManager: MetaManager,
   private val ioDispatcher: CoroutineDispatcher
 ) {
 
@@ -114,6 +116,9 @@ class GameController(
     val node = engine.currentNode() as? SceneNode.DiceRoll ?: return step()
 
     engine.state.diceResult = engine.dice.roll(node.sides)
+
+    val randomCard = cardManager.drawCard()
+    metaManager.addCard(randomCard)
 
     return step()
   }
