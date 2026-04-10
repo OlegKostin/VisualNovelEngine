@@ -1,5 +1,6 @@
 package com.olegkos.save.metaStorage
 
+import com.olegkos.vnengine.engine.cards.CardData
 import java.util.UUID
 
 class MetaManager(

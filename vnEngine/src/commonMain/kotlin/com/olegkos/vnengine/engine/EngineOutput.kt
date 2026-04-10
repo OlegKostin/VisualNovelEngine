@@ -1,5 +1,6 @@
 package com.olegkos.vnengine.engine
 
+import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
 import com.olegkos.vnengine.scene.SubClass
@@ -47,7 +48,7 @@ sealed interface EngineOutput {
 
   data class ShowCardUsage(
     val diceResult: Int,
-    val cards: List<CardInstance>,
+    val cards: List<CardData>,
     val maxCards: Int
   ) : EngineOutput
 

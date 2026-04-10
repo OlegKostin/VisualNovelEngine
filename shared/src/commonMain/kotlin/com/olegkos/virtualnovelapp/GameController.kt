@@ -10,6 +10,7 @@ import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.engine.cards.CardManager
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.game.GameLoader
 import com.olegkos.vnengine.scene.Option
@@ -25,6 +26,7 @@ class GameController(
   private val assetReader: AssetReader,
   private val saveManager: SaveManager,
   private val metaManager: MetaManager,
+  private val cardManager: CardManager,
   private val ioDispatcher: CoroutineDispatcher
 ) {
 
@@ -117,8 +119,8 @@ class GameController(
 
     engine.state.diceResult = engine.dice.roll(node.sides)
 
-    val randomCard = cardManager.drawCard()
-    metaManager.addCard(randomCard)
+//    val randomCard = cardManager.drawCard()
+//    metaManager.addCard(randomCard)
 
     return step()
   }
