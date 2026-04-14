@@ -7,6 +7,7 @@ data class GameState(
   var pointer: NodePointer,
   val variables: MutableMap<String, GameValue> = mutableMapOf(),
   var diceResult: Int? = null,
+  var diceModifiedResult: Float? = null,
   val scenarioStack: ArrayDeque<NodePointer> = ArrayDeque(),
   var isGameInitialized: Boolean = false,
 )

@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
@@ -148,7 +149,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             .graphicsLayer(
               scaleX = char.scale,
               scaleY = char.scale,
-              transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+              transformOrigin = TransformOrigin(0.5f, 1f)
             ),
           contentScale = ContentScale.Fit
         )
@@ -262,7 +263,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             modifier = o.modifier,
             difficulty = o.difficulty,
             onRoll = { viewModel.rollDice() },
-            onContinue = { viewModel.next() }
+            onContinue = { viewModel.next() },
+            onApplyCard = { value -> viewModel.applyDiceModifier(value) }
           )
         }
         is EngineOutput.ShowSceneView -> Unit

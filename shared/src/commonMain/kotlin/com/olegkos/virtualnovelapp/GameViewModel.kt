@@ -95,7 +95,11 @@
 
       next()
     }
-
+    fun applyDiceModifier(value: Float) {
+      val (output, node) = controller.applyDiceModifier(value)
+      currentOutput = output
+      currentNode = node
+    }
     fun jumpScenario(path: String) {
       viewModelScope.launch {
         val (output, node) = controller.switchScenario(path)

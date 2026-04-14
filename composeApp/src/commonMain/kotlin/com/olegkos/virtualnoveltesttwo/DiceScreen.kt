@@ -22,11 +22,13 @@ fun DiceScreen(
   modifier: Float,
   difficulty: Int,
   onRoll: () -> Unit,
+  onApplyCard: (Float) -> Unit,
   onContinue: () -> Unit
 ) {
 
   var isRolling by remember { mutableStateOf(false) }
   var showResult by remember { mutableStateOf(false) }
+  var showCardsPhase by remember { mutableStateOf(false) }
   var rollingValue by remember { mutableIntStateOf(1) }
 
   LaunchedEffect(isRolling) {
@@ -85,10 +87,12 @@ fun DiceScreen(
 
     when {
 
+      // 1. БРОСОК
       result == null && !isRolling -> {
         Button(
           onClick = {
             showResult = false
+            showCardsPhase = false
             isRolling = true
           }
         ) {
@@ -96,12 +100,67 @@ fun DiceScreen(
         }
       }
 
-      result != null && showResult -> {
+      // 2. ПОСЛЕ БРОСКА → показать результат и кнопку "карты"
+      result != null && showResult && !showCardsPhase -> {
+
+        Text("Бросок: $result")
+        Text("Модификатор: $modifier")
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+          onClick = {
+            showCardsPhase = true
+          }
+        ) {
+          Text("Использовать карты")
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Button(
+          onClick = {
+            // без карт
+            onApplyCard(0f)
+          }
+        ) {
+          Text("Без карт")
+        }
+      }
+
+      // 3. ФАЗА КАРТ
+      showCardsPhase -> {
+
+        Text("Выбери карту")
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+          onClick = {
+            onApplyCard(2f) // пример
+          }
+        ) {
+          Text("+2")
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Button(
+          onClick = {
+            onApplyCard(5f)
+          }
+        ) {
+          Text("+5")
+        }
+      }
+
+      // 4. ФИНАЛ (engine уже пересчитал)
+      result != null && !isRolling && !showCardsPhase -> {
 
         val total = result + modifier
 
         Text("Бросок: $result")
-        Text("Модификатор: $modifier")
+        Text("Итоговый модификатор: $modifier")
         Text("Итого: $total / $difficulty")
 
         Spacer(Modifier.height(16.dp))

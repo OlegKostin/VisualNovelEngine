@@ -140,6 +140,8 @@ class VnEngine(
           return ShowChoices(node.options)
         }
         is SceneNode.DiceRoll -> {
+
+          // 1. ЕЩЁ НЕ БРОСАЛИ
           if (state.diceResult == null) {
             return ShowDice(
               name = node.name,
@@ -150,27 +152,51 @@ class VnEngine(
             )
           }
 
-          // Кубик уже бросан — продолжаем сцену
           val roll = state.diceResult!!
-          val mod = variables.getModifier(node.modifierVar).round2()
-          val total = (roll.toFloat() + mod).round2()
+          val baseMod = variables.getModifier(node.modifierVar).round2()
+
+          // 2. БРОСИЛИ, НО КАРТЫ НЕ ПРИМЕНЕНЫ
+          if (state.diceModifiedResult == null) {
+            return ShowDice(
+              name = node.name,
+              sides = node.sides,
+              result = roll,
+              modifier = baseMod,
+              difficulty = node.difficulty
+            )
+          }
+
+          // 3. ФИНАЛ (ПОСЛЕ КАРТ)
+          val total = state.diceModifiedResult!!.round2()
+
+          val finalModifier = (total - roll).round2()
 
           val resultOutput = ShowDice(
             name = node.name,
             sides = node.sides,
             result = roll,
-            modifier = mod,
+            modifier = finalModifier,
             difficulty = node.difficulty
           )
 
           when {
-            roll == 1 && node.critFailScene != null -> jumpToScene(node.critFailScene)
-            roll == node.sides && node.critSuccessScene != null -> jumpToScene(node.critSuccessScene)
-            total >= node.difficulty -> jumpToScene(node.successScene)
-            else -> jumpToScene(node.failScene)
+            roll == 1 && node.critFailScene != null ->
+              jumpToScene(node.critFailScene)
+
+            roll == node.sides && node.critSuccessScene != null ->
+              jumpToScene(node.critSuccessScene)
+
+            total >= node.difficulty ->
+              jumpToScene(node.successScene)
+
+            else ->
+              jumpToScene(node.failScene)
           }
 
+          // очищаем состояние
           state.diceResult = null
+          state.diceModifiedResult = null
+
           return resultOutput
         }
 

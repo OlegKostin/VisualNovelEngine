@@ -125,6 +125,20 @@ class GameController(
     return step()
   }
 
+  fun applyDiceModifier(extra: Float): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+
+    val base = engine.state.diceResult ?: return next()
+
+    val currentMod = engine.variables.getModifier(
+      (engine.currentNode() as SceneNode.DiceRoll).modifierVar
+    )
+
+    engine.state.diceModifiedResult = base + currentMod + extra
+
+    return next()
+  }
+
   fun saveGame(slot: String) {
     val engine = engine ?: return
 
