@@ -18,6 +18,7 @@ sealed interface EngineOutput {
     val sides: Int,
     val result: Int?,
     val modifier: Float,
+    val phase: DicePhase,
     val difficulty: Int
   ) : EngineOutput
   data class ShowVar(val name: String, val value: String, val text: String): EngineOutput
@@ -61,4 +62,10 @@ sealed interface EngineOutput {
   data class ShowEffect(
     val image: String
   ) : EngineOutput
+}
+enum class DicePhase {
+  ROLL,
+  RESULT,
+//  CARD_SELECTION,
+  FINAL
 }

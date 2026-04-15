@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.olegkos.vnengine.engine.DicePhase
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -21,46 +22,29 @@ fun DiceScreen(
   result: Int?,
   modifier: Float,
   difficulty: Int,
+  phase: DicePhase,
   onRoll: () -> Unit,
   onApplyCard: (Float) -> Unit,
   onContinue: () -> Unit
 ) {
 
   var isRolling by remember { mutableStateOf(false) }
-  var showResult by remember { mutableStateOf(false) }
-  var showCardsPhase by remember { mutableStateOf(false) }
   var rollingValue by remember { mutableIntStateOf(1) }
 
+  // 👉 анимация
   LaunchedEffect(isRolling) {
-
     if (!isRolling) return@LaunchedEffect
-
-    onRoll()
-
-    val final = result ?: (1..sides).random()
 
     var delayMs = 40L
 
-    repeat(20) {
+    repeat(15) {
       rollingValue = (1..sides).random()
       delay(delayMs)
       delayMs += 10
     }
 
-    val nearValues = listOf(
-      (1..sides).random(),
-      (1..sides).random(),
-      final
-    )
-
-    for (v in nearValues) {
-      rollingValue = v
-      delay(delayMs)
-      delayMs += 40
-    }
-
-    rollingValue = final
-    showResult = true
+    // финальное значение от engine
+    rollingValue = result ?: 1
     isRolling = false
   }
 
@@ -70,12 +54,11 @@ fun DiceScreen(
 
     Spacer(Modifier.height(24.dp))
 
-    val valueToShow =
-      when {
-        isRolling -> rollingValue
-        result != null -> result
-        else -> 20
-      }
+    val valueToShow = when {
+      isRolling -> rollingValue
+      result != null -> result
+      else -> 20
+    }
 
     Image(
       painter = painterResource(diceImage(valueToShow)),
@@ -85,79 +68,51 @@ fun DiceScreen(
 
     Spacer(Modifier.height(24.dp))
 
-    when {
+    when (phase) {
 
       // 1. БРОСОК
-      result == null && !isRolling -> {
+      DicePhase.ROLL -> {
         Button(
           onClick = {
-            showResult = false
-            showCardsPhase = false
-            isRolling = true
+            onRoll()      // 👉 сначала кидаем в engine
+            isRolling = true // 👉 потом запускаем анимацию
           }
         ) {
           Text("Бросить")
         }
       }
 
-      // 2. ПОСЛЕ БРОСКА → показать результат и кнопку "карты"
-      result != null && showResult && !showCardsPhase -> {
+      // 2. ПОСЛЕ БРОСКА
+      DicePhase.RESULT -> {
 
-        Text("Бросок: $result")
-        Text("Модификатор: $modifier")
+        if (!isRolling) {
+          Text("Бросок: $result")
+          Text("Модификатор: $modifier")
 
-        Spacer(Modifier.height(16.dp))
+          Spacer(Modifier.height(16.dp))
 
-        Button(
-          onClick = {
-            showCardsPhase = true
+          Button(onClick = { onApplyCard(0f) }) {
+            Text("Без карт")
           }
-        ) {
-          Text("Использовать карты")
-        }
 
-        Spacer(Modifier.height(8.dp))
+          Spacer(Modifier.height(8.dp))
 
-        Button(
-          onClick = {
-            // без карт
-            onApplyCard(0f)
+          Button(onClick = { onApplyCard(2f) }) {
+            Text("+2")
           }
-        ) {
-          Text("Без карт")
-        }
-      }
 
-      // 3. ФАЗА КАРТ
-      showCardsPhase -> {
+          Spacer(Modifier.height(8.dp))
 
-        Text("Выбери карту")
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-          onClick = {
-            onApplyCard(2f) // пример
+          Button(onClick = { onApplyCard(5f) }) {
+            Text("+5")
           }
-        ) {
-          Text("+2")
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        Button(
-          onClick = {
-            onApplyCard(5f)
-          }
-        ) {
-          Text("+5")
         }
       }
 
-      // 4. ФИНАЛ (engine уже пересчитал)
-      result != null && !isRolling && !showCardsPhase -> {
+      // 3. ФИНАЛ
+      DicePhase.FINAL -> {
 
-        val total = result + modifier
+        val total = (result ?: 0) + modifier
 
         Text("Бросок: $result")
         Text("Итоговый модификатор: $modifier")
@@ -172,7 +127,6 @@ fun DiceScreen(
     }
   }
 }
-
 fun diceImage(value: Int): DrawableResource =
   when (value) {
     1 -> Res.drawable.d1

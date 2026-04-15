@@ -141,34 +141,36 @@ class VnEngine(
         }
         is SceneNode.DiceRoll -> {
 
+          val roll = state.diceResult
+          val baseMod = variables.getModifier(node.modifierVar).round2()
+          val modified = state.diceModifiedResult
+
           // 1. ЕЩЁ НЕ БРОСАЛИ
-          if (state.diceResult == null) {
+          if (roll == null) {
             return ShowDice(
               name = node.name,
               sides = node.sides,
               result = null,
-              modifier = variables.getModifier(node.modifierVar),
-              difficulty = node.difficulty
+              modifier = baseMod,
+              difficulty = node.difficulty,
+              phase = DicePhase.ROLL
             )
           }
 
-          val roll = state.diceResult!!
-          val baseMod = variables.getModifier(node.modifierVar).round2()
-
           // 2. БРОСИЛИ, НО КАРТЫ НЕ ПРИМЕНЕНЫ
-          if (state.diceModifiedResult == null) {
+          if (modified == null) {
             return ShowDice(
               name = node.name,
               sides = node.sides,
               result = roll,
               modifier = baseMod,
-              difficulty = node.difficulty
+              difficulty = node.difficulty,
+              phase = DicePhase.RESULT
             )
           }
 
           // 3. ФИНАЛ (ПОСЛЕ КАРТ)
-          val total = state.diceModifiedResult!!.round2()
-
+          val total = modified.round2()
           val finalModifier = (total - roll).round2()
 
           val resultOutput = ShowDice(
@@ -176,9 +178,11 @@ class VnEngine(
             sides = node.sides,
             result = roll,
             modifier = finalModifier,
-            difficulty = node.difficulty
+            difficulty = node.difficulty,
+            phase = DicePhase.FINAL
           )
 
+          // переход сцены
           when {
             roll == 1 && node.critFailScene != null ->
               jumpToScene(node.critFailScene)

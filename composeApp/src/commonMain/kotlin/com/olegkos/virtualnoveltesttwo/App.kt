@@ -263,6 +263,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             modifier = o.modifier,
             difficulty = o.difficulty,
             onRoll = { viewModel.rollDice() },
+            phase = o.phase,
             onContinue = { viewModel.next() },
             onApplyCard = { value -> viewModel.applyDiceModifier(value) }
           )
