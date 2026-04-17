@@ -45,6 +45,7 @@ class GameController(
     private set
 
   suspend fun init(): Pair<EngineOutput, SceneNode?> {
+    println("ENGINE INSTANCE: ${System.identityHashCode(engine)}")
     val game = withContext(ioDispatcher) {
       loader.load(gameConfigPath)
     }
@@ -91,6 +92,25 @@ class GameController(
 
     val output = engine.step(option)
 
+    if (output is EngineOutput.DrawCardRequest) {
+
+      val card = when {
+        output.random == true -> cardManager.drawCard()
+        output.value != null -> cardManager.drawCard() //cardManager.getByValue(output.value)
+        output.image != null -> cardManager.drawCard()//cardManager.getByImage(output.image)
+        else -> null
+      }
+
+      requireNotNull(card) { "Card not found: $output" }
+
+      metaManager.addCard(card)
+
+
+
+
+      return next(option)
+    }
+
     if (output is EngineOutput.JumpScenarioOutput) {
       return output to null
     }
@@ -112,6 +132,7 @@ class GameController(
 
     return step()
   }
+
 
   fun rollDice(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null

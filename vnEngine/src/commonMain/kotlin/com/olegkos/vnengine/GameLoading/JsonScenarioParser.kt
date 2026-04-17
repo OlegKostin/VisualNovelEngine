@@ -41,6 +41,7 @@ class JsonScenarioParser : ScenarioParser {
           id = sceneId,
           nodes = sceneJson.nodes.map { nodeJson ->
 
+            println("Node ${nodeJson::class.simpleName} -> $nodeJson")
             when (nodeJson) {
 
               is SceneNodeJson.Text ->
@@ -131,10 +132,10 @@ class JsonScenarioParser : ScenarioParser {
               )
 
               is HideImageNode -> HideImage
-              is SceneViewNode -> SceneNode.SceneView(
+              is SceneViewNode -> SceneView(
                 background = nodeJson.background,
                 navigation = nodeJson.navigation?.let {
-                  SceneNode.Navigation(
+                  Navigation(
                     up = it.up,
                     down = it.down,
                     left = it.left,
@@ -142,7 +143,7 @@ class JsonScenarioParser : ScenarioParser {
                   )
                 },
                 hotspots = nodeJson.hotspots.map {
-                  SceneNode.Hotspot(
+                  Hotspot(
                     xPercent = it.xPercent,
                     yPercent = it.yPercent,
                     widthPercent = it.widthPercent,
@@ -150,6 +151,12 @@ class JsonScenarioParser : ScenarioParser {
                     targetScenarioFile = it.targetScenarioFile
                   )
                 }
+              )
+
+              is SceneNodeJson.DrawCard -> DrawCard(
+                random = nodeJson.random,
+                value = nodeJson.value,
+                image = nodeJson.image
               )
             }
           }
@@ -203,6 +210,14 @@ sealed class SceneNodeJson {
   @Serializable
   @SerialName("setVar")
   data class SetVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("drawCard")
+  data class DrawCard(
+    val random: Boolean? = null,
+    val value: Int? = null,
+    val image: String? = null
+  ) : SceneNodeJson()
 
   @Serializable
   @SerialName("modifyVar")

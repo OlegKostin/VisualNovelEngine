@@ -40,7 +40,11 @@ sealed interface EngineOutput {
   data class HideCharacter(
     val id: String
   ) : EngineOutput
-
+  data class DrawCardRequest(
+    val random: Boolean?,
+    val value: Int?,
+    val image: String?
+  ) : EngineOutput
   data class ShowSceneView(
     val background: String,
     val navigation: SceneNode.Navigation?,

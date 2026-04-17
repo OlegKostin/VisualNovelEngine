@@ -55,7 +55,7 @@ class VnEngine(
     return node
   }
   fun step(selectedOption: Option? = null): EngineOutput {
-
+    println("=== STEP START === pointer=$state.pointer option=$selectedOption")
     while (true) {
 
       val scene = scenes[state.pointer.sceneId]
@@ -65,13 +65,27 @@ class VnEngine(
         return EndOfScene
       }
 
-      val node = resolveNode() ?: return EndOfScene
+      val node = resolveNode() ?: run {
+        println("resolveNode returned NULL -> EndOfScene")
+        return EndOfScene
+      }
+      println("RESOLVED NODE: ${node::class.simpleName}")
 
       when (node) {
 
         is SceneNode.SetVar -> {
           variables.set(node.varName, node.value.resolve())
           advance()
+        }
+
+        is SceneNode.DrawCard -> {
+          println("HANDLE DrawCard node=$node")
+          advance()
+          return DrawCardRequest(
+            random = node.random,
+            value = node.value,
+            image = node.image
+          )
         }
 
         is SceneNode.ModifyVar -> {
@@ -308,12 +322,14 @@ class VnEngine(
   }
 
   private fun advance() {
-    println("ADVANCE from ${state.pointer}")
+    val before = state.pointer.nodeIndex
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )
-  }
+    val after = state.pointer.nodeIndex
 
+    println("ADVANCE: $before -> $after")
+  }
   private fun resolveTextVariables(rawText: String): String {
     val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()
     return regex.replace(rawText) { matchResult ->

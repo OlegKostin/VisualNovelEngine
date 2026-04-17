@@ -24,6 +24,11 @@ sealed interface SceneNode {
   ) : SceneNode
 
   data class SetVar(val varName: String, val value: GameValue) : SceneNode
+  data class DrawCard(
+    val random: Boolean? = null,
+    val value: Int? = null,
+    val image: String? = null
+  ) : SceneNode
 
   data class ModifyVar(val varName: String, val value: GameValue, val text: String) : SceneNode
 
