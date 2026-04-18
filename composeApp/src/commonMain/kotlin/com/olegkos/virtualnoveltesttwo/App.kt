@@ -2,10 +2,24 @@ package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
@@ -23,8 +37,6 @@ import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
-import com.olegkos.vnengine.engine.asserts.AssetPathResolver
-import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SubClass
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -76,9 +88,11 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
         viewModel.next()
       }
+
       is EngineOutput.ShowCard -> {
         cardImage = o.image
       }
+
       is EngineOutput.HideImage -> {
         image = null
         viewModel.next()
@@ -102,7 +116,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     val boxWidth = maxWidth
 
     background?.let { bgPath ->
-      val painter = rememberPainter(viewModel.assets.image(bgPath), viewModel.reader)
+      val painter = rememberPainter(viewModel.assets.background(bgPath), viewModel.reader)
       painter?.let {
         Image(
           painter = it,
@@ -231,6 +245,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             }
           )
         }
+
         is EngineOutput.ShowVar -> {
           ShowVarScreen(
             name = o.name,
@@ -238,7 +253,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             description = o.text,
             onNext = { viewModel.next() }
           )
-      }
+        }
+
         is EngineOutput.ShowText -> {
           VNTextBox(
             speaker = o.speaker,
@@ -257,6 +273,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             }
           }
         }
+
         is EngineOutput.ShowChoices -> {
           o.options.forEach { option ->
             Button(
@@ -283,6 +300,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             onApplyCard = { value -> viewModel.applyDiceModifier(value) }
           )
         }
+
         is EngineOutput.ShowSceneView -> Unit
         else -> Text("Загрузка...")
       }
@@ -304,6 +322,7 @@ fun rememberPainter(
 
   return painter
 }
+
 @Composable
 fun ArrowButton(
   alignment: Alignment,

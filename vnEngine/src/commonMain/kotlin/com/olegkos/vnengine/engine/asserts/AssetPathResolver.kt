@@ -9,13 +9,13 @@ class AssetPathResolver(
 ) {
 
   fun background(path: String) =
-    "$root/backgrounds/$path"
+    "$root/$path"
 
   fun character(path: String) =
     "$root/$path"
 
   fun image(path: String) =
-    "$root/$path" // общий fallback (если нужен)
+    "$root/$path"
 
   fun card(path: String) =
     "game/$path"
