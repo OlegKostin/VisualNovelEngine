@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -148,12 +149,14 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           painter = it,
           contentDescription = null,
           modifier = Modifier
-            .size(200.dp)
+            .height(maxHeight * 0.8f)
+            .fillMaxWidth()
             .align(Alignment.Center),
           contentScale = ContentScale.Fit
         )
       }
     }
+
 
     characters.forEach { char ->
       val painter = rememberPainter(viewModel.assets.character(char.image), viewModel.reader)
