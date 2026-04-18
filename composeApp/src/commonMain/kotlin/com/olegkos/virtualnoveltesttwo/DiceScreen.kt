@@ -1,12 +1,14 @@
 package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.engine.DicePhase
 import com.olegkos.vnengine.engine.UiCard
@@ -23,6 +25,7 @@ fun DiceScreen(
   modifier: Float,
   difficulty: Int,
   cards: List<UiCard>,
+  cardPainter: @Composable (String) -> BitmapPainter?,
   phase: DicePhase,
   onRoll: () -> Unit,
   onApplyCard: (Float, List<String>) -> Unit,
@@ -71,7 +74,6 @@ fun DiceScreen(
 
     Spacer(Modifier.height(24.dp))
 
-    // 👇 UI-фаза НЕ ломаем engine
     val uiPhase = when {
       showCards -> DicePhase.CARD_SELECTION
       else -> phase
@@ -139,14 +141,30 @@ fun DiceScreen(
 
             val isSelected = card.id in selectedCards
 
-            Button(onClick = {
-              selectedCards = if (isSelected) {
-                selectedCards - card.id
-              } else {
-                selectedCards + card.id
+            val painter = cardPainter(card.image)
+
+            painter?.let {
+              Column(
+                modifier = Modifier
+                  .padding(8.dp)
+                  .clickable {
+                    selectedCards = if (isSelected) {
+                      selectedCards - card.id
+                    } else {
+                      selectedCards + card.id
+                    }
+                  },
+                horizontalAlignment = Alignment.CenterHorizontally
+              ) {
+
+                Image(
+                  painter = it,
+                  contentDescription = null,
+                  modifier = Modifier.size(140.dp)
+                )
+
+                Text(if (isSelected) "✓ выбрано" else "")
               }
-            }) {
-              Text(if (isSelected) "✓ ${card.id}" else card.id)
             }
           }
 

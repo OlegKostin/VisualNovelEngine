@@ -300,6 +300,10 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             phase = o.phase,
             cards = viewModel.getCards(),
             onContinue = { viewModel.next() },
+            cardPainter = { path ->
+              rememberPainter(viewModel.assets.card(path), viewModel.reader)
+            },
+
             onApplyCard = { value, usedCards ->
               viewModel.applyDiceModifier(value, usedCards)
             }
