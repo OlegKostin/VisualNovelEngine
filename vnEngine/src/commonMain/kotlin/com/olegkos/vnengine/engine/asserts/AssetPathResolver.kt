@@ -8,14 +8,17 @@ class AssetPathResolver(
   private val reader: AssetReader
 ) {
 
-  fun background(name: String) =
-    "backgrounds/$name"
+  fun background(path: String) =
+    "$root/backgrounds/$path"
 
-  fun character(name: String) =
-    "characters/$name"
-
-  fun image(path: String): String =
+  fun character(path: String) =
     "$root/$path"
+
+  fun image(path: String) =
+    "$root/$path" // общий fallback (если нужен)
+
+  fun card(path: String) =
+    "game/$path"
 
   suspend fun readBytes(path: String): ByteArray {
     return reader.readBytes("$root/$path")

@@ -40,6 +40,7 @@ class GameLoader(
       scenarioPath = scenarioPath,
       assetsRoot = config.assetsRoot,
       variables = config.variables,
+      cards = config.cards,
       assets = AssetPathResolver(config.assetsRoot, assetReader)
     )  }
 }

@@ -8,5 +8,6 @@ data class LoadedGame(
   val scenarioPath: String,
   val variables: String,
   val assetsRoot: String,
+  val cards: String,
   val assets: AssetPathResolver
 )

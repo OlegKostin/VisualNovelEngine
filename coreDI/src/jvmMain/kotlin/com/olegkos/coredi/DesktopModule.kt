@@ -66,7 +66,7 @@ actual val platformModule = module {
     MetaManager(get())
   }
   single {
-    CardManager( cards = get())
+    CardManager()
   }
   single<List<CardData>> {
     listOf(

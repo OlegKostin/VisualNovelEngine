@@ -10,6 +10,8 @@ import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.engine.cards.CardConfig
+import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.game.GameLoader
@@ -46,21 +48,27 @@ class GameController(
 
   suspend fun init(): Pair<EngineOutput, SceneNode?> {
     println("ENGINE INSTANCE: ${System.identityHashCode(engine)}")
+
     val game = withContext(ioDispatcher) {
       loader.load(gameConfigPath)
     }
 
+    // assets
     this.assets = game.assets
     this.reader = assetReader
-
     currentScenario = game.scenarioPath
 
-    val varsRaw = assetReader.readText(basePath + game.variables)
-
     val json = Json { ignoreUnknownKeys = true }
+
+    // =========================
+    // VARIABLES
+    // =========================
+    val varsRaw = assetReader.readText(basePath + game.variables)
     val varsMap = json.decodeFromString<Map<String, JsonElement>>(varsRaw)
 
-    val state = GameState(NodePointer(game.scenario.startSceneId, 0))
+    val state = GameState(
+      pointer = NodePointer(game.scenario.startSceneId, 0)
+    )
 
     varsMap.forEach { (key, value) ->
       state.variables[key] = when {
@@ -80,13 +88,36 @@ class GameController(
       }
     }
 
+    // =========================
+    // CARDS (🔥 ВАЖНО)
+    // =========================
+    println("LOAD CARDS FROM: ${game.cards}")
+
+    val cardsRaw = assetReader.readText(basePath + game.cards)
+
+    val cardsList = try {
+      val wrapper = json.decodeFromString<CardConfig>(cardsRaw)
+      wrapper.cards
+    } catch (e: Exception) {
+      println("❌ ERROR PARSING CARDS: ${e.message}")
+      emptyList()
+    }
+    println("CARDS LOADED: ${cardsList.size}")
+
+    cardManager.setCards(cardsList)
+
+    // =========================
+    // ENGINE
+    // =========================
     engine = VnEngine(state, dice).apply {
       addScenes(game.scenario.scenes)
     }
 
+    // =========================
+    // START GAME
+    // =========================
     return step()
   }
-
   fun next(option: Option? = null): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
@@ -104,11 +135,9 @@ class GameController(
       requireNotNull(card) { "Card not found: $output" }
 
       metaManager.addCard(card)
-
-
-
-
-      return next(option)
+      return EngineOutput.ShowCard(
+        image = card.image,
+      ) to null
     }
 
     if (output is EngineOutput.JumpScenarioOutput) {

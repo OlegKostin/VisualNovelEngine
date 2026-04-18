@@ -36,7 +36,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   var image by remember { mutableStateOf<String?>(null) }
   var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
   var sceneView by remember { mutableStateOf<EngineOutput.ShowSceneView?>(null) }
-
+  var cardImage by remember { mutableStateOf<String?>(null) }
 
   fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
     val index = position.lowercase().removePrefix("pos").toIntOrNull() ?: 0
@@ -76,6 +76,9 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
         viewModel.next()
       }
+      is EngineOutput.ShowCard -> {
+        cardImage = o.image
+      }
       is EngineOutput.HideImage -> {
         image = null
         viewModel.next()
@@ -99,11 +102,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     val boxWidth = maxWidth
 
     background?.let { bgPath ->
-      val painter = rememberPainter(
-        path = bgPath,
-        resolver = viewModel.assets,
-        reader = viewModel.reader
-      )
+      val painter = rememberPainter(viewModel.assets.image(bgPath), viewModel.reader)
       painter?.let {
         Image(
           painter = it,
@@ -115,11 +114,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
 
     image?.let { imgPath ->
-      val painter = rememberPainter(
-        path = imgPath,
-        resolver = viewModel.assets,
-        reader = viewModel.reader
-      )
+      val painter = rememberPainter(viewModel.assets.image(imgPath), viewModel.reader)
       painter?.let {
         Image(
           painter = it,
@@ -132,12 +127,22 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
+    cardImage?.let { cardPath ->
+      val painter = rememberPainter(viewModel.assets.card(cardPath), viewModel.reader)
+      painter?.let {
+        Image(
+          painter = it,
+          contentDescription = null,
+          modifier = Modifier
+            .size(200.dp)
+            .align(Alignment.Center),
+          contentScale = ContentScale.Fit
+        )
+      }
+    }
+
     characters.forEach { char ->
-      val painter = rememberPainter(
-        path = char.image,
-        resolver = viewModel.assets,
-        reader = viewModel.reader
-      )
+      val painter = rememberPainter(viewModel.assets.character(char.image), viewModel.reader)
       painter?.let {
         val xOffset = positionOffsetFromString(char.position, boxWidth)
         Image(
@@ -242,6 +247,16 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
 
+        is EngineOutput.ShowCard -> {
+          Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(onClick = {
+              cardImage = null
+              viewModel.next()
+            }) {
+              Text("Продолжить")
+            }
+          }
+        }
         is EngineOutput.ShowChoices -> {
           o.options.forEach { option ->
             Button(
@@ -278,20 +293,17 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 @Composable
 fun rememberPainter(
   path: String,
-  resolver: AssetPathResolver,
   reader: AssetReader
 ): BitmapPainter? {
   var painter by remember { mutableStateOf<BitmapPainter?>(null) }
 
   LaunchedEffect(path) {
-    val fullPath = resolver.image(path)
-    val bytes = reader.readBytes(fullPath)
+    val bytes = reader.readBytes(path)
     painter = BitmapPainter(loadImageBitmap(bytes.inputStream()))
   }
 
   return painter
 }
-
 @Composable
 fun ArrowButton(
   alignment: Alignment,

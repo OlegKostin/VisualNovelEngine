@@ -50,7 +50,9 @@ sealed interface EngineOutput {
     val navigation: SceneNode.Navigation?,
     val hotspots: List<SceneNode.Hotspot>
   ) : EngineOutput
-
+  data class ShowCard(
+    val image: String,
+  ) : EngineOutput
   data class ShowCardUsage(
     val diceResult: Int,
     val cards: List<CardData>,
