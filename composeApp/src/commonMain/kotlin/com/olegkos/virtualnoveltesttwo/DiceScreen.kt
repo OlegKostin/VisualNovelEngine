@@ -132,87 +132,81 @@ fun DiceScreen(
 
       DicePhase.CARD_SELECTION -> {
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
           Text("Выбери карты")
 
-          Spacer(Modifier.height(8.dp))
+          Spacer(Modifier.height(16.dp))
 
-          val currentBonus = cards
-            .filter { it.id in selectedCards }
-            .sumOf { it.value.toDouble() }
-            .toFloat()
+          BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            val cardSize = maxWidth * 0.15f
 
-          Text("Бонус: +$currentBonus")
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.Center
+            ) {
 
-          Spacer(Modifier.height(12.dp))
+              cards.forEach { card ->
 
-          Column {
-            cards.chunked(2).forEach { row ->
+                val isSelected = card.id in selectedCards
+                val painter = cardPainter(card.image)
 
-              Row(
-                horizontalArrangement = Arrangement.Center
-              ) {
+                painter?.let {
 
-                row.forEach { card ->
-
-                  val isSelected = card.id in selectedCards
-                  val painter = cardPainter(card.image)
-
-                  painter?.let {
-
-                    Column(
-                      modifier = Modifier
-                        .padding(8.dp)
-                        .clickable {
-                          selectedCards = if (isSelected) {
-                            selectedCards - card.id
-                          } else {
-                            selectedCards + card.id
-                          }
-                        },
-                      horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-
-                      Box {
-
-                        Image(
-                          painter = it,
-                          contentDescription = null,
-                          modifier = Modifier
-                            .size(120.dp)
-                        )
-
-                        if (isSelected) {
-                          Text(
-                            text = "✓",
-                            modifier = Modifier
-                              .align(Alignment.TopEnd)
-                              .padding(4.dp)
-                          )
+                  Column(
+                    modifier = Modifier
+                      .padding(6.dp)
+                      .clickable {
+                        selectedCards = if (isSelected) {
+                          selectedCards - card.id
+                        } else {
+                          selectedCards + card.id
                         }
-                      }
+                      },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                  ) {
 
-                      // 👉 value карты
-                      Text("+${card.value}")
+                    Box {
+
+                      Image(
+                        painter = it,
+                        contentDescription = null,
+                        modifier = Modifier.size(cardSize)
+                      )
+
+                      if (isSelected) {
+                        Text(
+                          text = "✓",
+                          modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                        )
+                      }
                     }
+
+                    Text("+${card.value}")
                   }
                 }
               }
             }
           }
 
-          Spacer(Modifier.height(16.dp))
+          Spacer(Modifier.height(20.dp))
+
+          val bonus = cards
+            .filter { it.id in selectedCards }
+            .sumOf { it.value.toDouble() }
+            .toFloat()
 
           Button(
             enabled = selectedCards.isNotEmpty(),
             onClick = {
               val usedCards = selectedCards.toList()
-
-              val bonus = cards
-                .filter { it.id in selectedCards }
-                .sumOf { it.value.toDouble() }
-                .toFloat()
 
               onApplyCard(bonus, usedCards)
 
@@ -220,7 +214,7 @@ fun DiceScreen(
               showCards = false
             }
           ) {
-            Text("Применить (+$currentBonus)")
+            Text("Применить (+$bonus)")
           }
         }
       }
