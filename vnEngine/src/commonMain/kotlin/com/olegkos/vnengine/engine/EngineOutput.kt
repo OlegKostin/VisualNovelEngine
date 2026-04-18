@@ -19,7 +19,8 @@ sealed interface EngineOutput {
     val result: Int?,
     val modifier: Float,
     val phase: DicePhase,
-    val difficulty: Int
+    val difficulty: Int,
+    val cards: List<UiCard> = emptyList(),
   ) : EngineOutput
   data class ShowVar(val name: String, val value: String, val text: String): EngineOutput
   data class JumpScenarioOutput(val scenarioFile: String) : EngineOutput
@@ -52,6 +53,7 @@ sealed interface EngineOutput {
   ) : EngineOutput
   data class ShowCard(
     val image: String,
+    val id: String
   ) : EngineOutput
   data class ShowCardUsage(
     val diceResult: Int,
@@ -72,6 +74,6 @@ sealed interface EngineOutput {
 enum class DicePhase {
   ROLL,
   RESULT,
-//  CARD_SELECTION,
+  CARD_SELECTION,
   FINAL
 }

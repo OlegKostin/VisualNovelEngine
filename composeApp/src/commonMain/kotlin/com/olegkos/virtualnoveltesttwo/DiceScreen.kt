@@ -7,9 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.engine.DicePhase
+import com.olegkos.vnengine.engine.UiCard
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -22,16 +22,20 @@ fun DiceScreen(
   result: Int?,
   modifier: Float,
   difficulty: Int,
+  cards: List<UiCard>,
   phase: DicePhase,
   onRoll: () -> Unit,
-  onApplyCard: (Float) -> Unit,
+  onApplyCard: (Float, List<String>) -> Unit,
   onContinue: () -> Unit
 ) {
 
   var isRolling by remember { mutableStateOf(false) }
   var rollingValue by remember { mutableIntStateOf(1) }
 
-  // 👉 анимация
+  var selectedCards by remember { mutableStateOf(setOf<String>()) }
+  var showCards by remember { mutableStateOf(false) }
+
+  // 🎲 анимация броска
   LaunchedEffect(isRolling) {
     if (!isRolling) return@LaunchedEffect
 
@@ -43,7 +47,6 @@ fun DiceScreen(
       delayMs += 10
     }
 
-    // финальное значение от engine
     rollingValue = result ?: 1
     isRolling = false
   }
@@ -57,7 +60,7 @@ fun DiceScreen(
     val valueToShow = when {
       isRolling -> rollingValue
       result != null -> result
-      else -> 20
+      else -> 1
     }
 
     Image(
@@ -68,48 +71,49 @@ fun DiceScreen(
 
     Spacer(Modifier.height(24.dp))
 
-    when (phase) {
+    // 👇 UI-фаза НЕ ломаем engine
+    val uiPhase = when {
+      showCards -> DicePhase.CARD_SELECTION
+      else -> phase
+    }
 
-      // 1. БРОСОК
+    when (uiPhase) {
+
       DicePhase.ROLL -> {
-        Button(
-          onClick = {
-            onRoll()      // 👉 сначала кидаем в engine
-            isRolling = true // 👉 потом запускаем анимацию
-          }
-        ) {
+        Button(onClick = {
+          onRoll()
+          isRolling = true
+        }) {
           Text("Бросить")
         }
       }
 
-      // 2. ПОСЛЕ БРОСКА
       DicePhase.RESULT -> {
-
         if (!isRolling) {
+
           Text("Бросок: $result")
           Text("Модификатор: $modifier")
 
           Spacer(Modifier.height(16.dp))
 
-          Button(onClick = { onApplyCard(0f) }) {
+          Button(onClick = {
+            onApplyCard(0f, emptyList())
+          }) {
             Text("Без карт")
           }
 
           Spacer(Modifier.height(8.dp))
 
-          Button(onClick = { onApplyCard(2f) }) {
-            Text("+2")
-          }
-
-          Spacer(Modifier.height(8.dp))
-
-          Button(onClick = { onApplyCard(5f) }) {
-            Text("+5")
+          Button(onClick = {
+            // ❗ ТОЛЬКО UI переключение
+            selectedCards = emptySet()
+            showCards = true
+          }) {
+            Text("Использовать карты")
           }
         }
       }
 
-      // 3. ФИНАЛ
       DicePhase.FINAL -> {
 
         val total = (result ?: 0) + modifier
@@ -122,6 +126,43 @@ fun DiceScreen(
 
         Button(onClick = onContinue) {
           Text("Продолжить")
+        }
+      }
+
+      DicePhase.CARD_SELECTION -> {
+
+        Column {
+
+          Text("Выбери карты (+1 за каждую)")
+
+          cards.forEach { card ->
+
+            val isSelected = card.id in selectedCards
+
+            Button(onClick = {
+              selectedCards = if (isSelected) {
+                selectedCards - card.id
+              } else {
+                selectedCards + card.id
+              }
+            }) {
+              Text(if (isSelected) "✓ ${card.id}" else card.id)
+            }
+          }
+
+          Spacer(Modifier.height(12.dp))
+
+          Button(onClick = {
+            val usedCards = selectedCards.toList()
+            val bonus = usedCards.size * 1f
+
+            onApplyCard(bonus, usedCards)
+
+            selectedCards = emptySet()
+            showCards = false
+          }) {
+            Text("Применить")
+          }
         }
       }
     }

@@ -95,8 +95,12 @@
 
       next()
     }
-    fun applyDiceModifier(value: Float) {
-      val (output, node) = controller.applyDiceModifier(value)
+    fun applyDiceModifier(extra: Float, usedCards: List<String>) {
+      val (output, node) = controller.applyDiceModifier(extra, usedCards)
+
+
+      useCards(usedCards)
+
       currentOutput = output
       currentNode = node
     }
@@ -107,7 +111,15 @@
         currentNode = node
       }
     }
+    fun getCards() = controller.getPlayerCards()
 
+    fun useCards(cardIds: List<String>) {
+      cardIds.forEach { controller.consumeCard(it) }
+    }
+
+    fun consumeCard(cardId: String) {
+      controller.consumeCard(cardId)
+    }
     fun listSaves(): List<String> =
       saveManager.listSaves()
   }

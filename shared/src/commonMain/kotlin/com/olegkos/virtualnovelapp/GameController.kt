@@ -8,6 +8,7 @@ import com.olegkos.vnengine.GameLoading.ScenarioParser
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
+import com.olegkos.vnengine.engine.UiCard
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.cards.CardConfig
@@ -129,6 +130,10 @@ class GameController(
     val engine = engine ?: return EngineOutput.Loading to null
 
     val output = engine.step(option)
+    if (output is EngineOutput.ShowDice) {
+      val cards = getPlayerCards()
+      return output.copy(cards = cards) to engine.currentNode()
+    }
 
     if (output is EngineOutput.DrawCardRequest) {
 
@@ -141,9 +146,10 @@ class GameController(
 
       requireNotNull(card) { "Card not found: $output" }
 
-      metaManager.addCard(card)
+      val instance = metaManager.addCard(card)
       return EngineOutput.ShowCard(
-        image = card.image,
+        image = instance.image,
+        id = instance.id
       ) to null
     }
 
@@ -169,7 +175,14 @@ class GameController(
     return step()
   }
 
-
+  fun getPlayerCards(): List<UiCard> {
+    return metaManager.getCards().map {
+      UiCard(
+        id = it.id,
+        image = it.image
+      )
+    }
+  }
   fun rollDice(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
     val node = engine.currentNode() as? SceneNode.DiceRoll ?: return step()
@@ -182,20 +195,27 @@ class GameController(
     return step()
   }
 
-  fun applyDiceModifier(extra: Float): Pair<EngineOutput, SceneNode?> {
+  fun applyDiceModifier(extra: Float, usedCards: List<String>): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
     val base = engine.state.diceResult ?: return next()
 
-    val currentMod = engine.variables.getModifier(
-      (engine.currentNode() as SceneNode.DiceRoll).modifierVar
-    )
+    val currentNode = engine.currentNode() as? SceneNode.DiceRoll
+      ?: return next()
+
+    val currentMod = engine.variables.getModifier(currentNode.modifierVar)
 
     engine.state.diceModifiedResult = base + currentMod + extra
 
+    usedCards.forEach { cardId ->
+      metaManager.consumeCard(cardId)
+    }
+
     return next()
   }
-
+  fun consumeCard(cardId: String) {
+    metaManager.consumeCard(cardId)
+  }
   fun saveGame(slot: String) {
     val engine = engine ?: return
 
@@ -234,9 +254,15 @@ class GameController(
 
   private fun step(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
-    return engine.step() to engine.currentNode()
-  }
+    val output = engine.step()
 
+    if (output is EngineOutput.ShowDice) {
+      val cards = getPlayerCards()
+      return output.copy(cards = cards) to engine.currentNode()
+    }
+
+    return output to engine.currentNode()
+  }
   fun listSaves(): List<String> =
     saveManager.listSaves()
 }

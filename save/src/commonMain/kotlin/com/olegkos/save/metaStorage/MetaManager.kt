@@ -11,7 +11,7 @@ class MetaManager(
 
   fun getCards(): List<CardInstance> = state.cards
 
-  fun addCard(card: CardData) {
+  fun addCard(card: CardData): CardInstance {
     val newCard = CardInstance(
       value = card.value,
       image = card.image,
@@ -20,7 +20,10 @@ class MetaManager(
 
     state = state.copy(cards = state.cards + newCard)
     storage.save(state)
+
+    return newCard
   }
+
 
   fun consumeCard(cardId: String) {
     state = state.copy(

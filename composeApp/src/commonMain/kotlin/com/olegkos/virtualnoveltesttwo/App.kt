@@ -149,7 +149,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           painter = it,
           contentDescription = null,
           modifier = Modifier
-            .height(maxHeight * 0.8f)
+            .height(maxHeight * 0.95f)
             .align(Alignment.Center),
           contentScale = ContentScale.Fit
         )
@@ -298,8 +298,11 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             difficulty = o.difficulty,
             onRoll = { viewModel.rollDice() },
             phase = o.phase,
+            cards = viewModel.getCards(),
             onContinue = { viewModel.next() },
-            onApplyCard = { value -> viewModel.applyDiceModifier(value) }
+            onApplyCard = { value, usedCards ->
+              viewModel.applyDiceModifier(value, usedCards)
+            }
           )
         }
 
