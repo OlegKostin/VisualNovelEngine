@@ -150,7 +150,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           contentDescription = null,
           modifier = Modifier
             .height(maxHeight * 0.8f)
-            .fillMaxWidth()
             .align(Alignment.Center),
           contentScale = ContentScale.Fit
         )

@@ -26,4 +26,9 @@ class CardManager {
 
     return cards.last()
   }
+  fun getByValue(value: Int): CardData? {
+    return cards
+      .filter { it.value == value }
+      .randomOrNull()
+  }
 }

@@ -96,7 +96,7 @@ class GameController(
     }
 
     // =========================
-    // CARDS (🔥 ВАЖНО)
+    // CARDS
     // =========================
     println("LOAD CARDS FROM: ${game.cards}")
 
@@ -134,7 +134,7 @@ class GameController(
 
       val card = when {
         output.random == true -> cardManager.drawCard()
-        output.value != null -> cardManager.drawCard() //cardManager.getByValue(output.value)
+        output.value != null -> cardManager.getByValue(output.value!!)
         output.image != null -> cardManager.drawCard()//cardManager.getByImage(output.image)
         else -> null
       }
