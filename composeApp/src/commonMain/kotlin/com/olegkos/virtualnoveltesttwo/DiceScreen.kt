@@ -107,7 +107,6 @@ fun DiceScreen(
           Spacer(Modifier.height(8.dp))
 
           Button(onClick = {
-            // ❗ ТОЛЬКО UI переключение
             selectedCards = emptySet()
             showCards = true
           }) {
@@ -133,53 +132,95 @@ fun DiceScreen(
 
       DicePhase.CARD_SELECTION -> {
 
-        Column {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-          Text("Выбери карты (+1 за каждую)")
+          Text("Выбери карты")
 
-          cards.forEach { card ->
+          Spacer(Modifier.height(8.dp))
 
-            val isSelected = card.id in selectedCards
+          val currentBonus = cards
+            .filter { it.id in selectedCards }
+            .sumOf { it.value.toDouble() }
+            .toFloat()
 
-            val painter = cardPainter(card.image)
+          Text("Бонус: +$currentBonus")
 
-            painter?.let {
-              Column(
-                modifier = Modifier
-                  .padding(8.dp)
-                  .clickable {
-                    selectedCards = if (isSelected) {
-                      selectedCards - card.id
-                    } else {
-                      selectedCards + card.id
-                    }
-                  },
-                horizontalAlignment = Alignment.CenterHorizontally
+          Spacer(Modifier.height(12.dp))
+
+          Column {
+            cards.chunked(2).forEach { row ->
+
+              Row(
+                horizontalArrangement = Arrangement.Center
               ) {
 
-                Image(
-                  painter = it,
-                  contentDescription = null,
-                  modifier = Modifier.size(140.dp)
-                )
+                row.forEach { card ->
 
-                Text(if (isSelected) "✓ выбрано" else "")
+                  val isSelected = card.id in selectedCards
+                  val painter = cardPainter(card.image)
+
+                  painter?.let {
+
+                    Column(
+                      modifier = Modifier
+                        .padding(8.dp)
+                        .clickable {
+                          selectedCards = if (isSelected) {
+                            selectedCards - card.id
+                          } else {
+                            selectedCards + card.id
+                          }
+                        },
+                      horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                      Box {
+
+                        Image(
+                          painter = it,
+                          contentDescription = null,
+                          modifier = Modifier
+                            .size(120.dp)
+                        )
+
+                        if (isSelected) {
+                          Text(
+                            text = "✓",
+                            modifier = Modifier
+                              .align(Alignment.TopEnd)
+                              .padding(4.dp)
+                          )
+                        }
+                      }
+
+                      // 👉 value карты
+                      Text("+${card.value}")
+                    }
+                  }
+                }
               }
             }
           }
 
-          Spacer(Modifier.height(12.dp))
+          Spacer(Modifier.height(16.dp))
 
-          Button(onClick = {
-            val usedCards = selectedCards.toList()
-            val bonus = usedCards.size * 1f
+          Button(
+            enabled = selectedCards.isNotEmpty(),
+            onClick = {
+              val usedCards = selectedCards.toList()
 
-            onApplyCard(bonus, usedCards)
+              val bonus = cards
+                .filter { it.id in selectedCards }
+                .sumOf { it.value.toDouble() }
+                .toFloat()
 
-            selectedCards = emptySet()
-            showCards = false
-          }) {
-            Text("Применить")
+              onApplyCard(bonus, usedCards)
+
+              selectedCards = emptySet()
+              showCards = false
+            }
+          ) {
+            Text("Применить (+$currentBonus)")
           }
         }
       }

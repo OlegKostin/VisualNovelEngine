@@ -179,7 +179,8 @@ class GameController(
     return metaManager.getCards().map {
       UiCard(
         id = it.id,
-        image = it.image
+        image = it.image,
+        value = it.value
       )
     }
   }

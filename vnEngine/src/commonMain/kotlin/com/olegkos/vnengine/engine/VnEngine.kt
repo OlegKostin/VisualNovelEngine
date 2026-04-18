@@ -343,5 +343,6 @@ fun Float.round2(): Float = (this * 100).toInt() / 100f
 
 data class UiCard(
   val id: String,
-  val image: String
+  val image: String,
+  val value: Int
 )
