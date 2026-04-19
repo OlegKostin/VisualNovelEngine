@@ -1,11 +1,13 @@
 package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -45,6 +48,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun App(viewModel: GameViewModel = koinViewModel()) {
   val output = viewModel.currentOutput
 
+  var showMenu by remember { mutableStateOf(false) }
+
   var background by remember { mutableStateOf<String?>(null) }
   var image by remember { mutableStateOf<String?>(null) }
   var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
@@ -53,7 +58,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
   fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
     val index = position.lowercase().removePrefix("pos").toIntOrNull() ?: 0
-    val step = boxWidth * 0.10f // 10% ширины
+    val step = boxWidth * 0.15f
     return step * index
   }
 
@@ -114,6 +119,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   }
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+
     val boxWidth = maxWidth
 
     background?.let { bgPath ->
@@ -156,7 +162,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
-
     characters.forEach { char ->
       val painter = rememberPainter(viewModel.assets.character(char.image), viewModel.reader)
       painter?.let {
@@ -178,33 +183,22 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
 
     sceneView?.let { view ->
-
-
       background = view.background
 
       val boxHeight = maxHeight
 
-
       view.navigation?.let { nav ->
         nav.left?.let { target ->
-          ArrowButton(Alignment.CenterStart) {
-            viewModel.jumpScenario(target)
-          }
+          ArrowButton(Alignment.CenterStart) { viewModel.jumpScenario(target) }
         }
         nav.right?.let { target ->
-          ArrowButton(Alignment.CenterEnd) {
-            viewModel.jumpScenario(target)
-          }
+          ArrowButton(Alignment.CenterEnd) { viewModel.jumpScenario(target) }
         }
         nav.up?.let { target ->
-          ArrowButton(Alignment.TopCenter) {
-            viewModel.jumpScenario(target)
-          }
+          ArrowButton(Alignment.TopCenter) { viewModel.jumpScenario(target) }
         }
         nav.down?.let { target ->
-          ArrowButton(Alignment.BottomCenter) {
-            viewModel.jumpScenario(target)
-          }
+          ArrowButton(Alignment.BottomCenter) { viewModel.jumpScenario(target) }
         }
       }
 
@@ -234,6 +228,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       verticalArrangement = Arrangement.Center
     ) {
       when (val o = output) {
+
         is EngineOutput.ShowInitGame -> {
           InitGameScreen(
             classes = o.classes,
@@ -303,7 +298,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             cardPainter = { path ->
               rememberPainter(viewModel.assets.card(path), viewModel.reader)
             },
-
             onApplyCard = { value, usedCards ->
               viewModel.applyDiceModifier(value, usedCards)
             }
@@ -314,9 +308,50 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         else -> Text("Загрузка...")
       }
     }
+
+    // ---------- КНОПКА МЕНЮ ----------
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp),
+      contentAlignment = Alignment.TopEnd
+    ) {
+      Button(onClick = { showMenu = true }) {
+        Text("⚙")
+      }
+    }
+
+    // ---------- OVERLAY ----------
+    if (showMenu) {
+      Box(
+        modifier = Modifier
+          .fillMaxSize()
+          .background(Color.Black.copy(alpha = 0.6f))
+          .clickable { showMenu = false } // закрытие по клику
+      )
+
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
+        Column(
+          modifier = Modifier
+            .padding(16.dp)
+            .background(Color.DarkGray)
+            .padding(16.dp)
+        ) {
+          SaveSlotsMenu(viewModel)
+
+          Spacer(Modifier.height(12.dp))
+
+          Button(onClick = { showMenu = false }) {
+            Text("Закрыть")
+          }
+        }
+      }
+    }
   }
 }
-
 @Composable
 fun rememberPainter(
   path: String,
