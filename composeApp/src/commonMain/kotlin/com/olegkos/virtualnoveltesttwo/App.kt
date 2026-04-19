@@ -58,7 +58,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
   fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
     val index = position.lowercase().removePrefix("pos").toIntOrNull() ?: 0
-    val step = boxWidth * 0.15f
+    val step = boxWidth * 0.1f
     return step * index
   }
 
