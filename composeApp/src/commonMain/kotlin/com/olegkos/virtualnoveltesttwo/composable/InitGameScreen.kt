@@ -2,26 +2,10 @@ package com.olegkos.virtualnoveltesttwo.composable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -43,86 +27,142 @@ fun InitGameScreen(
   Column(
     modifier = Modifier
       .fillMaxSize()
+      .background(Color(0xFFE9ECF3)) // мягкий светлый фон
       .padding(16.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
 
-    Text("Создание персонажа", style = MaterialTheme.typography.headlineMedium)
-    Spacer(modifier = Modifier.height(16.dp))
-    OutlinedTextField(
-      value = name,
-      onValueChange = { name = it },
-      label = { Text("Имя персонажа") },
-      modifier = Modifier.fillMaxWidth(0.5f)
+    Text(
+      "Создание персонажа",
+      style = MaterialTheme.typography.headlineMedium,
+      color = Color(0xFF1A1A1A)
     )
 
-    Spacer(modifier = Modifier.height(32.dp))
+    Spacer(modifier = Modifier.height(20.dp))
 
-
+    // INPUT + BUTTON по центру
     Row(
       modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.Center,
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+
+      OutlinedTextField(
+        value = name,
+        onValueChange = { name = it },
+        label = { Text("Имя персонажа") },
+        modifier = Modifier.width(300.dp)
+      )
+
+      Spacer(modifier = Modifier.width(12.dp))
+
+      Button(
+        onClick = { if (name.isNotBlank()) onConfirm(name, selectedClass) },
+        enabled = name.isNotBlank() && selectedClass != null,
+        modifier = Modifier.height(56.dp)
+      ) {
+        Text("Начать игру")
+      }
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    // 3 КЛАССА НА ЭКРАН
+    Row(
+      modifier = Modifier.fillMaxSize(),
       horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-      classes.forEach { cls ->
+      classes.take(3).forEachIndexed { index, cls ->
+
         val isHovered = hoveredClassId == cls.id
         val isSelected = selectedClass?.id == cls.id
 
+        val baseBg = Color(0xFFC9D6F5)
+
+        val hoverBg = when (index) {
+          0 -> Color(0xFFBFE8C1)
+          1 -> Color(0xFFBFC7FF)
+          2 -> Color(0xFFFFC1C1)
+          else -> baseBg
+        }
+
+        val selectedBg = when (index) {
+          0 -> Color(0xFF7AD67A)
+          1 -> Color(0xFF7A8CFF)
+          2 -> Color(0xFFFF7A7A)
+          else -> baseBg
+        }
+
+        val backgroundColor = when {
+          isSelected -> selectedBg
+          isHovered -> hoverBg
+          else -> baseBg
+        }
+
+        val borderColor = when {
+          isSelected -> Color(0xFF2E7D32)
+          isHovered -> when (index) {
+            0 -> Color(0xFF66FF66)
+            1 -> Color(0xFF6699FF)
+            2 -> Color(0xFFFF6666)
+            else -> Color.Gray
+          }
+          else -> Color.Gray
+        }
+
         Column(
           modifier = Modifier
-            .width(200.dp)
-            .height(250.dp)
+            .weight(1f)
+            .fillMaxHeight()
+            .padding(8.dp)
             .border(
               width = 2.dp,
-              color = if (isSelected) Color.Green else if (isHovered) Color.Yellow else Color.Gray,
+              color = borderColor,
               shape = RoundedCornerShape(12.dp)
             )
-            .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
+            .background(backgroundColor, RoundedCornerShape(12.dp))
             .pointerMoveFilter(
-              onEnter = { hoveredClassId = cls.id; false },
-              onExit = { hoveredClassId = null; false }
+              onEnter = {
+                hoveredClassId = cls.id
+                false
+              },
+              onExit = {
+                hoveredClassId = null
+                false
+              }
             )
             .padding(16.dp),
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.SpaceBetween
         ) {
+
           Text(
             text = cls.name,
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.White
+            color = Color(0xFF1A1A1A),
+            style = MaterialTheme.typography.headlineSmall
           )
 
-          Spacer(modifier = Modifier.height(8.dp))
-
-          // Статы
           Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
           ) {
             cls.stats.forEach { (key, value) ->
-              Text("$key: $value", color = Color.LightGray)
+              Text(
+                "$key: $value",
+                color = Color(0xFF2E2E2E)
+              )
             }
           }
-
-          Spacer(modifier = Modifier.height(16.dp))
 
           Button(
             onClick = { selectedClass = cls },
             colors = ButtonDefaults.buttonColors(
-              containerColor = if (isSelected) Color.Green else MaterialTheme.colorScheme.primary
+              containerColor = if (isSelected) Color(0xFF4CAF50) else Color(0xFF607D8B)
             )
           ) {
             Text(if (isSelected) "Выбран" else "Выбрать")
           }
         }
       }
-    }
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    Button(
-      onClick = { if (name.isNotBlank()) onConfirm(name, selectedClass) },
-      enabled = name.isNotBlank() && selectedClass != null
-    ) {
-      Text("Начать игру")
     }
   }
 }

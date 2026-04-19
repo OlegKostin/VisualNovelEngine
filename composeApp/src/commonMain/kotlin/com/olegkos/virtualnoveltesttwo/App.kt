@@ -223,8 +223,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
     Column(
       modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp),
+        .fillMaxSize(),
       verticalArrangement = Arrangement.Center
     ) {
       when (val o = output) {
