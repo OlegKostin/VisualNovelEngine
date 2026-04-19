@@ -1,10 +1,8 @@
 package com.olegkos.virtualnoveltesttwo.composable
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,135 +30,90 @@ fun InitGameScreen(
   classes: List<SubClass.GameClass>,
   onConfirm: (String, SubClass.GameClass?) -> Unit
 ) {
+
   var name by remember { mutableStateOf("") }
   var selectedClass by remember { mutableStateOf<SubClass.GameClass?>(null) }
   var hoveredClassId by remember { mutableStateOf<String?>(null) }
+  val infinite = rememberInfiniteTransition(label = "pulse")
 
+  val pulse by infinite.animateFloat(
+    initialValue = 1f,
+    targetValue = if (selectedClass != null && hoveredClassId == selectedClass?.id) 1.08f else 1f,
+    animationSpec = infiniteRepeatable(
+      animation = tween(1200),
+      repeatMode = RepeatMode.Reverse
+    ),
+    label = "pulse"
+  )
   Column(
-    modifier = Modifier
+    Modifier
       .fillMaxSize()
       .background(Color(0xFFE9ECF3))
       .padding(16.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
 
-    Text(
-      "Создание персонажа",
-      style = MaterialTheme.typography.headlineMedium,
-      color = Color(0xFF1A1A1A)
-    )
+    Text("Создание персонажа", style = MaterialTheme.typography.headlineMedium)
 
-    Spacer(modifier = Modifier.height(20.dp))
+    Spacer(Modifier.height(16.dp))
 
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.Center,
-      verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
 
       OutlinedTextField(
         value = name,
         onValueChange = { name = it },
-        label = { Text("Имя персонажа") },
-        modifier = Modifier.width(300.dp)
+        label = { Text("Имя") }
       )
 
-      Spacer(modifier = Modifier.width(12.dp))
+      Spacer(Modifier.width(12.dp))
 
       Button(
         onClick = { onConfirm(name, selectedClass) },
-        enabled = name.isNotBlank() && selectedClass != null,
-        modifier = Modifier.height(56.dp)
+        enabled = name.isNotBlank() && selectedClass != null
       ) {
-        Text("Начать игру")
+        Text("Начать")
       }
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(Modifier.height(24.dp))
 
-    Row(
-      modifier = Modifier.fillMaxSize(),
-      horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
+    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly) {
 
       classes.take(3).forEachIndexed { index, cls ->
 
         val isHovered = hoveredClassId == cls.id
         val isSelected = selectedClass?.id == cls.id
 
-        // --- PERSONA EFFECT ---
         val scale by animateFloatAsState(
-          targetValue = when {
-            isSelected -> 1.06f
-            isHovered -> 1.03f
-            else -> 0.98f
-          },
-          animationSpec = spring(dampingRatio = 0.7f)
+          targetValue = if (isSelected) 1.05f else if (isHovered) 1.02f else 1f,
+          animationSpec = spring(dampingRatio = 0.75f),
+          label = ""
         )
 
-        val offsetX by animateFloatAsState(
-          targetValue = when {
-            isSelected -> 0f
-            selectedClass != null && index < classes.indexOf(selectedClass) -> -20f
-            selectedClass != null && index > classes.indexOf(selectedClass) -> 20f
-            else -> 0f
-          }
-        )
+        val base = Color(0xFFC9D6F5)
 
-        val alpha by animateFloatAsState(
-          targetValue = when {
-            isSelected -> 1f
-            selectedClass != null -> 0.7f
-            else -> 1f
-          }
-        )
-
-        val elevation = when {
-          isSelected -> 20.dp
-          isHovered -> 12.dp
-          else -> 4.dp
-        }
-
-        val baseBg = Color(0xFFC9D6F5)
-
-        val selectedBg = when (index) {
+        val selectedColor = when (index) {
           0 -> Color(0xFF6FAF73)
           1 -> Color(0xFF7B86C2)
-          2 -> Color(0xFFC07C7C)
-          else -> baseBg
+          else -> Color(0xFFC07C7C)
         }
 
-        val bgColor = if (isSelected) selectedBg else baseBg
+        val bg = if (isSelected) selectedColor else base
 
-        val backgroundBrush = Brush.verticalGradient(
-          colors = listOf(
-            bgColor.copy(alpha = 0.95f),
-            bgColor.copy(alpha = 0.6f)
-          )
+        val brush = Brush.verticalGradient(
+          listOf(bg.copy(0.95f), bg.copy(0.65f))
         )
-
-        val glowOverlay = if (isSelected) {
-          Brush.radialGradient(
-            colors = listOf(
-              Color.White.copy(alpha = 0.35f),
-              Color.Transparent
-            )
-          )
-        } else null
 
         Box(
           modifier = Modifier
             .weight(1f)
-            .fillMaxHeight()
             .padding(8.dp)
             .graphicsLayer {
               scaleX = scale
               scaleY = scale
-              translationX = offsetX
-              this.alpha = alpha
             }
-            .shadow(elevation, RoundedCornerShape(14.dp))
-            .background(backgroundBrush, RoundedCornerShape(14.dp))
+            .shadow(10.dp, RoundedCornerShape(14.dp))
+            .background(brush, RoundedCornerShape(14.dp))
             .pointerMoveFilter(
               onEnter = {
                 hoveredClassId = cls.id
@@ -175,59 +128,43 @@ fun InitGameScreen(
             .clickable { selectedClass = cls }
         ) {
 
-          // --- GLOW ---
-          glowOverlay?.let {
-            Box(
-              modifier = Modifier
-                .matchParentSize()
-                .background(it, RoundedCornerShape(14.dp))
-            )
-          }
-
           Column(
-            modifier = Modifier
+            Modifier
               .fillMaxSize()
-              .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+              .padding(14.dp),
             verticalArrangement = Arrangement.SpaceBetween
           ) {
 
+            // =======================
+            // TITLE
+            // =======================
+            Text(cls.name, style = MaterialTheme.typography.titleLarge)
+
+            // =======================
+            // DESCRIPTION (HARDCODE)
+            // =======================
             Text(
-              text = cls.name,
-              color = Color(0xFF1A1A1A),
-              style = MaterialTheme.typography.headlineSmall
+              text = getDescription(cls.id),
+              style = MaterialTheme.typography.bodyMedium
             )
 
-            Column(
-              verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-              cls.stats.forEach { (key, value) ->
+            // =======================
+            // STATS (2x3 GRID)
+            // =======================
+            StatsBlock(
+              cls = cls,
+              isSelected = isSelected,
+              pulse = pulse,
+              hovered = isHovered
+            )
 
-                val stat = StatType.fromKey(key)
-
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-
-                  stat?.let {
-                    Image(
-                      painter = painterResource(it.image),
-                      contentDescription = key,
-                      modifier = Modifier.size(20.dp)
-                    )
-                  }
-
-                  Text(
-                    text = value.toString(),
-                    color = Color(0xFF2E2E2E)
-                  )
-                }
-              }            }
+            // =======================
+            // CARDS (HARDCODE)
+            // =======================
+            CardBlock()
 
             Text(
-              text = if (isSelected) "Выбрано" else "Нажми",
-              color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF555555)
+              if (isSelected) "Выбрано" else "Клик для выбора"
             )
           }
         }
@@ -236,8 +173,127 @@ fun InitGameScreen(
   }
 }
 
+private fun getDescription(id: String): String {
+  return when (id) {
+    "hikki" -> "Воин — ближний бой и высокая выживаемость."
+    "nerd" -> "Маг — дальний урон и контроль."
+    "lucky" -> "Разбойник — крит и скорость."
+    else -> "Класс без описания."
+  }
+}
+@Composable
+fun StatsBlock(
+  cls: SubClass.GameClass,
+  isSelected: Boolean,
+  pulse: Float,
+  hovered: Boolean
+) {
+
+  Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+    cls.stats.entries.chunked(2).take(3).forEach { row ->
+
+      Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+      ) {
+
+        row.forEach { (key, value) ->
+
+          val stat = StatType.fromKey(key)
+
+          val scale by animateFloatAsState(
+            targetValue = when {
+              hovered -> 1.15f
+              isSelected -> pulse
+              else -> 1f
+            },
+            animationSpec = spring(dampingRatio = 0.7f),
+            label = "statScale"
+          )
+
+          Row(
+            modifier = Modifier
+              .weight(1f)
+              .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+              },
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+
+            stat?.let {
+              Image(
+                painter = painterResource(it.image),
+                contentDescription = key,
+                modifier = Modifier.size(40.dp) // 👈 УВЕЛИЧИЛ ИКОНКУ
+              )
+            }
+
+            Spacer(Modifier.width(8.dp))
+
+            Text(
+              text = value.toString(),
+              style = MaterialTheme.typography.titleMedium
+            )
+          }
+        }
+
+        if (row.size == 1) {
+          Spacer(Modifier.weight(1f))
+        }
+      }
+    }
+  }
+}
 private fun Modifier.cursorForHand(): Modifier {
-  return this.pointerHoverIcon(
+  return pointerHoverIcon(
     PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
   )
+}
+@Composable
+fun CardBlock() {
+
+  Column(
+    Modifier
+      .fillMaxWidth()
+      .padding(top = 8.dp)
+  ) {
+
+    Text(
+      text = "Карты персонажа",
+      style = MaterialTheme.typography.labelMedium
+    )
+
+    Spacer(Modifier.height(6.dp))
+
+    Row(
+      Modifier
+        .fillMaxWidth()
+        .height(60.dp),
+      horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+
+      repeat(3) { index ->
+
+        Box(
+          modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .background(
+              color = Color(0xFF2E3A59),
+              shape = RoundedCornerShape(10.dp)
+            )
+            .clickable { /* позже добавишь логику */ },
+          contentAlignment = Alignment.Center
+        ) {
+          Text(
+            text = "Карта ${index + 1}",
+            color = Color.White,
+            style = MaterialTheme.typography.bodySmall
+          )
+        }
+      }
+    }
+  }
 }
