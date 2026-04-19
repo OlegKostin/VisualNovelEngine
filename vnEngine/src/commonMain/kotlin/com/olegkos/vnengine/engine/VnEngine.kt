@@ -101,13 +101,16 @@ class VnEngine(
             else -> "0"
           }
 
-          return ShowVar(
-            node.varName,
-            valueString,
-            node.text
-          )
+          if (node.text != null) {
+            return ShowVar(
+              node.varName,
+              valueString,
+              node.text
+            )
+          } else {
+            continue
+          }
         }
-
         is SceneNode.If -> {
           val value = state.variables[node.variable]
           val compareValue = node.equals.resolve()
@@ -115,15 +118,24 @@ class VnEngine(
           val condition = when {
             value is IntVal && compareValue is IntVal ->
               value.value >= compareValue.value
+
             value is FloatVal && compareValue is FloatVal ->
               value.value.round2() >= compareValue.value.round2()
+
             value is IntVal && compareValue is FloatVal ->
               value.value.toFloat().round2() >= compareValue.value.round2()
+
             value is FloatVal && compareValue is IntVal ->
               value.value.round2() >= compareValue.value.toFloat().round2()
+
+            value is GameValue.Bool && compareValue is GameValue.Bool ->
+              value.value == compareValue.value
+
+            value is GameValue.StringVal && compareValue is GameValue.StringVal ->
+              value.value == compareValue.value
+
             else -> false
           }
-
           if (condition)
             jumpToScene(node.successScene)
           else

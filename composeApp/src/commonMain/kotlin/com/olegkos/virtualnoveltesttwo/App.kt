@@ -243,14 +243,19 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowVar -> {
-          ShowVarScreen(
-            name = o.name,
-            value = o.value,
-            description = o.text,
-            onNext = { viewModel.next() }
-          )
+          if (o.text!!.isBlank()) {
+            LaunchedEffect(Unit) {
+              viewModel.next()
+            }
+          } else {
+            ShowVarScreen(
+              name = o.name,
+              value = o.value,
+              description = o.text!!,
+              onNext = { viewModel.next() }
+            )
+          }
         }
-
         is EngineOutput.ShowText -> {
           VNTextBox(
             speaker = o.speaker,

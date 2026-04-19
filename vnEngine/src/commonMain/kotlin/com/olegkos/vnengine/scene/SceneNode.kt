@@ -30,7 +30,7 @@ sealed interface SceneNode {
     val image: String? = null
   ) : SceneNode
 
-  data class ModifyVar(val varName: String, val value: GameValue, val text: String) : SceneNode
+  data class ModifyVar(val varName: String, val value: GameValue, val text: String? = null) : SceneNode
 
   data class If(
     val variable: String,

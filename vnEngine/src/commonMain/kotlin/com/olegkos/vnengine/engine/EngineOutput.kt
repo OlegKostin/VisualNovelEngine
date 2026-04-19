@@ -22,7 +22,7 @@ sealed interface EngineOutput {
     val difficulty: Int,
     val cards: List<UiCard> = emptyList(),
   ) : EngineOutput
-  data class ShowVar(val name: String, val value: String, val text: String): EngineOutput
+  data class ShowVar(val name: String, val value: String, val text: String?= null): EngineOutput
   data class JumpScenarioOutput(val scenarioFile: String) : EngineOutput
   data class ShowBackground(
     val image: String
