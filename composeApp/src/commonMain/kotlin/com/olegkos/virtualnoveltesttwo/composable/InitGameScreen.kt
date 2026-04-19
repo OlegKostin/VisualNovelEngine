@@ -2,6 +2,7 @@ package com.olegkos.virtualnoveltesttwo.composable
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,7 +21,9 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.dp
+import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.vnengine.scene.SubClass
+import org.jetbrains.compose.resources.painterResource
 import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -85,31 +88,40 @@ fun InitGameScreen(
         val isHovered = hoveredClassId == cls.id
         val isSelected = selectedClass?.id == cls.id
 
-        // --- SCALE АНИМАЦИЯ ---
+        // --- PERSONA EFFECT ---
         val scale by animateFloatAsState(
           targetValue = when {
-            isSelected -> 1.04f
-            isHovered -> 1.02f
-            else -> 1f
+            isSelected -> 1.06f
+            isHovered -> 1.03f
+            else -> 0.98f
           },
-          animationSpec = spring()
+          animationSpec = spring(dampingRatio = 0.7f)
         )
 
-        // --- ТЕНЬ ---
+        val offsetX by animateFloatAsState(
+          targetValue = when {
+            isSelected -> 0f
+            selectedClass != null && index < classes.indexOf(selectedClass) -> -20f
+            selectedClass != null && index > classes.indexOf(selectedClass) -> 20f
+            else -> 0f
+          }
+        )
+
+        val alpha by animateFloatAsState(
+          targetValue = when {
+            isSelected -> 1f
+            selectedClass != null -> 0.7f
+            else -> 1f
+          }
+        )
+
         val elevation = when {
-          isSelected -> 16.dp
-          isHovered -> 10.dp
+          isSelected -> 20.dp
+          isHovered -> 12.dp
           else -> 4.dp
         }
 
         val baseBg = Color(0xFFC9D6F5)
-
-        val hoverBg = when (index) {
-          0 -> Color(0xFFBFE8C1)
-          1 -> Color(0xFFBFC7FF)
-          2 -> Color(0xFFFFC1C1)
-          else -> baseBg
-        }
 
         val selectedBg = when (index) {
           0 -> Color(0xFF6FAF73)
@@ -118,38 +130,23 @@ fun InitGameScreen(
           else -> baseBg
         }
 
-        val bgColor = when {
-          isSelected -> selectedBg
-          isHovered -> hoverBg
-          else -> baseBg
-        }
+        val bgColor = if (isSelected) selectedBg else baseBg
 
-        // --- ОСНОВНОЙ ГРАДИЕНТ ---
         val backgroundBrush = Brush.verticalGradient(
           colors = listOf(
             bgColor.copy(alpha = 0.95f),
-            bgColor.copy(alpha = 0.7f)
+            bgColor.copy(alpha = 0.6f)
           )
         )
 
-        // --- GLASS EFFECT (свет сверху) ---
-        val glassOverlay = Brush.verticalGradient(
-          colors = listOf(
-            Color.White.copy(alpha = 0.25f),
-            Color.Transparent
+        val glowOverlay = if (isSelected) {
+          Brush.radialGradient(
+            colors = listOf(
+              Color.White.copy(alpha = 0.35f),
+              Color.Transparent
+            )
           )
-        )
-
-        val borderColor = when {
-          isSelected -> Color(0xFF2E7D32)
-          isHovered -> when (index) {
-            0 -> Color(0xFF66FF66)
-            1 -> Color(0xFF6699FF)
-            2 -> Color(0xFFFF6666)
-            else -> Color.Gray
-          }
-          else -> Color.Gray
-        }
+        } else null
 
         Box(
           modifier = Modifier
@@ -159,10 +156,11 @@ fun InitGameScreen(
             .graphicsLayer {
               scaleX = scale
               scaleY = scale
+              translationX = offsetX
+              this.alpha = alpha
             }
-            .shadow(elevation, RoundedCornerShape(12.dp))
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
-            .background(backgroundBrush, RoundedCornerShape(12.dp))
+            .shadow(elevation, RoundedCornerShape(14.dp))
+            .background(backgroundBrush, RoundedCornerShape(14.dp))
             .pointerMoveFilter(
               onEnter = {
                 hoveredClassId = cls.id
@@ -177,12 +175,14 @@ fun InitGameScreen(
             .clickable { selectedClass = cls }
         ) {
 
-          // --- GLASS OVERLAY ---
-          Box(
-            modifier = Modifier
-              .matchParentSize()
-              .background(glassOverlay, RoundedCornerShape(12.dp))
-          )
+          // --- GLOW ---
+          glowOverlay?.let {
+            Box(
+              modifier = Modifier
+                .matchParentSize()
+                .background(it, RoundedCornerShape(14.dp))
+            )
+          }
 
           Column(
             modifier = Modifier
@@ -202,15 +202,31 @@ fun InitGameScreen(
               verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
               cls.stats.forEach { (key, value) ->
-                Text(
-                  "$key: $value",
-                  color = Color(0xFF2E2E2E)
-                )
-              }
-            }
+
+                val stat = StatType.fromKey(key)
+
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+
+                  stat?.let {
+                    Image(
+                      painter = painterResource(it.image),
+                      contentDescription = key,
+                      modifier = Modifier.size(20.dp)
+                    )
+                  }
+
+                  Text(
+                    text = value.toString(),
+                    color = Color(0xFF2E2E2E)
+                  )
+                }
+              }            }
 
             Text(
-              text = if (isSelected) "Выбрано" else "Нажми для выбора",
+              text = if (isSelected) "Выбрано" else "Нажми",
               color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF555555)
             )
           }
