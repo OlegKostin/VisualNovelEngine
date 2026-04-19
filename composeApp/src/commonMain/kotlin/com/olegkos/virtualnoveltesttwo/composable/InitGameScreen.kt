@@ -2,6 +2,7 @@ package com.olegkos.virtualnoveltesttwo.composable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -9,10 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.scene.SubClass
+import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -27,7 +32,7 @@ fun InitGameScreen(
   Column(
     modifier = Modifier
       .fillMaxSize()
-      .background(Color(0xFFE9ECF3)) // мягкий светлый фон
+      .background(Color(0xFFE9ECF3))
       .padding(16.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
@@ -40,7 +45,6 @@ fun InitGameScreen(
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    // INPUT + BUTTON по центру
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.Center,
@@ -57,7 +61,7 @@ fun InitGameScreen(
       Spacer(modifier = Modifier.width(12.dp))
 
       Button(
-        onClick = { if (name.isNotBlank()) onConfirm(name, selectedClass) },
+        onClick = { onConfirm(name, selectedClass) },
         enabled = name.isNotBlank() && selectedClass != null,
         modifier = Modifier.height(56.dp)
       ) {
@@ -67,11 +71,11 @@ fun InitGameScreen(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // 3 КЛАССА НА ЭКРАН
     Row(
       modifier = Modifier.fillMaxSize(),
       horizontalArrangement = Arrangement.SpaceEvenly
     ) {
+
       classes.take(3).forEachIndexed { index, cls ->
 
         val isHovered = hoveredClassId == cls.id
@@ -87,17 +91,24 @@ fun InitGameScreen(
         }
 
         val selectedBg = when (index) {
-          0 -> Color(0xFF7AD67A)
-          1 -> Color(0xFF7A8CFF)
-          2 -> Color(0xFFFF7A7A)
+          0 -> Color(0xFF6FAF73)
+          1 -> Color(0xFF7B86C2)
+          2 -> Color(0xFFC07C7C)
           else -> baseBg
         }
 
-        val backgroundColor = when {
+        val bgColor = when {
           isSelected -> selectedBg
           isHovered -> hoverBg
           else -> baseBg
         }
+
+        val backgroundBrush = Brush.verticalGradient(
+          colors = listOf(
+            bgColor.copy(alpha = 1f),
+            bgColor.copy(alpha = 0.2f)
+          )
+        )
 
         val borderColor = when {
           isSelected -> Color(0xFF2E7D32)
@@ -116,11 +127,11 @@ fun InitGameScreen(
             .fillMaxHeight()
             .padding(8.dp)
             .border(
-              width = 2.dp,
-              color = borderColor,
-              shape = RoundedCornerShape(12.dp)
+              2.dp,
+              borderColor,
+              RoundedCornerShape(12.dp)
             )
-            .background(backgroundColor, RoundedCornerShape(12.dp))
+            .background(backgroundBrush, RoundedCornerShape(12.dp)) // 🔥 ВОТ ТУТ ГРАДИЕНТ
             .pointerMoveFilter(
               onEnter = {
                 hoveredClassId = cls.id
@@ -131,6 +142,10 @@ fun InitGameScreen(
                 false
               }
             )
+            .cursorForHand()
+            .clickable {
+              selectedClass = cls
+            }
             .padding(16.dp),
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.SpaceBetween
@@ -153,16 +168,18 @@ fun InitGameScreen(
             }
           }
 
-          Button(
-            onClick = { selectedClass = cls },
-            colors = ButtonDefaults.buttonColors(
-              containerColor = if (isSelected) Color(0xFF4CAF50) else Color(0xFF607D8B)
-            )
-          ) {
-            Text(if (isSelected) "Выбран" else "Выбрать")
-          }
+          Text(
+            text = if (isSelected) "Выбрано" else "Нажми для выбора",
+            color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF555555)
+          )
         }
       }
     }
   }
+}
+
+private fun Modifier.cursorForHand(): Modifier {
+  return this.pointerHoverIcon(
+    PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+  )
 }
