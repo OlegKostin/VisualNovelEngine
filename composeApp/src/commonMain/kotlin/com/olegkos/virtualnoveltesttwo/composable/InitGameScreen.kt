@@ -1,5 +1,7 @@
 package com.olegkos.virtualnoveltesttwo.composable
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,8 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
@@ -81,6 +85,23 @@ fun InitGameScreen(
         val isHovered = hoveredClassId == cls.id
         val isSelected = selectedClass?.id == cls.id
 
+        // --- SCALE АНИМАЦИЯ ---
+        val scale by animateFloatAsState(
+          targetValue = when {
+            isSelected -> 1.04f
+            isHovered -> 1.02f
+            else -> 1f
+          },
+          animationSpec = spring()
+        )
+
+        // --- ТЕНЬ ---
+        val elevation = when {
+          isSelected -> 16.dp
+          isHovered -> 10.dp
+          else -> 4.dp
+        }
+
         val baseBg = Color(0xFFC9D6F5)
 
         val hoverBg = when (index) {
@@ -103,10 +124,19 @@ fun InitGameScreen(
           else -> baseBg
         }
 
+        // --- ОСНОВНОЙ ГРАДИЕНТ ---
         val backgroundBrush = Brush.verticalGradient(
           colors = listOf(
-            bgColor.copy(alpha = 1f),
-            bgColor.copy(alpha = 0.2f)
+            bgColor.copy(alpha = 0.95f),
+            bgColor.copy(alpha = 0.7f)
+          )
+        )
+
+        // --- GLASS EFFECT (свет сверху) ---
+        val glassOverlay = Brush.verticalGradient(
+          colors = listOf(
+            Color.White.copy(alpha = 0.25f),
+            Color.Transparent
           )
         )
 
@@ -121,17 +151,18 @@ fun InitGameScreen(
           else -> Color.Gray
         }
 
-        Column(
+        Box(
           modifier = Modifier
             .weight(1f)
             .fillMaxHeight()
             .padding(8.dp)
-            .border(
-              2.dp,
-              borderColor,
-              RoundedCornerShape(12.dp)
-            )
-            .background(backgroundBrush, RoundedCornerShape(12.dp)) // 🔥 ВОТ ТУТ ГРАДИЕНТ
+            .graphicsLayer {
+              scaleX = scale
+              scaleY = scale
+            }
+            .shadow(elevation, RoundedCornerShape(12.dp))
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
+            .background(backgroundBrush, RoundedCornerShape(12.dp))
             .pointerMoveFilter(
               onEnter = {
                 hoveredClassId = cls.id
@@ -143,35 +174,46 @@ fun InitGameScreen(
               }
             )
             .cursorForHand()
-            .clickable {
-              selectedClass = cls
-            }
-            .padding(16.dp),
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.SpaceBetween
+            .clickable { selectedClass = cls }
         ) {
 
-          Text(
-            text = cls.name,
-            color = Color(0xFF1A1A1A),
-            style = MaterialTheme.typography.headlineSmall
+          // --- GLASS OVERLAY ---
+          Box(
+            modifier = Modifier
+              .matchParentSize()
+              .background(glassOverlay, RoundedCornerShape(12.dp))
           )
 
           Column(
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+              .fillMaxSize()
+              .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
           ) {
-            cls.stats.forEach { (key, value) ->
-              Text(
-                "$key: $value",
-                color = Color(0xFF2E2E2E)
-              )
-            }
-          }
 
-          Text(
-            text = if (isSelected) "Выбрано" else "Нажми для выбора",
-            color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF555555)
-          )
+            Text(
+              text = cls.name,
+              color = Color(0xFF1A1A1A),
+              style = MaterialTheme.typography.headlineSmall
+            )
+
+            Column(
+              verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+              cls.stats.forEach { (key, value) ->
+                Text(
+                  "$key: $value",
+                  color = Color(0xFF2E2E2E)
+                )
+              }
+            }
+
+            Text(
+              text = if (isSelected) "Выбрано" else "Нажми для выбора",
+              color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF555555)
+            )
+          }
         }
       }
     }
