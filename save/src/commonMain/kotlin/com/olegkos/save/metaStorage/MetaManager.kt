@@ -31,4 +31,17 @@ class MetaManager(
     )
     storage.save(state)
   }
+
+  fun getDiceResult(id: String): Int? {
+    return state.diceResults[id]?.result
+  }
+
+  fun saveDiceResult(id: String, result: Int) {
+    if (state.diceResults.containsKey(id)) return
+
+    val newMap = state.diceResults + (id to DiceInstance(id, result))
+    state = state.copy(diceResults = newMap)
+    storage.save(state)
+  }
+
 }

@@ -188,14 +188,22 @@ class GameController(
     val engine = engine ?: return EngineOutput.Loading to null
     val node = engine.currentNode() as? SceneNode.DiceRoll ?: return step()
 
-    engine.state.diceResult = engine.dice.roll(node.sides)
+    val diceId = buildDiceId()
 
-//    val randomCard = cardManager.drawCard()
-//    metaManager.addCard(randomCard)
+    val saved = metaManager.getDiceResult(diceId)
 
+    val result = if (saved != null) {
+      saved
+    } else {
+      val roll = engine.dice.roll(node.sides)
+      metaManager.saveDiceResult(diceId, roll)
+      roll
+    }
+
+    engine.state.diceResult = result
+    println("DICE ID: $diceId RESULT: $result (saved=${saved != null})")
     return step()
   }
-
   fun applyDiceModifier(extra: Float, usedCards: List<String>): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
@@ -264,6 +272,14 @@ class GameController(
 
     return output to engine.currentNode()
   }
+
+  private fun buildDiceId(): String {
+    val engine = requireEngine
+    val pointer = engine.state.pointer
+
+    return "$currentScenario|${pointer.sceneId}|${pointer.nodeIndex}"
+  }
+
   fun listSaves(): List<String> =
     saveManager.listSaves()
 }
