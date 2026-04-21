@@ -10,17 +10,26 @@ class DesktopSaveStorage : SaveStorage {
   ).apply { mkdirs() }
 
   override fun save(slot: String, data: String) {
-    File(dir, "$slot.json").writeText(data)
+    val file = File(dir, "$slot.json")
+    println("💾 SAVE FILE PATH: ${file.absolutePath}")
+    println("💾 SAVE DATA: $data")
+
+    file.writeText(data)
   }
 
   override fun load(slot: String): String? {
-
     val file = File(dir, "$slot.json")
 
-    return if (file.exists())
-      file.readText()
-    else
+    println("📂 LOAD FILE PATH: ${file.absolutePath}")
+    println("📂 EXISTS: ${file.exists()}")
+
+    return if (file.exists()) {
+      val text = file.readText()
+      println("📂 LOADED DATA: $text")
+      text
+    } else {
       null
+    }
   }
 
   override fun list(): List<String> =

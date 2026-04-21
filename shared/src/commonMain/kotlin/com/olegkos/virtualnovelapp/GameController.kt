@@ -228,25 +228,29 @@ class GameController(
   fun saveGame(slot: String) {
     val engine = engine ?: return
 
+    println("🎮 SAVE GAME CALLED")
+    println("CURRENT SCENARIO: $currentScenario")
+    println("POINTER: ${engine.state.pointer}")
+
     saveManager.save(
       slot = slot,
       state = engine.state,
       scenario = currentScenario
     )
   }
-
   suspend fun loadSave(slot: String): Pair<EngineOutput, SceneNode?> {
-    val loaded = saveManager.load(slot) ?: return EngineOutput.Loading to null
+
+    println("🎮 LOAD GAME CALLED")
+
+    val loaded = saveManager.load(slot)
+      ?: return EngineOutput.Loading to null
+
+    println("LOADED SCENARIO: ${loaded.scenario}")
+    println("LOADED POINTER: ${loaded.state.pointer}")
 
     val scenarioPath = loaded.scenario
 
-    if (!scenarioPath.endsWith(".json")) {
-      throw IllegalStateException("Corrupted save: scenario=$scenarioPath")
-    }
-
-    currentScenario = scenarioPath
-
-    val scenario = loadScenario(currentScenario)
+    val scenario = loadScenario(scenarioPath)
 
     engine = VnEngine(loaded.state, dice).apply {
       addScenes(scenario.scenes)
@@ -254,7 +258,6 @@ class GameController(
 
     return step()
   }
-
   private suspend fun loadScenario(path: String) =
     withContext(ioDispatcher) {
       val raw = assetReader.readText(path)

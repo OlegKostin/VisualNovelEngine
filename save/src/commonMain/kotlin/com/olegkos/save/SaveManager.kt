@@ -11,6 +11,12 @@ class SaveManager(
 
   fun save(slot: String, state: GameState, scenario: String) {
 
+    println("=== SAVE START ===")
+    println("SLOT: $slot")
+    println("SCENARIO: $scenario")
+    println("POINTER: ${state.pointer}")
+    println("VARS: ${state.variables}")
+
     val serializable = state.toSerializable(scenario)
 
     val json = SaveJson.encodeToString(
@@ -18,13 +24,22 @@ class SaveManager(
       serializable
     )
 
+    println("SERIALIZED JSON: $json")
+
     storage.save(slot, json)
   }
 
   fun load(slot: String): LoadedSave? {
 
+    println("=== LOAD START === SLOT=$slot")
+
     val json = storage.load(slot)
-      ?: return null
+      ?: run {
+        println("❌ SAVE NOT FOUND")
+        return null
+      }
+
+    println("RAW JSON: $json")
 
     val serializable =
       SaveJson.decodeFromString(
@@ -32,12 +47,14 @@ class SaveManager(
         json
       )
 
+    println("DESERIALIZED POINTER: ${serializable.pointer}")
+    println("DESERIALIZED SCENARIO: ${serializable.scenario}")
+
     return LoadedSave(
       state = serializable.toGameState(),
       scenario = serializable.scenario
     )
   }
-
   fun listSaves(): List<String> =
     storage.list()
 

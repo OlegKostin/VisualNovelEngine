@@ -29,18 +29,17 @@ fun GameState.toSerializable(
   GameStateSerializable(
     pointer = pointer,
     variables = variables.mapValues { it.value.toSerializable() },
-    diceResult = diceResult,
     timestamp = timestamp,
+    scenarioStack = scenarioStack.toList(),
     scenario = scenario
   )
-
 fun GameStateSerializable.toGameState(): GameState =
   GameState(
     pointer = pointer,
     variables = variables
       .mapValues { it.value.toGameValue() }
       .toMutableMap(),
-    diceResult = diceResult
+    scenarioStack = ArrayDeque(scenarioStack)
   )
 val SaveJson = Json {
   prettyPrint = true
