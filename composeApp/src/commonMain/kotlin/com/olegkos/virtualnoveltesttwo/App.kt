@@ -265,16 +265,19 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowCard -> {
-          Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Button(onClick = {
-              cardImage = null
-              viewModel.next()
-            }) {
-              Text("Продолжить")
-            }
+
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .clickable {
+                cardImage = null
+                viewModel.next()
+              },
+            contentAlignment = Alignment.Center
+          ) {
+
           }
         }
-
         is EngineOutput.ShowChoices -> {
           o.options.forEach { option ->
             Button(
