@@ -279,15 +279,28 @@ class VnEngine(
           jumpToScene(targetScene)
         }
         is SceneNode.ShowCharacter -> {
+
+          val finalImage = when {
+            node.flagVar != null -> {
+              val value = state.variables[node.flagVar]
+
+              if (value is GameValue.Bool && value.value) {
+                node.trueImage ?: node.image
+              } else {
+                node.falseImage ?: node.image
+              }
+            }
+            else -> node.image
+          }
+
           advance()
           return ShowCharacter(
             id = node.id,
-            image = node.image,
+            image = finalImage ?: "",
             position = node.position,
             scale = node.scale,
           )
         }
-
         is SceneNode.HideCharacter -> {
           advance()
           return HideCharacter(node.id)
