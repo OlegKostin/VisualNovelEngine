@@ -140,8 +140,10 @@ class VnEngine(
             jumpToScene(node.successScene)
           else
             jumpToScene(node.failScene)
-        }        is SceneNode.Text -> {
-          advance()
+
+          continue
+        }
+        is SceneNode.Text -> {
         val speakerName = node.speakerVar?.let { variables.getString(it) } ?: node.speaker
         val resolvedText = resolveTextVariables(node.text)
           return ShowText(
@@ -240,18 +242,15 @@ class VnEngine(
           jumpToScene(node.targetSceneId)
         }
         is SceneNode.Background -> {
-          advance()
           return ShowBackground(node.image)
         }
 
         is SceneNode.Image -> {
-          advance()
           return ShowImage(node.image)
         }
 
 
         is SceneNode.Effect -> {
-          advance()
           return ShowImage(node.image)
         }
 
@@ -265,8 +264,8 @@ class VnEngine(
 
           val targetScene = node.cases[key] ?: node.default
           jumpToScene(targetScene)
+          continue
         }
-
         is SceneNode.SwitchRange -> {
 
           val value = variables.getModifier(node.variable)
@@ -277,6 +276,7 @@ class VnEngine(
 
           val targetScene = found?.scene ?: node.default
           jumpToScene(targetScene)
+          continue
         }
         is SceneNode.ShowCharacter -> {
 
@@ -293,7 +293,6 @@ class VnEngine(
             else -> node.image
           }
 
-          advance()
           return ShowCharacter(
             id = node.id,
             image = finalImage ?: "",
@@ -302,7 +301,6 @@ class VnEngine(
           )
         }
         is SceneNode.HideCharacter -> {
-          advance()
           return HideCharacter(node.id)
         }
 
@@ -321,7 +319,6 @@ class VnEngine(
         }
 
         is SceneNode.HideImage -> {
-          advance()
           return HideImage
         }
 
@@ -332,6 +329,28 @@ class VnEngine(
             hotspots = node.hotspots
           )
         }
+      }
+    }
+  }
+
+  fun advanceExternal(option: Option?) {
+
+    val node = currentNode() ?: return
+
+    when (node) {
+
+      is SceneNode.Choice -> {
+        option?.nextSceneId?.let {
+          jumpToScene(it)
+          return
+        }
+      }
+
+      is SceneNode.DiceRoll -> {
+      }
+
+      else -> {
+        advance()
       }
     }
   }
@@ -354,6 +373,96 @@ class VnEngine(
     val after = state.pointer.nodeIndex
 
     println("ADVANCE: $before -> $after")
+  }
+
+  fun renderCurrent(): EngineOutput {
+    while (true) {
+
+      val node = resolveNode() ?: return EngineOutput.EndOfScene
+
+      when (node) {
+
+        // =========================
+        // АВТО-ПРОПУСК (как step)
+        // =========================
+
+        is SceneNode.SetVar -> {
+          variables.set(node.varName, node.value.resolve())
+          advance()
+        }
+
+        is SceneNode.ModifyVar -> {
+          val resolved = node.value.resolve()
+          variables.modify(node.varName, resolved)
+          advance()
+        }
+
+        is SceneNode.Jump -> {
+          jumpToScene(node.targetSceneId)
+        }
+
+        is SceneNode.Background -> {
+          return EngineOutput.ShowBackground(node.image)
+        }
+
+        is SceneNode.Image -> {
+          return EngineOutput.ShowImage(node.image)
+        }
+
+        is SceneNode.ShowCharacter -> {
+          return EngineOutput.ShowCharacter(
+            id = node.id,
+            image = node.image ?: "",
+            position = node.position,
+            scale = node.scale
+          )
+        }
+
+        is SceneNode.HideCharacter -> {
+          return EngineOutput.HideCharacter(node.id)
+        }
+
+        // =========================
+        // USER OUTPUT (СТОП)
+        // =========================
+
+        is SceneNode.Text -> {
+          val speakerName =
+            node.speakerVar?.let { variables.getString(it) }
+              ?: node.speaker
+
+          val resolvedText = resolveTextVariables(node.text)
+
+          return EngineOutput.ShowText(
+            speaker = speakerName,
+            speakerVar = node.speakerVar,
+            text = resolvedText
+          )
+        }
+
+        is SceneNode.Choice -> {
+          return EngineOutput.ShowChoices(node.options)
+        }
+
+        is SceneNode.DiceRoll -> {
+          val baseMod = variables.getModifier(node.modifierVar).round2()
+
+          return EngineOutput.ShowDice(
+            name = node.name,
+            sides = node.sides,
+            result = state.diceResult,
+            modifier = baseMod,
+            difficulty = node.difficulty,
+            phase = DicePhase.ROLL
+          )
+        }
+
+        else -> {
+          println("⚠️ UNKNOWN NODE IN RENDER: ${node::class}")
+          advance()
+        }
+      }
+    }
   }
   private fun resolveTextVariables(rawText: String): String {
     val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()

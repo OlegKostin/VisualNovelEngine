@@ -129,41 +129,44 @@ class GameController(
   fun next(option: Option? = null): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
-    val output = engine.step(option)
-    if (output is EngineOutput.ShowDice) {
-      val cards = getPlayerCards()
-      return output.copy(cards = cards) to engine.currentNode()
-    }
+    // 1. применяем выбор (если есть)
+    engine.advanceExternal(option)
 
-    if (output is EngineOutput.DrawCardRequest) {
+    // 2. получаем результат текущей ноды
+    val output = engine.step()
 
-      val card = when {
-        output.random == true -> cardManager.drawCard()
-        output.value != null -> cardManager.getByValue(output.value!!)
-        output.image != null -> cardManager.drawCard()//cardManager.getByImage(output.image)
-        else -> null
+    // 3. post-processing (карты / дайс / сцена)
+    return when (output) {
+
+      is EngineOutput.ShowDice -> {
+        val cards = getPlayerCards()
+        output.copy(cards = cards) to engine.currentNode()
       }
 
-      requireNotNull(card) { "Card not found: $output" }
+      is EngineOutput.DrawCardRequest -> {
+        val card = when {
+          output.random == true -> cardManager.drawCard()
+          output.value != null -> cardManager.getByValue(output.value!!)
+          output.image != null -> cardManager.drawCard()
+          else -> null
+        }
 
-      val instance = metaManager.addCard(card)
-      return EngineOutput.ShowCard(
-        image = instance.image,
-        id = instance.id
-      ) to null
+        requireNotNull(card) { "Card not found: $output" }
+
+        val instance = metaManager.addCard(card)
+
+        EngineOutput.ShowCard(
+          image = instance.image,
+          id = instance.id
+        ) to null
+      }
+
+      is EngineOutput.JumpScenarioOutput -> output to null
+      is EngineOutput.EndOfScene -> output to null
+
+      else -> output to engine.currentNode()
     }
-
-    if (output is EngineOutput.JumpScenarioOutput) {
-      return output to null
-    }
-
-    if (output is EngineOutput.EndOfScene) {
-      return output to null
-    }
-
-    return output to engine.currentNode()
   }
-
   suspend fun switchScenario(path: String): Pair<EngineOutput, SceneNode?> {
     val scenario = loadScenario(path)
 
@@ -174,6 +177,8 @@ class GameController(
 
     return step()
   }
+
+
 
   fun getPlayerCards(): List<UiCard> {
     return metaManager.getCards().map {
@@ -240,24 +245,20 @@ class GameController(
   }
   suspend fun loadSave(slot: String): Pair<EngineOutput, SceneNode?> {
 
-    println("🎮 LOAD GAME CALLED")
-
     val loaded = saveManager.load(slot)
       ?: return EngineOutput.Loading to null
 
-    println("LOADED SCENARIO: ${loaded.scenario}")
-    println("LOADED POINTER: ${loaded.state.pointer}")
-
-    val scenarioPath = loaded.scenario
-
-    val scenario = loadScenario(scenarioPath)
+    val scenario = loadScenario(loaded.scenario)
 
     engine = VnEngine(loaded.state, dice).apply {
       addScenes(scenario.scenes)
     }
 
-    return step()
+    val engine = requireEngine
+
+    return engine.renderCurrent() to engine.currentNode()
   }
+
   private suspend fun loadScenario(path: String) =
     withContext(ioDispatcher) {
       val raw = assetReader.readText(path)
