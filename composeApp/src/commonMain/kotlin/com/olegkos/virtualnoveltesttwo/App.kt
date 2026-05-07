@@ -46,6 +46,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun App(viewModel: GameViewModel = koinViewModel()) {
+
   val output = viewModel.currentOutput
 
   var showMenu by remember { mutableStateOf(false) }
@@ -56,16 +57,30 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   var sceneView by remember { mutableStateOf<EngineOutput.ShowSceneView?>(null) }
   var cardImage by remember { mutableStateOf<String?>(null) }
 
+  var advancing by remember { mutableStateOf(false) }
+
   fun positionOffsetFromString(position: String, boxWidth: Dp): Dp {
     val index = position.lowercase().removePrefix("pos").toIntOrNull() ?: 0
     val step = boxWidth * 0.1f
     return step * index
   }
 
+  // ---------------- SAFE SIDE EFFECTS ----------------
+  LaunchedEffect(sceneView) {
+    sceneView?.let {
+      background = it.background
+    }
+  }
+
   LaunchedEffect(output) {
+    println("UI OUTPUT = $output")
+    if (advancing) return@LaunchedEffect
+    advancing = true
+
     if (output !is EngineOutput.ShowSceneView) {
       sceneView = null
     }
+
     when (val o = output) {
 
       is EngineOutput.ShowBackground -> {
@@ -79,24 +94,14 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
 
       is EngineOutput.ShowCharacter -> {
-        val scale = o.scale
-        val position = o.position
-
-        characters = characters
-          .filterNot { it.id == o.id } +
-            CharacterState(
-              id = o.id,
-              image = o.image,
-              alignment = Alignment.BottomStart,
-              scale = scale,
-              position = position
-            )
-
+        characters = characters.filterNot { it.id == o.id } + CharacterState(
+          id = o.id,
+          image = o.image,
+          alignment = Alignment.BottomStart,
+          scale = o.scale,
+          position = o.position
+        )
         viewModel.next()
-      }
-
-      is EngineOutput.ShowCard -> {
-        cardImage = o.image
       }
 
       is EngineOutput.HideImage -> {
@@ -109,14 +114,22 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         viewModel.next()
       }
 
+      is EngineOutput.ShowCard -> {
+        println("CARD IN UI: ${o.image}")
+        cardImage = o.image
+      }
+
       is EngineOutput.ShowSceneView -> {
         sceneView = o
-        background = o.background
       }
 
       else -> Unit
     }
+
+    advancing = false
   }
+
+  // ---------------- UI ----------------
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 
@@ -183,23 +196,14 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
 
     sceneView?.let { view ->
-      background = view.background
 
       val boxHeight = maxHeight
 
       view.navigation?.let { nav ->
-        nav.left?.let { target ->
-          ArrowButton(Alignment.CenterStart) { viewModel.jumpScenario(target) }
-        }
-        nav.right?.let { target ->
-          ArrowButton(Alignment.CenterEnd) { viewModel.jumpScenario(target) }
-        }
-        nav.up?.let { target ->
-          ArrowButton(Alignment.TopCenter) { viewModel.jumpScenario(target) }
-        }
-        nav.down?.let { target ->
-          ArrowButton(Alignment.BottomCenter) { viewModel.jumpScenario(target) }
-        }
+        nav.left?.let { ArrowButton(Alignment.CenterStart) { viewModel.jumpScenario(it) } }
+        nav.right?.let { ArrowButton(Alignment.CenterEnd) { viewModel.jumpScenario(it) } }
+        nav.up?.let { ArrowButton(Alignment.TopCenter) { viewModel.jumpScenario(it) } }
+        nav.down?.let { ArrowButton(Alignment.BottomCenter) { viewModel.jumpScenario(it) } }
       }
 
       view.hotspots.forEach { spot ->
@@ -221,17 +225,18 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         )
       }
     }
+
     Column(
-      modifier = Modifier
-        .fillMaxSize(),
+      modifier = Modifier.fillMaxSize(),
       verticalArrangement = Arrangement.Center
     ) {
+
       when (val o = output) {
 
         is EngineOutput.ShowInitGame -> {
           InitGameScreen(
             classes = o.classes,
-            onConfirm = { name: String, selectedClass: SubClass.GameClass? ->
+            onConfirm = { name, selectedClass ->
               viewModel.initGame(
                 playerName = name,
                 selectedClass = selectedClass,
@@ -243,10 +248,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowVar -> {
-          if (o.text!!.isBlank()) {
-            LaunchedEffect(Unit) {
-              viewModel.next()
-            }
+          if (o.text.isNullOrBlank()) {
+            viewModel.next()
           } else {
             ShowVarScreen(
               name = o.name,
@@ -256,6 +259,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             )
           }
         }
+
         is EngineOutput.ShowText -> {
           VNTextBox(
             speaker = o.speaker,
@@ -265,7 +269,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowCard -> {
-
           Box(
             modifier = Modifier
               .fillMaxSize()
@@ -274,10 +277,9 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
                 viewModel.next()
               },
             contentAlignment = Alignment.Center
-          ) {
-
-          }
+          ) {}
         }
+
         is EngineOutput.ShowChoices -> {
           o.options.forEach { option ->
             Button(
@@ -312,11 +314,13 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowSceneView -> Unit
+
         else -> Text("Загрузка...")
       }
     }
 
-    // ---------- КНОПКА МЕНЮ ----------
+    // ---------------- MENU ----------------
+
     Box(
       modifier = Modifier
         .fillMaxSize()
@@ -328,13 +332,12 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
-    // ---------- OVERLAY ----------
     if (showMenu) {
       Box(
         modifier = Modifier
           .fillMaxSize()
           .background(Color.Black.copy(alpha = 0.6f))
-          .clickable { showMenu = false } // закрытие по клику
+          .clickable { showMenu = false }
       )
 
       Box(

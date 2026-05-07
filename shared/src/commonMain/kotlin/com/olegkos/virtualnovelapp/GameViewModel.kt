@@ -41,20 +41,28 @@
     }
 
     fun next(option: Option? = null) {
+      println("VM NEXT option=$option")
       val result = controller.next(option)
-      currentOutput = result.first
-      currentNode = result.second
+      val output = result.first
 
-      if (result.first is EngineOutput.JumpScenarioOutput) {
-        viewModelScope.launch {
-          val jump = result.first as EngineOutput.JumpScenarioOutput
-          val (output, node) = controller.switchScenario(jump.scenarioFile)
+      when (output) {
+
+        is EngineOutput.JumpScenarioOutput -> {
+          viewModelScope.launch {
+            val (newOutput, node) =
+              controller.switchScenario(output.scenarioFile)
+
+            currentOutput = newOutput
+            currentNode = node
+          }
+        }
+
+        else -> {
           currentOutput = output
-          currentNode = node
+          currentNode = result.second
         }
       }
     }
-
     fun rollDice() {
       val (output, node) = controller.rollDice()
       currentOutput = output
@@ -98,11 +106,8 @@
     fun applyDiceModifier(extra: Float, usedCards: List<String>) {
       val (output, node) = controller.applyDiceModifier(extra, usedCards)
 
-
-      useCards(usedCards)
-
       currentOutput = output
-      currentNode = node
+      currentNode = node ?: controller.requireEngine.currentNode()
     }
     fun jumpScenario(path: String) {
       viewModelScope.launch {

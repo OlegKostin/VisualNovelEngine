@@ -129,12 +129,15 @@ class GameController(
   fun next(option: Option? = null): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
-    // 1. применяем выбор (если есть)
+
+    println("👉 NEXT CALLED option=$option pointer=${engine.state.pointer}")
+
     engine.advanceExternal(option)
 
-    // 2. получаем результат текущей ноды
     val output = engine.step()
 
+    println("👉 ENGINE OUTPUT = $output")
+    println("👉 NODE = ${engine.currentNode()}")
     // 3. post-processing (карты / дайс / сцена)
     return when (output) {
 
@@ -206,6 +209,7 @@ class GameController(
     }
 
     engine.state.diceResult = result
+    engine.state.diceModifiedResult = null
     println("DICE ID: $diceId RESULT: $result (saved=${saved != null})")
     return step()
   }
@@ -254,9 +258,7 @@ class GameController(
       addScenes(scenario.scenes)
     }
 
-    val engine = requireEngine
-
-    return engine.renderCurrent() to engine.currentNode()
+    return step()
   }
 
   private suspend fun loadScenario(path: String) =
@@ -267,14 +269,18 @@ class GameController(
 
   private fun step(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
+
     val output = engine.step()
 
-    if (output is EngineOutput.ShowDice) {
-      val cards = getPlayerCards()
-      return output.copy(cards = cards) to engine.currentNode()
-    }
+    return when (output) {
 
-    return output to engine.currentNode()
+      is EngineOutput.ShowDice -> {
+        val cards = getPlayerCards()
+        output.copy(cards = cards) to engine.currentNode()
+      }
+
+      else -> output to engine.currentNode()
+    }
   }
 
   private fun buildDiceId(): String {

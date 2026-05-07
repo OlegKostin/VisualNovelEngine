@@ -8,6 +8,8 @@ data class GameState(
   val variables: MutableMap<String, GameValue> = mutableMapOf(),
   var diceResult: Int? = null,
   var diceModifiedResult: Float? = null,
+  var pendingOutput: EngineOutput? = null,
+  var waitingForUi: Boolean = false,
   val scenarioStack: ArrayDeque<NodePointer> = ArrayDeque(),
   var isGameInitialized: Boolean = false,
 )

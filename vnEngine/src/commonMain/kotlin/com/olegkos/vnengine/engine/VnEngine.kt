@@ -34,17 +34,13 @@ class VnEngine(
   }
 
   fun currentNode(): SceneNode? {
-
     val scene = scenes[state.pointer.sceneId]
       ?: error("Scene not found: ${state.pointer.sceneId}")
-
-    println("CURRENT NODE → scene=${state.pointer.sceneId}, index=${state.pointer.nodeIndex}, size=${scene.nodes.size}")
 
     return scene.nodes.getOrNull(state.pointer.nodeIndex)
   }
 
   private tailrec fun resolveNode(): SceneNode? {
-
     val node = currentNode() ?: return null
 
     if (node is SceneNode.Jump) {
@@ -54,63 +50,53 @@ class VnEngine(
 
     return node
   }
-  fun step(selectedOption: Option? = null): EngineOutput {
-    println("=== STEP START === pointer=$state.pointer option=$selectedOption")
+
+  // =========================
+  // ЕДИНАЯ ТОЧКА ВХОДА
+  // =========================
+  fun tick(option: Option? = null): EngineOutput {
+    println("STEP: ${state.pointer}")
+    println("CURRENT NODE: ${currentNode()}")
+    // обработка выбора игрока — оставляем как у тебя было (inline логика)
+    if (option != null) {
+      val node = currentNode()
+
+      if (node is SceneNode.Choice) {
+        option.nextSceneId?.let {
+          jumpToScene(it)
+        }
+      }
+    }
+
     while (true) {
 
-      val scene = scenes[state.pointer.sceneId]
-        ?: error("Scene not found")
-
-      if (state.pointer.nodeIndex >= scene.nodes.size) {
-        return EndOfScene
-      }
-
-      val node = resolveNode() ?: run {
-        println("resolveNode returned NULL -> EndOfScene")
-        return EndOfScene
-      }
-      println("RESOLVED NODE: ${node::class.simpleName}")
+      val node = resolveNode()
+        ?: return EndOfScene
 
       when (node) {
+
+        // =========================
+        // AUTO NODES
+        // =========================
 
         is SceneNode.SetVar -> {
           variables.set(node.varName, node.value.resolve())
           advance()
-        }
-
-        is SceneNode.DrawCard -> {
-          println("HANDLE DrawCard node=$node")
-          advance()
-          return DrawCardRequest(
-            random = node.random,
-            value = node.value,
-            image = node.image
-          )
+          continue
         }
 
         is SceneNode.ModifyVar -> {
           val resolved = node.value.resolve()
           variables.modify(node.varName, resolved)
           advance()
-
-          val valueString = when (resolved) {
-            is IntVal -> resolved.value.toString()
-            is FloatVal -> resolved.value.round2().toString()
-            is GameValue.Bool -> resolved.value.toString()
-            is GameValue.StringVal -> resolved.value
-            else -> "0"
-          }
-
-          if (node.text != null) {
-            return ShowVar(
-              node.varName,
-              valueString,
-              node.text
-            )
-          } else {
-            continue
-          }
+          continue
         }
+
+        is SceneNode.Jump -> {
+          jumpToScene(node.targetSceneId)
+          continue
+        }
+
         is SceneNode.If -> {
           val value = state.variables[node.variable]
           val compareValue = node.equals.resolve()
@@ -136,122 +122,11 @@ class VnEngine(
 
             else -> false
           }
-          if (condition)
-            jumpToScene(node.successScene)
-          else
-            jumpToScene(node.failScene)
 
-          continue
-        }
-        is SceneNode.Text -> {
-        val speakerName = node.speakerVar?.let { variables.getString(it) } ?: node.speaker
-        val resolvedText = resolveTextVariables(node.text)
-          return ShowText(
-            speaker = speakerName,
-            speakerVar = node.speakerVar,
-            text = resolvedText)
-        }
-
-        is SceneNode.Choice -> {
-          if (selectedOption != null) {
-
-            selectedOption.nextScenarioFile?.let {
-              return JumpScenarioOutput(it)
-            }
-
-            selectedOption.nextSceneId?.let {
-              jumpToScene(it)
-              continue
-            }
-          }
-
-          return ShowChoices(node.options)
-        }
-        is SceneNode.DiceRoll -> {
-
-          val roll = state.diceResult
-          val baseMod = variables.getModifier(node.modifierVar).round2()
-          val modified = state.diceModifiedResult
-
-          // 1. ЕЩЁ НЕ БРОСАЛИ
-          if (roll == null) {
-            return ShowDice(
-              name = node.name,
-              sides = node.sides,
-              result = null,
-              modifier = baseMod,
-              difficulty = node.difficulty,
-              phase = DicePhase.ROLL
-            )
-          }
-
-          // 2. БРОСИЛИ, НО КАРТЫ НЕ ПРИМЕНЕНЫ
-          if (modified == null) {
-            return ShowDice(
-              name = node.name,
-              sides = node.sides,
-              result = roll,
-              modifier = baseMod,
-              difficulty = node.difficulty,
-              phase = DicePhase.RESULT
-            )
-          }
-
-          // 3. ФИНАЛ (ПОСЛЕ КАРТ)
-          val total = modified.round2()
-          val finalModifier = (total - roll).round2()
-
-          val resultOutput = ShowDice(
-            name = node.name,
-            sides = node.sides,
-            result = roll,
-            modifier = finalModifier,
-            difficulty = node.difficulty,
-            phase = DicePhase.FINAL
+          jumpToScene(
+            if (condition) node.successScene else node.failScene
           )
-
-          // переход сцены
-          when {
-            roll == 1 && node.critFailScene != null ->
-              jumpToScene(node.critFailScene)
-
-            roll == node.sides && node.critSuccessScene != null ->
-              jumpToScene(node.critSuccessScene)
-
-            total >= node.difficulty ->
-              jumpToScene(node.successScene)
-
-            else ->
-              jumpToScene(node.failScene)
-          }
-
-          // очищаем состояние
-          state.diceResult = null
-          state.diceModifiedResult = null
-
-          return resultOutput
-        }
-
-        is SceneNode.JumpScenario -> {
-          state.scenarioStack.addLast(state.pointer.copy())
-          advance()
-          return JumpScenarioOutput(node.scenarioFile)
-        }
-
-        is SceneNode.Jump -> {
-          jumpToScene(node.targetSceneId)
-        }
-        is SceneNode.Background -> {
-          return ShowBackground(node.image)
-        }
-
-        is SceneNode.Image -> {
-          return ShowImage(node.image)
-        }
-
-
-        is SceneNode.Effect -> {
-          return ShowImage(node.image)
+          continue
         }
 
         is SceneNode.Switch -> {
@@ -266,18 +141,47 @@ class VnEngine(
           jumpToScene(targetScene)
           continue
         }
+
         is SceneNode.SwitchRange -> {
 
           val value = variables.getModifier(node.variable)
 
-          val found = node.ranges.firstOrNull {
+          val targetScene = node.ranges.firstOrNull {
             value >= it.min && value <= it.max
-          }
+          }?.scene ?: node.default
 
-          val targetScene = found?.scene ?: node.default
           jumpToScene(targetScene)
           continue
         }
+
+        // =========================
+        // UI OUTPUT
+        // =========================
+
+        is SceneNode.Text -> {
+          val speakerName =
+            node.speakerVar?.let { variables.getString(it) }
+              ?: node.speaker
+
+          return ShowText(
+            speaker = speakerName,
+            speakerVar = node.speakerVar,
+            text = resolveTextVariables(node.text)
+          )
+        }
+
+        is SceneNode.Choice -> {
+          return ShowChoices(node.options)
+        }
+
+        is SceneNode.Background -> {
+          return ShowBackground(node.image)
+        }
+
+        is SceneNode.Image -> {
+          return ShowImage(node.image)
+        }
+
         is SceneNode.ShowCharacter -> {
 
           val finalImage = when {
@@ -300,12 +204,80 @@ class VnEngine(
             scale = node.scale,
           )
         }
+
         is SceneNode.HideCharacter -> {
           return HideCharacter(node.id)
         }
 
-        is SceneNode.InitGame -> {
+        is SceneNode.DiceRoll -> {
 
+          val roll = state.diceResult
+          val baseMod = variables.getModifier(node.modifierVar).round2()
+          val modified = state.diceModifiedResult
+
+          if (roll == null) {
+            return ShowDice(
+              name = node.name,
+              sides = node.sides,
+              result = null,
+              modifier = baseMod,
+              difficulty = node.difficulty,
+              phase = DicePhase.ROLL
+            )
+          }
+
+          if (modified == null) {
+            return ShowDice(
+              name = node.name,
+              sides = node.sides,
+              result = roll,
+              modifier = baseMod,
+              difficulty = node.difficulty,
+              phase = DicePhase.RESULT
+            )
+          }
+
+          val total = modified.round2()
+          val finalModifier = (total - roll).round2()
+
+          val resultOutput = ShowDice(
+            name = node.name,
+            sides = node.sides,
+            result = roll,
+            modifier = finalModifier,
+            difficulty = node.difficulty,
+            phase = DicePhase.FINAL
+          )
+
+          when {
+            roll == 1 && node.critFailScene != null ->
+              jumpToScene(node.critFailScene)
+
+            roll == node.sides && node.critSuccessScene != null ->
+              jumpToScene(node.critSuccessScene)
+
+            total >= node.difficulty ->
+              jumpToScene(node.successScene)
+
+            else ->
+              jumpToScene(node.failScene)
+          }
+
+          state.diceResult = null
+          state.diceModifiedResult = null
+
+          return resultOutput
+        }
+
+        is SceneNode.DrawCard -> {
+          return DrawCardRequest(
+            random = node.random,
+            value = node.value,
+            image = node.image
+          )
+        }
+
+        is SceneNode.InitGame -> {
           return if (!state.isGameInitialized) {
             ShowInitGame(
               playerNameVar = node.playerNameVar,
@@ -329,34 +301,41 @@ class VnEngine(
             hotspots = node.hotspots
           )
         }
+
+        is SceneNode.Effect -> {
+          return ShowImage(node.image)
+        }
+        is SceneNode.JumpScenario -> {
+
+          state.scenarioStack.addLast(state.pointer.copy())
+          advance()
+
+          return JumpScenarioOutput(node.scenarioFile)
+        }
       }
     }
   }
 
-  fun advanceExternal(option: Option?) {
+  // =========================
+  // BACKWARD COMPAT (НЕ ЛОМАЕМ APP)
+  // =========================
+  fun step(option: Option? = null): EngineOutput = tick(option)
 
+  fun advanceExternal(option: Option?) {
     val node = currentNode() ?: return
 
     when (node) {
-
       is SceneNode.Choice -> {
         option?.nextSceneId?.let {
           jumpToScene(it)
           return
         }
       }
-
-      is SceneNode.DiceRoll -> {
-      }
-
-      else -> {
-        advance()
-      }
+      else -> advance()
     }
   }
 
   fun jumpToScene(sceneId: String) {
-
     require(scenes.containsKey(sceneId)) {
       "Scene '$sceneId' not found"
     }
@@ -366,112 +345,17 @@ class VnEngine(
   }
 
   private fun advance() {
-    val before = state.pointer.nodeIndex
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )
-    val after = state.pointer.nodeIndex
-
-    println("ADVANCE: $before -> $after")
   }
 
-  fun renderCurrent(): EngineOutput {
-    while (true) {
-
-      val node = resolveNode() ?: return EngineOutput.EndOfScene
-
-      when (node) {
-
-        // =========================
-        // АВТО-ПРОПУСК (как step)
-        // =========================
-
-        is SceneNode.SetVar -> {
-          variables.set(node.varName, node.value.resolve())
-          advance()
-        }
-
-        is SceneNode.ModifyVar -> {
-          val resolved = node.value.resolve()
-          variables.modify(node.varName, resolved)
-          advance()
-        }
-
-        is SceneNode.Jump -> {
-          jumpToScene(node.targetSceneId)
-        }
-
-        is SceneNode.Background -> {
-          return EngineOutput.ShowBackground(node.image)
-        }
-
-        is SceneNode.Image -> {
-          return EngineOutput.ShowImage(node.image)
-        }
-
-        is SceneNode.ShowCharacter -> {
-          return EngineOutput.ShowCharacter(
-            id = node.id,
-            image = node.image ?: "",
-            position = node.position,
-            scale = node.scale
-          )
-        }
-
-        is SceneNode.HideCharacter -> {
-          return EngineOutput.HideCharacter(node.id)
-        }
-
-        // =========================
-        // USER OUTPUT (СТОП)
-        // =========================
-
-        is SceneNode.Text -> {
-          val speakerName =
-            node.speakerVar?.let { variables.getString(it) }
-              ?: node.speaker
-
-          val resolvedText = resolveTextVariables(node.text)
-
-          return EngineOutput.ShowText(
-            speaker = speakerName,
-            speakerVar = node.speakerVar,
-            text = resolvedText
-          )
-        }
-
-        is SceneNode.Choice -> {
-          return EngineOutput.ShowChoices(node.options)
-        }
-
-        is SceneNode.DiceRoll -> {
-          val baseMod = variables.getModifier(node.modifierVar).round2()
-
-          return EngineOutput.ShowDice(
-            name = node.name,
-            sides = node.sides,
-            result = state.diceResult,
-            modifier = baseMod,
-            difficulty = node.difficulty,
-            phase = DicePhase.ROLL
-          )
-        }
-
-        else -> {
-          println("⚠️ UNKNOWN NODE IN RENDER: ${node::class}")
-          advance()
-        }
-      }
-    }
-  }
   private fun resolveTextVariables(rawText: String): String {
     val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()
-    return regex.replace(rawText) { matchResult ->
-      val varName = matchResult.groupValues[1]
-      variables.getString(varName)
+    return regex.replace(rawText) {
+      variables.getString(it.groupValues[1])
     }
   }
-
 }
 fun Float.round2(): Float = (this * 100).toInt() / 100f
 
