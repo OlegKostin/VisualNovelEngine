@@ -111,4 +111,66 @@ sealed interface SceneNode {
   ) : SceneNode
   data object HideImage : SceneNode
 
+  data class Battle(
+    val id: String,
+    val title: String,
+    val monster: Monster,
+    val player: PlayerRefs,
+    val phases: BattlePhases,
+    val transitions: BattleTransitions,
+    val escape: EscapeConfig? = null
+  ) : SceneNode
+
+  data class Monster(
+    val name: String,
+    val image: String,
+    val health: Int,
+    val horrorDamage: Int = 0,
+    val combatDamage: Int = 0
+  )
+
+  data class PlayerRefs(
+    val healthVar: String,
+    val sanityVar: String
+  )
+
+  data class BattlePhases(
+    val horror: CheckPhase? = null,
+    val combat: CombatPhase
+  )
+
+  data class CheckPhase(
+    val enabled: Boolean = true,
+    val name: String,
+    val sides: Int,
+    val difficulty: Int,
+    val modifierVar: String,
+    val onFailSanityDamage: Int = 0
+  )
+
+  data class CombatPhase(
+    val name: String,
+    val sides: Int,
+    val difficulty: Int,
+    val modifierVar: String,
+    val damageOnSuccess: Int = 1,
+    val damageOnCritSuccess: Int = 2,
+    val damageToPlayerOnFail: Int = 1
+  )
+
+  data class EscapeConfig(
+    val allowed: Boolean = true,
+    val name: String,
+    val sides: Int,
+    val difficulty: Int,
+    val modifierVar: String,
+    val onFailPlayerDamage: Int = 0
+  )
+
+  data class BattleTransitions(
+    val winScene: String,
+    val loseScene: String,
+    val escapeScene: String? = null
+  )
+
 }
