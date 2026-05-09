@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
+import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.vnengine.engine.BattlePhase
 import com.olegkos.vnengine.engine.UiCard
 import kotlinx.coroutines.delay
@@ -61,11 +62,14 @@ fun BattleScreen(
 
   var isRolling by remember { mutableStateOf(false) }
   var rollingValue by remember { mutableIntStateOf(1) }
+  var revealResult by remember(result, phase) { mutableStateOf(false) }
 
   val scroll = rememberScrollState()
 
   LaunchedEffect(isRolling) {
     if (!isRolling) return@LaunchedEffect
+
+    revealResult = false
 
     var delayMs = 40L
     val diceSides = sides ?: 20
@@ -78,6 +82,14 @@ fun BattleScreen(
 
     rollingValue = result ?: rollingValue
     isRolling = false
+    revealResult = true
+  }
+
+  val modifierStat = when (phase) {
+    BattlePhase.HORROR -> StatType.fromKey("opt_will")
+    BattlePhase.COMBAT -> StatType.fromKey("opt_str")
+    BattlePhase.ESCAPE -> StatType.fromKey("opt_luck")
+    else -> null
   }
 
   Column(
@@ -91,8 +103,22 @@ fun BattleScreen(
     Spacer(Modifier.height(8.dp))
     Text("Монстр: $monsterName")
     Text("HP монстра: $monsterHp / $monsterMaxHp")
-    Text("Твое здоровье: $playerHealth")
-    Text("Твой рассудок: $playerSanity")
+
+    Spacer(Modifier.height(10.dp))
+
+    StatIconsRow(
+      stat = StatType.fromKey("health"),
+      count = playerHealth,
+      fallbackLabel = "Здоровье: $playerHealth"
+    )
+
+    Spacer(Modifier.height(6.dp))
+
+    StatIconsRow(
+      stat = StatType.fromKey("mental_health"),
+      count = playerSanity,
+      fallbackLabel = "Рассудок: $playerSanity"
+    )
 
     Spacer(Modifier.height(12.dp))
 
@@ -111,14 +137,9 @@ fun BattleScreen(
         Spacer(Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          Button(onClick = onChooseFight) {
-            Text("Сражаться")
-          }
-
+          Button(onClick = onChooseFight) { Text("Сражаться") }
           if (canEscape) {
-            Button(onClick = onChooseEscape) {
-              Text("Сбежать")
-            }
+            Button(onClick = onChooseEscape) { Text("Сбежать") }
           }
         }
       }
@@ -137,12 +158,33 @@ fun BattleScreen(
           else -> 1
         }
 
+        val totalResult = result?.let { (it + modifier).toInt() }
+
         Text(titleText)
         Spacer(Modifier.height(6.dp))
         Text(diceName ?: "Проверка")
         Text("d${sides ?: "-"}  сложность: ${difficulty ?: "-"}")
-        Text("Модификатор: $modifier")
-        Text("Результат: ${result ?: "-"}")
+
+        Spacer(Modifier.height(6.dp))
+        modifierStat?.let {
+          Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Image(
+              painter = painterResource(it.image),
+              contentDescription = null,
+              modifier = Modifier.size(24.dp)
+            )
+            Text("$modifier")
+          }
+        } ?: Text("Модификатор: $modifier")
+
+        if (isRolling) {
+          Text("Бросок...")
+        } else if (result != null && revealResult) {
+          Text("Бросок: $result")
+          Text("Итог: ${totalResult ?: "-"}")
+        } else {
+          Text("Результат: -")
+        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -161,21 +203,17 @@ fun BattleScreen(
               onRoll()
               isRolling = true
             }
-          ) {
-            Text("Бросить")
-          }
+          ) { Text("Бросить") }
+        } else if (isRolling || !revealResult) {
+          Button(enabled = false, onClick = {}) { Text("Считаем...") }
         } else {
           if (canUseCards && !showCards) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-              Button(onClick = { onApplyCards(0f, emptyList()) }) {
-                Text("Без карт")
-              }
+              Button(onClick = { onApplyCards(0f, emptyList()) }) { Text("Без карт") }
               Button(onClick = {
                 selectedCards = emptySet()
                 showCards = true
-              }) {
-                Text("Использовать карты")
-              }
+              }) { Text("Использовать карты") }
             }
           } else if (showCards) {
             Text("Выбери карты")
@@ -211,8 +249,7 @@ fun BattleScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            val bonus = cards
-              .filter { it.id in selectedCards }
+            val bonus = cards.filter { it.id in selectedCards }
               .sumOf { it.value.toDouble() }
               .toFloat()
 
@@ -223,13 +260,9 @@ fun BattleScreen(
                 selectedCards = emptySet()
                 showCards = false
               }
-            ) {
-              Text("Применить (+$bonus)")
-            }
+            ) { Text("Применить (+$bonus)") }
           } else {
-            Button(onClick = onContinue) {
-              Text("Продолжить")
-            }
+            Button(onClick = onContinue) { Text("Продолжить") }
           }
         }
       }
@@ -237,16 +270,44 @@ fun BattleScreen(
       BattlePhase.RESOLVE -> {
         Text("Рассчет результата...")
         Spacer(Modifier.height(8.dp))
-        Button(onClick = onContinue) {
-          Text("Продолжить")
-        }
+        Button(onClick = onContinue) { Text("Продолжить") }
       }
 
       else -> {
-        Button(onClick = onContinue) {
-          Text("Продолжить")
-        }
+        Button(onClick = onContinue) { Text("Продолжить") }
       }
+    }
+  }
+}
+
+@Composable
+private fun StatIconsRow(
+  stat: StatType?,
+  count: Int,
+  fallbackLabel: String
+) {
+  val safeCount = count.coerceAtLeast(0).coerceAtMost(20)
+
+  if (stat == null) {
+    Text(fallbackLabel)
+    return
+  }
+
+  if (safeCount == 0) {
+    Text("0")
+    return
+  }
+
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(4.dp),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    repeat(safeCount) {
+      Image(
+        painter = painterResource(stat.image),
+        contentDescription = null,
+        modifier = Modifier.size(24.dp)
+      )
     }
   }
 }
