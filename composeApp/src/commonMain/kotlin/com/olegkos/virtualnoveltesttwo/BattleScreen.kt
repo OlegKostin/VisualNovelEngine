@@ -1,6 +1,8 @@
 package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -114,9 +118,21 @@ fun BattleScreen(
     val diceSize = (screenMaxHeight * 0.70f)
       .coerceAtLeast(180.dp)
       .coerceAtMost(screenMaxWidth * 0.70f)
-
-    // Каждая карта = 30% ширины экрана
     val cardSize = screenMaxWidth * 0.30f
+
+    val playerBase = Color(0x1A4CAF50)
+    val centerBase = Color(0x1A2196F3)
+    val monsterBase = Color(0x1AF44336)
+
+    val activeGlow = Color.White.copy(alpha = 0.28f)
+    val inactiveBorder = Color.White.copy(alpha = 0.08f)
+
+    val playerActive = false
+    val centerActive = phase == BattlePhase.HORROR ||
+        phase == BattlePhase.COMBAT ||
+        phase == BattlePhase.ESCAPE ||
+        phase == BattlePhase.ACTION
+    val monsterActive = phase == BattlePhase.COMBAT || phase == BattlePhase.RESOLVE
 
     Row(modifier = Modifier.fillMaxSize()) {
 
@@ -125,6 +141,13 @@ fun BattleScreen(
         modifier = Modifier
           .weight(1f)
           .fillMaxHeight()
+          .padding(panelPadding / 2)
+          .background(playerBase, RoundedCornerShape(14.dp))
+          .border(
+            width = if (playerActive) 1.5.dp else 1.dp,
+            color = if (playerActive) activeGlow else inactiveBorder,
+            shape = RoundedCornerShape(14.dp)
+          )
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
@@ -235,6 +258,13 @@ fun BattleScreen(
         modifier = Modifier
           .weight(1f)
           .fillMaxHeight()
+          .padding(panelPadding / 2)
+          .background(centerBase, RoundedCornerShape(14.dp))
+          .border(
+            width = if (centerActive) 1.5.dp else 1.dp,
+            color = if (centerActive) activeGlow else inactiveBorder,
+            shape = RoundedCornerShape(14.dp)
+          )
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
@@ -317,6 +347,13 @@ fun BattleScreen(
         modifier = Modifier
           .weight(1f)
           .fillMaxHeight()
+          .padding(panelPadding / 2)
+          .background(monsterBase, RoundedCornerShape(14.dp))
+          .border(
+            width = if (monsterActive) 1.5.dp else 1.dp,
+            color = if (monsterActive) activeGlow else inactiveBorder,
+            shape = RoundedCornerShape(14.dp)
+          )
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
