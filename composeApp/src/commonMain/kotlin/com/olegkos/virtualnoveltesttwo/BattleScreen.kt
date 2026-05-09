@@ -16,7 +16,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,6 +28,8 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.engine.BattlePhase
 import com.olegkos.vnengine.engine.UiCard
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BattleScreen(
@@ -55,7 +59,26 @@ fun BattleScreen(
   var selectedCards by remember { mutableStateOf(setOf<String>()) }
   var showCards by remember { mutableStateOf(false) }
 
+  var isRolling by remember { mutableStateOf(false) }
+  var rollingValue by remember { mutableIntStateOf(1) }
+
   val scroll = rememberScrollState()
+
+  LaunchedEffect(isRolling) {
+    if (!isRolling) return@LaunchedEffect
+
+    var delayMs = 40L
+    val diceSides = sides ?: 20
+
+    repeat(15) {
+      rollingValue = (1..diceSides).random()
+      delay(delayMs)
+      delayMs += 10
+    }
+
+    rollingValue = result ?: rollingValue
+    isRolling = false
+  }
 
   Column(
     modifier = Modifier
@@ -108,6 +131,12 @@ fun BattleScreen(
           else -> ""
         }
 
+        val valueToShow = when {
+          isRolling -> rollingValue
+          result != null -> result
+          else -> 1
+        }
+
         Text(titleText)
         Spacer(Modifier.height(6.dp))
         Text(diceName ?: "Проверка")
@@ -117,8 +146,22 @@ fun BattleScreen(
 
         Spacer(Modifier.height(12.dp))
 
+        Image(
+          painter = painterResource(diceImage(valueToShow)),
+          contentDescription = null,
+          modifier = Modifier.size(160.dp)
+        )
+
+        Spacer(Modifier.height(12.dp))
+
         if (result == null) {
-          Button(onClick = onRoll) {
+          Button(
+            enabled = !isRolling,
+            onClick = {
+              onRoll()
+              isRolling = true
+            }
+          ) {
             Text("Бросить")
           }
         } else {
