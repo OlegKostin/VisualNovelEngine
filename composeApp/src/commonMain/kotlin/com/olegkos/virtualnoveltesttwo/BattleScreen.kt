@@ -36,7 +36,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.vnengine.engine.BattlePhase
 import com.olegkos.vnengine.engine.UiCard
@@ -108,10 +110,15 @@ fun BattleScreen(
     else -> 1
   }
 
+  val bonus = cards
+    .filter { it.id in selectedCards }
+    .sumOf { it.value.toDouble() }
+    .toFloat()
+
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val screenMaxHeight = this.maxHeight
     val screenMaxWidth = this.maxWidth
-
+    val fontSize = (maxHeight.value * 0.045f).sp
     val panelPadding = 12.dp
     val iconSize = (screenMaxWidth * 0.05f).coerceAtLeast(20.dp).coerceAtMost(34.dp)
     val monsterImageSize = (screenMaxWidth * 0.22f).coerceAtMost(screenMaxHeight * 0.45f)
@@ -136,7 +143,6 @@ fun BattleScreen(
 
     Row(modifier = Modifier.fillMaxSize()) {
 
-      // Левая часть: игрок + карты
       Column(
         modifier = Modifier
           .weight(1f)
@@ -151,28 +157,25 @@ fun BattleScreen(
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
-        Text("Игрок")
-        Spacer(Modifier.height(10.dp))
 
-        Text("Здоровье")
+        Text("Здоровье", fontSize = fontSize)
         IconStatRow(
           stat = StatType.fromKey("health"),
           count = playerHealth,
-          iconSize = iconSize
+          iconSize = iconSize,
+          fontSize = fontSize
         )
 
         Spacer(Modifier.height(10.dp))
 
-        Text("Рассудок")
+        Text("Рассудок", fontSize = fontSize)
         IconStatRow(
           stat = StatType.fromKey("mental_health"),
           count = playerSanity,
-          iconSize = iconSize
+          iconSize = iconSize,
+          fontSize = fontSize
         )
 
-        Spacer(Modifier.height(14.dp))
-
-        Text("Модификатор")
         Row(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -184,17 +187,19 @@ fun BattleScreen(
               modifier = Modifier.size(iconSize)
             )
           }
-          Text(modifier.toString())
+          Text(modifier.toString(), fontSize = fontSize)
         }
 
         Spacer(Modifier.height(10.dp))
-        Text("Бросок: ${if (result != null && revealResult) result else "-"}")
-        Text("Итог: ${if (result != null && revealResult) totalResult else "-"}")
+        Text(
+          "Бросок: ${if (result != null && revealResult) totalResult else "-"}",
+          fontSize = fontSize
+        )
 
         Spacer(Modifier.height(12.dp))
 
         if (showCards) {
-          Text("Карты")
+          Text("Карты", fontSize = fontSize)
           Spacer(Modifier.height(6.dp))
 
           LazyVerticalGrid(
@@ -208,6 +213,7 @@ fun BattleScreen(
             items(cards, key = { it.id }) { card ->
               val isSelected = card.id in selectedCards
               val painter = cardPainter(card.image)
+              val tickSize = (fontSize.value * 1.2f).sp
 
               Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -224,36 +230,21 @@ fun BattleScreen(
                       modifier = Modifier.size(cardSize)
                     )
                     if (isSelected) {
-                      Text("✓", modifier = Modifier.align(Alignment.TopEnd))
+                      Text(
+                        "✓",
+                        fontSize = tickSize,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                      )
                     }
                   }
                 }
-                Text("+${card.value}")
+                Text("+${card.value}", fontSize = fontSize)
               }
             }
-          }
-
-          Spacer(Modifier.height(8.dp))
-
-          val bonus = cards
-            .filter { it.id in selectedCards }
-            .sumOf { it.value.toDouble() }
-            .toFloat()
-
-          Button(
-            enabled = selectedCards.isNotEmpty(),
-            onClick = {
-              onApplyCards(bonus, selectedCards.toList())
-              selectedCards = emptySet()
-              showCards = false
-            }
-          ) {
-            Text("Применить (+$bonus)")
           }
         }
       }
 
-      // Центральная часть: кубик + контроль
       Column(
         modifier = Modifier
           .weight(1f)
@@ -268,9 +259,9 @@ fun BattleScreen(
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
-        Text(title, textAlign = TextAlign.Center)
+        Text(title, textAlign = TextAlign.Center, fontSize = fontSize)
         Spacer(Modifier.height(8.dp))
-        Text(diceName ?: "Проверка")
+        Text(diceName ?: "Проверка", fontSize = fontSize)
 
         Box(
           modifier = Modifier
@@ -286,12 +277,12 @@ fun BattleScreen(
               modifier = Modifier.size(diceSize)
             )
             Spacer(Modifier.height(8.dp))
-            Text("d${sides ?: "-"}")
-            Text("Сложность: ${difficulty ?: "-"}")
+            Text("d${sides ?: "-"}", fontSize = fontSize)
+            Text("Сложность: ${difficulty ?: "-"}", fontSize = fontSize)
             if (isRolling) {
-              Text("Бросок...")
+              Text("Бросок...", fontSize = fontSize)
             } else if (result != null && revealResult) {
-              Text("Готово")
+              Text("Готово", fontSize = fontSize)
             }
           }
         }
@@ -301,9 +292,13 @@ fun BattleScreen(
         when (phase) {
           BattlePhase.ACTION -> {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-              Button(onClick = onChooseFight) { Text("Сражаться") }
+              Button(onClick = onChooseFight) {
+                Text("Сражаться", fontSize = fontSize)
+              }
               if (canEscape) {
-                Button(onClick = onChooseEscape) { Text("Сбежать") }
+                Button(onClick = onChooseEscape) {
+                  Text("Сбежать", fontSize = fontSize)
+                }
               }
             }
           }
@@ -316,33 +311,60 @@ fun BattleScreen(
                   onRoll()
                   isRolling = true
                 }
-              ) { Text("Бросить") }
+              ) {
+                Text("Бросить", fontSize = fontSize)
+              }
             } else if (isRolling || !revealResult) {
-              Button(enabled = false, onClick = {}) { Text("Считаем...") }
+              Button(enabled = false, onClick = {}) {
+                Text("Считаем...", fontSize = fontSize)
+              }
             } else {
               if (canUseCards && !showCards) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                  Button(onClick = { onApplyCards(0f, emptyList()) }) { Text("Без карт") }
+                  Button(onClick = { onApplyCards(0f, emptyList()) }) {
+                    Text("Без карт", fontSize = fontSize)
+                  }
                   Button(onClick = {
                     selectedCards = emptySet()
                     showCards = true
-                  }) { Text("Карты") }
+                  }) {
+                    Text("Карты", fontSize = fontSize)
+                  }
                 }
               } else if (showCards) {
-                Text("Карты слева")
+                Button(
+                  onClick = {
+                    if (selectedCards.isEmpty()) {
+                      onApplyCards(0f, emptyList())
+                    } else {
+                      onApplyCards(bonus, selectedCards.toList())
+                    }
+                    selectedCards = emptySet()
+                    showCards = false
+                  }
+                ) {
+                  Text(
+                    if (selectedCards.isEmpty()) "Применить"
+                    else "Применить (+$bonus)",
+                    fontSize = fontSize
+                  )
+                }
               } else {
-                Button(onClick = onContinue) { Text("Продолжить") }
+                Button(onClick = onContinue) {
+                  Text("Продолжить", fontSize = fontSize)
+                }
               }
             }
           }
 
           else -> {
-            Button(onClick = onContinue) { Text("Продолжить") }
+            Button(onClick = onContinue) {
+              Text("Продолжить", fontSize = fontSize)
+            }
           }
         }
       }
 
-      // Правая часть: монстр
       Column(
         modifier = Modifier
           .weight(1f)
@@ -357,9 +379,9 @@ fun BattleScreen(
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
-        Text("Монстр")
+        Text("Монстр", fontSize = fontSize)
         Spacer(Modifier.height(8.dp))
-        Text(monsterName, textAlign = TextAlign.Center)
+        Text(monsterName, textAlign = TextAlign.Center, fontSize = fontSize)
         Spacer(Modifier.height(10.dp))
 
         monsterImagePainter?.let {
@@ -373,8 +395,8 @@ fun BattleScreen(
         }
 
         Spacer(Modifier.height(12.dp))
-        Text("HP: $monsterHp / $monsterMaxHp")
-        Text("Сила атаки: $monsterAttack")
+        Text("HP: $monsterHp / $monsterMaxHp", fontSize = fontSize)
+        Text("Сила атаки: $monsterAttack", fontSize = fontSize)
       }
     }
   }
@@ -384,12 +406,13 @@ fun BattleScreen(
 private fun IconStatRow(
   stat: StatType?,
   count: Int,
-  iconSize: Dp
+  iconSize: Dp,
+  fontSize: TextUnit
 ) {
   val safeCount = count.coerceAtLeast(0).coerceAtMost(20)
 
   if (safeCount == 0 || stat == null) {
-    Text(safeCount.toString())
+    Text(safeCount.toString(), fontSize = fontSize)
     return
   }
 
