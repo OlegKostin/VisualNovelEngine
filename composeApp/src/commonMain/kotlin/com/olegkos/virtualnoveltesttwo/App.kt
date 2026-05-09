@@ -323,6 +323,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             ),
             monsterHp = o.monsterHp,
             monsterMaxHp = o.monsterMaxHp,
+            monsterAttack = 2,
             playerHealth = o.playerHealth,
             playerSanity = o.playerSanity,
             phase = o.phase,

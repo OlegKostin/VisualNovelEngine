@@ -4,15 +4,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.vnengine.engine.BattlePhase
@@ -39,6 +46,7 @@ fun BattleScreen(
   monsterImagePainter: BitmapPainter?,
   monsterHp: Int,
   monsterMaxHp: Int,
+  monsterAttack: Int,
   playerHealth: Int,
   playerSanity: Int,
   phase: BattlePhase,
@@ -64,15 +72,12 @@ fun BattleScreen(
   var rollingValue by remember { mutableIntStateOf(1) }
   var revealResult by remember(result, phase) { mutableStateOf(false) }
 
-  val scroll = rememberScrollState()
-
   LaunchedEffect(isRolling) {
     if (!isRolling) return@LaunchedEffect
 
     revealResult = false
-
-    var delayMs = 40L
     val diceSides = sides ?: 20
+    var delayMs = 40L
 
     repeat(15) {
       rollingValue = (1..diceSides).random()
@@ -92,209 +97,262 @@ fun BattleScreen(
     else -> null
   }
 
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .verticalScroll(scroll)
-      .padding(16.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
-    Text(title)
-    Spacer(Modifier.height(8.dp))
-    Text("Монстр: $monsterName")
-    Text("HP монстра: $monsterHp / $monsterMaxHp")
+  val totalResult = result?.let { (it + modifier).toInt() }
+  val valueToShow = when {
+    isRolling -> rollingValue
+    result != null -> result
+    else -> 1
+  }
 
-    Spacer(Modifier.height(10.dp))
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val screenMaxHeight = this.maxHeight
+    val screenMaxWidth = this.maxWidth
 
-    StatIconsRow(
-      stat = StatType.fromKey("health"),
-      count = playerHealth,
-      fallbackLabel = "Здоровье: $playerHealth"
-    )
+    val panelPadding = 12.dp
+    val iconSize = (screenMaxWidth * 0.05f).coerceAtLeast(20.dp).coerceAtMost(34.dp)
+    val monsterImageSize = (screenMaxWidth * 0.22f).coerceAtMost(screenMaxHeight * 0.45f)
+    val diceSize = (screenMaxHeight * 0.70f)
+      .coerceAtLeast(180.dp)
+      .coerceAtMost(screenMaxWidth * 0.70f)
 
-    Spacer(Modifier.height(6.dp))
+    // Каждая карта = 30% ширины экрана
+    val cardSize = screenMaxWidth * 0.30f
 
-    StatIconsRow(
-      stat = StatType.fromKey("mental_health"),
-      count = playerSanity,
-      fallbackLabel = "Рассудок: $playerSanity"
-    )
+    Row(modifier = Modifier.fillMaxSize()) {
 
-    Spacer(Modifier.height(12.dp))
+      // Левая часть: игрок + карты
+      Column(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxHeight()
+          .padding(panelPadding),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text("Игрок")
+        Spacer(Modifier.height(10.dp))
 
-    monsterImagePainter?.let {
-      Image(
-        painter = it,
-        contentDescription = monsterName,
-        modifier = Modifier.size(220.dp)
-      )
-      Spacer(Modifier.height(12.dp))
-    }
+        Text("Здоровье")
+        IconStatRow(
+          stat = StatType.fromKey("health"),
+          count = playerHealth,
+          iconSize = iconSize
+        )
 
-    when (phase) {
-      BattlePhase.ACTION -> {
-        Text("Выбери действие")
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          Button(onClick = onChooseFight) { Text("Сражаться") }
-          if (canEscape) {
-            Button(onClick = onChooseEscape) { Text("Сбежать") }
+        Text("Рассудок")
+        IconStatRow(
+          stat = StatType.fromKey("mental_health"),
+          count = playerSanity,
+          iconSize = iconSize
+        )
+
+        Spacer(Modifier.height(14.dp))
+
+        Text("Модификатор")
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+          modifierStat?.let {
+            Image(
+              painter = painterResource(it.image),
+              contentDescription = null,
+              modifier = Modifier.size(iconSize)
+            )
+          }
+          Text(modifier.toString())
+        }
+
+        Spacer(Modifier.height(10.dp))
+        Text("Бросок: ${if (result != null && revealResult) result else "-"}")
+        Text("Итог: ${if (result != null && revealResult) totalResult else "-"}")
+
+        Spacer(Modifier.height(12.dp))
+
+        if (showCards) {
+          Text("Карты")
+          Spacer(Modifier.height(6.dp))
+
+          LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(screenMaxHeight * 0.70f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            items(cards, key = { it.id }) { card ->
+              val isSelected = card.id in selectedCards
+              val painter = cardPainter(card.image)
+
+              Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable {
+                  selectedCards =
+                    if (isSelected) selectedCards - card.id else selectedCards + card.id
+                }
+              ) {
+                painter?.let {
+                  Box {
+                    Image(
+                      painter = it,
+                      contentDescription = null,
+                      modifier = Modifier.size(cardSize)
+                    )
+                    if (isSelected) {
+                      Text("✓", modifier = Modifier.align(Alignment.TopEnd))
+                    }
+                  }
+                }
+                Text("+${card.value}")
+              }
+            }
+          }
+
+          Spacer(Modifier.height(8.dp))
+
+          val bonus = cards
+            .filter { it.id in selectedCards }
+            .sumOf { it.value.toDouble() }
+            .toFloat()
+
+          Button(
+            enabled = selectedCards.isNotEmpty(),
+            onClick = {
+              onApplyCards(bonus, selectedCards.toList())
+              selectedCards = emptySet()
+              showCards = false
+            }
+          ) {
+            Text("Применить (+$bonus)")
           }
         }
       }
 
-      BattlePhase.HORROR, BattlePhase.COMBAT, BattlePhase.ESCAPE -> {
-        val titleText = when (phase) {
-          BattlePhase.HORROR -> "Фаза ужаса"
-          BattlePhase.COMBAT -> "Фаза боя"
-          BattlePhase.ESCAPE -> "Фаза побега"
-          else -> ""
-        }
-
-        val valueToShow = when {
-          isRolling -> rollingValue
-          result != null -> result
-          else -> 1
-        }
-
-        val totalResult = result?.let { (it + modifier).toInt() }
-
-        Text(titleText)
-        Spacer(Modifier.height(6.dp))
+      // Центральная часть: кубик + контроль
+      Column(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxHeight()
+          .padding(panelPadding),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text(title, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(8.dp))
         Text(diceName ?: "Проверка")
-        Text("d${sides ?: "-"}  сложность: ${difficulty ?: "-"}")
 
-        Spacer(Modifier.height(6.dp))
-        modifierStat?.let {
-          Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(screenMaxHeight * 0.70f),
+          contentAlignment = Alignment.TopCenter
+        ) {
+          Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(8.dp))
             Image(
-              painter = painterResource(it.image),
+              painter = painterResource(diceImage(valueToShow)),
               contentDescription = null,
-              modifier = Modifier.size(24.dp)
+              modifier = Modifier.size(diceSize)
             )
-            Text("$modifier")
+            Spacer(Modifier.height(8.dp))
+            Text("d${sides ?: "-"}")
+            Text("Сложность: ${difficulty ?: "-"}")
+            if (isRolling) {
+              Text("Бросок...")
+            } else if (result != null && revealResult) {
+              Text("Готово")
+            }
           }
-        } ?: Text("Модификатор: $modifier")
-
-        if (isRolling) {
-          Text("Бросок...")
-        } else if (result != null && revealResult) {
-          Text("Бросок: $result")
-          Text("Итог: ${totalResult ?: "-"}")
-        } else {
-          Text("Результат: -")
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
 
-        Image(
-          painter = painterResource(diceImage(valueToShow)),
-          contentDescription = null,
-          modifier = Modifier.size(160.dp)
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        if (result == null) {
-          Button(
-            enabled = !isRolling,
-            onClick = {
-              onRoll()
-              isRolling = true
-            }
-          ) { Text("Бросить") }
-        } else if (isRolling || !revealResult) {
-          Button(enabled = false, onClick = {}) { Text("Считаем...") }
-        } else {
-          if (canUseCards && !showCards) {
+        when (phase) {
+          BattlePhase.ACTION -> {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-              Button(onClick = { onApplyCards(0f, emptyList()) }) { Text("Без карт") }
-              Button(onClick = {
-                selectedCards = emptySet()
-                showCards = true
-              }) { Text("Использовать карты") }
+              Button(onClick = onChooseFight) { Text("Сражаться") }
+              if (canEscape) {
+                Button(onClick = onChooseEscape) { Text("Сбежать") }
+              }
             }
-          } else if (showCards) {
-            Text("Выбери карты")
-            Spacer(Modifier.height(8.dp))
+          }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-              cards.forEach { card ->
-                val isSelected = card.id in selectedCards
-                val painter = cardPainter(card.image)
-
-                Column(
-                  horizontalAlignment = Alignment.CenterHorizontally,
-                  modifier = Modifier.clickable {
-                    selectedCards = if (isSelected) selectedCards - card.id else selectedCards + card.id
-                  }
-                ) {
-                  painter?.let {
-                    Box {
-                      Image(
-                        painter = it,
-                        contentDescription = null,
-                        modifier = Modifier.size(88.dp)
-                      )
-                      if (isSelected) {
-                        Text("✓", modifier = Modifier.align(Alignment.TopEnd))
-                      }
-                    }
-                  }
-                  Text("+${card.value}")
+          BattlePhase.HORROR, BattlePhase.COMBAT, BattlePhase.ESCAPE -> {
+            if (result == null) {
+              Button(
+                enabled = !isRolling,
+                onClick = {
+                  onRoll()
+                  isRolling = true
                 }
+              ) { Text("Бросить") }
+            } else if (isRolling || !revealResult) {
+              Button(enabled = false, onClick = {}) { Text("Считаем...") }
+            } else {
+              if (canUseCards && !showCards) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                  Button(onClick = { onApplyCards(0f, emptyList()) }) { Text("Без карт") }
+                  Button(onClick = {
+                    selectedCards = emptySet()
+                    showCards = true
+                  }) { Text("Карты") }
+                }
+              } else if (showCards) {
+                Text("Карты слева")
+              } else {
+                Button(onClick = onContinue) { Text("Продолжить") }
               }
             }
+          }
 
-            Spacer(Modifier.height(8.dp))
-
-            val bonus = cards.filter { it.id in selectedCards }
-              .sumOf { it.value.toDouble() }
-              .toFloat()
-
-            Button(
-              enabled = selectedCards.isNotEmpty(),
-              onClick = {
-                onApplyCards(bonus, selectedCards.toList())
-                selectedCards = emptySet()
-                showCards = false
-              }
-            ) { Text("Применить (+$bonus)") }
-          } else {
+          else -> {
             Button(onClick = onContinue) { Text("Продолжить") }
           }
         }
       }
 
-      BattlePhase.RESOLVE -> {
-        Text("Рассчет результата...")
+      // Правая часть: монстр
+      Column(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxHeight()
+          .padding(panelPadding),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text("Монстр")
         Spacer(Modifier.height(8.dp))
-        Button(onClick = onContinue) { Text("Продолжить") }
-      }
+        Text(monsterName, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(10.dp))
 
-      else -> {
-        Button(onClick = onContinue) { Text("Продолжить") }
+        monsterImagePainter?.let {
+          Image(
+            painter = it,
+            contentDescription = monsterName,
+            modifier = Modifier
+              .width(monsterImageSize)
+              .height(monsterImageSize)
+          )
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Text("HP: $monsterHp / $monsterMaxHp")
+        Text("Сила атаки: $monsterAttack")
       }
     }
   }
 }
 
 @Composable
-private fun StatIconsRow(
+private fun IconStatRow(
   stat: StatType?,
   count: Int,
-  fallbackLabel: String
+  iconSize: Dp
 ) {
   val safeCount = count.coerceAtLeast(0).coerceAtMost(20)
 
-  if (stat == null) {
-    Text(fallbackLabel)
-    return
-  }
-
-  if (safeCount == 0) {
-    Text("0")
+  if (safeCount == 0 || stat == null) {
+    Text(safeCount.toString())
     return
   }
 
@@ -306,7 +364,7 @@ private fun StatIconsRow(
       Image(
         painter = painterResource(stat.image),
         contentDescription = null,
-        modifier = Modifier.size(24.dp)
+        modifier = Modifier.size(iconSize)
       )
     }
   }
