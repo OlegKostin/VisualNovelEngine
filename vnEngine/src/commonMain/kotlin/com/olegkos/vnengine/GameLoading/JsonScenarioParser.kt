@@ -161,6 +161,58 @@ class JsonScenarioParser : ScenarioParser {
                 value = nodeJson.value,
                 image = nodeJson.image
               )
+
+              is SceneNodeJson.BattleNode -> Battle(
+                id = nodeJson.id,
+                title = nodeJson.title,
+                monster = SceneNode.Monster(
+                  name = nodeJson.monster.name,
+                  image = nodeJson.monster.image,
+                  health = nodeJson.monster.health,
+                  horrorDamage = nodeJson.monster.horrorDamage,
+                  combatDamage = nodeJson.monster.combatDamage
+                ),
+                player = SceneNode.PlayerRefs(
+                  healthVar = nodeJson.player.healthVar,
+                  sanityVar = nodeJson.player.sanityVar
+                ),
+                phases = SceneNode.BattlePhases(
+                  horror = nodeJson.phases.horror?.let {
+                    SceneNode.CheckPhase(
+                      enabled = it.enabled,
+                      name = it.name,
+                      sides = it.sides,
+                      difficulty = it.difficulty,
+                      modifierVar = it.modifierVar,
+                      onFailSanityDamage = it.onFailSanityDamage
+                    )
+                  },
+                  combat = SceneNode.CombatPhase(
+                    name = nodeJson.phases.combat.name,
+                    sides = nodeJson.phases.combat.sides,
+                    difficulty = nodeJson.phases.combat.difficulty,
+                    modifierVar = nodeJson.phases.combat.modifierVar,
+                    damageOnSuccess = nodeJson.phases.combat.damageOnSuccess,
+                    damageOnCritSuccess = nodeJson.phases.combat.damageOnCritSuccess,
+                    damageToPlayerOnFail = nodeJson.phases.combat.damageToPlayerOnFail
+                  )
+                ),
+                transitions = SceneNode.BattleTransitions(
+                  winScene = nodeJson.transitions.winScene,
+                  loseScene = nodeJson.transitions.loseScene,
+                  escapeScene = nodeJson.transitions.escapeScene
+                ),
+                escape = nodeJson.escape?.let {
+                  SceneNode.EscapeConfig(
+                    allowed = it.allowed,
+                    name = it.name,
+                    sides = it.sides,
+                    difficulty = it.difficulty,
+                    modifierVar = it.modifierVar,
+                    onFailPlayerDamage = it.onFailPlayerDamage
+                  )
+                }
+              )
             }
           }
         )
@@ -213,6 +265,70 @@ sealed class SceneNodeJson {
   @Serializable
   @SerialName("setVar")
   data class SetVar(val varName: String, val value: GameValueJson) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("battle")
+  data class BattleNode(
+    val id: String,
+    val title: String,
+    val monster: MonsterJson,
+    val player: PlayerRefsJson,
+    val phases: BattlePhasesJson,
+    val transitions: BattleTransitionsJson,
+    val escape: EscapeJson? = null
+  ) : SceneNodeJson()
+
+  @Serializable data class MonsterJson(
+    val name: String,
+    val image: String,
+    val health: Int,
+    val horrorDamage: Int = 0,
+    val combatDamage: Int = 0
+  )
+
+  @Serializable data class PlayerRefsJson(
+    val healthVar: String,
+    val sanityVar: String
+  )
+
+  @Serializable data class BattlePhasesJson(
+    val horror: CheckPhaseJson? = null,
+    val combat: CombatPhaseJson
+  )
+
+  @Serializable data class CheckPhaseJson(
+    val enabled: Boolean = true,
+    val name: String,
+    val sides: Int,
+    val difficulty: Int,
+    val modifierVar: String,
+    val onFailSanityDamage: Int = 0
+  )
+
+  @Serializable data class CombatPhaseJson(
+    val name: String,
+    val sides: Int,
+    val difficulty: Int,
+    val modifierVar: String,
+    val damageOnSuccess: Int = 1,
+    val damageOnCritSuccess: Int = 2,
+    val damageToPlayerOnFail: Int = 1
+  )
+
+  @Serializable data class EscapeJson(
+    val allowed: Boolean = true,
+    val name: String,
+    val sides: Int,
+    val difficulty: Int,
+    val modifierVar: String,
+    val onFailPlayerDamage: Int = 0
+  )
+
+  @Serializable data class BattleTransitionsJson(
+    val winScene: String,
+    val loseScene: String,
+    val escapeScene: String? = null
+  )
 
   @Serializable
   @SerialName("drawCard")

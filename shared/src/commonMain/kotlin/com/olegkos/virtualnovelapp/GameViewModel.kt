@@ -117,6 +117,35 @@
       }
     }
     fun getCards() = controller.getPlayerCards()
+    fun battleChooseFight() {
+      val (output, node) = controller.battleChooseFight()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun battleChooseEscape() {
+      val (output, node) = controller.battleChooseEscape()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun battleRoll() {
+      val (output, node) = controller.battleRoll()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun battleApplyModifier(extra: Float, usedCards: List<String>) {
+      val (output, node) = controller.battleApplyModifier(extra, usedCards)
+      currentOutput = output
+      currentNode = node ?: controller.requireEngine.currentNode()
+    }
+
+    fun battleContinue() {
+      val (output, node) = controller.battleContinue()
+      currentOutput = output
+      currentNode = node
+    }
 
     fun useCards(cardIds: List<String>) {
       cardIds.forEach { controller.consumeCard(it) }

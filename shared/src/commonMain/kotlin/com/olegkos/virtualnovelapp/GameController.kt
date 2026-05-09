@@ -5,6 +5,7 @@ import com.olegkos.save.metaStorage.MetaManager
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.GameLoading.ScenarioParser
+import com.olegkos.vnengine.engine.BattlePhase
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
@@ -247,6 +248,70 @@ class GameController(
       scenario = currentScenario
     )
   }
+
+  fun battleChooseFight(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.battleChooseFight()
+    return step()
+  }
+
+  fun battleChooseEscape(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.battleChooseEscape()
+    return step()
+  }
+
+  fun battleRoll(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    val node = engine.currentNode() as? SceneNode.Battle ?: return step()
+    val bs = engine.state.battle ?: return step()
+
+    val sides = when (bs.phase) {
+      BattlePhase.HORROR -> node.phases.horror?.sides
+      BattlePhase.COMBAT -> node.phases.combat.sides
+      BattlePhase.ESCAPE -> node.escape?.sides
+      else -> null
+    } ?: return step()
+
+    val result = engine.dice.roll(sides)
+
+    engine.state.diceResult = result
+    engine.state.diceModifiedResult = null
+
+    println("BATTLE ROLL phase=${bs.phase} sides=$sides result=$result")
+
+    return step()
+  }
+
+  fun battleApplyModifier(extra: Float, usedCards: List<String>): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    val node = engine.currentNode() as? SceneNode.Battle ?: return step()
+    val bs = engine.state.battle ?: return step()
+    val base = engine.state.diceResult ?: return step()
+
+    val modifierVar = when (bs.phase) {
+      BattlePhase.HORROR -> node.phases.horror?.modifierVar
+      BattlePhase.COMBAT -> node.phases.combat.modifierVar
+      BattlePhase.ESCAPE -> node.escape?.modifierVar
+      else -> null
+    } ?: return step()
+
+    val currentMod = engine.variables.getModifier(modifierVar)
+    engine.state.diceModifiedResult = base + currentMod + extra
+
+    usedCards.forEach { cardId ->
+      metaManager.consumeCard(cardId)
+    }
+
+    return step()
+  }
+  fun battleContinue(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    val node = engine.currentNode() as? SceneNode.Battle ?: return step()
+    // просто еще один tick/step на той же Battle-ноде
+    return engine.step() to node
+  }
+
   suspend fun loadSave(slot: String): Pair<EngineOutput, SceneNode?> {
 
     val loaded = saveManager.load(slot)

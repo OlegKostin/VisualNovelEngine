@@ -12,4 +12,14 @@ data class GameState(
   var waitingForUi: Boolean = false,
   val scenarioStack: ArrayDeque<NodePointer> = ArrayDeque(),
   var isGameInitialized: Boolean = false,
+  var battle: BattleState? = null
+)
+
+data class BattleState(
+  val battleId: String,
+  var phase: BattlePhase = BattlePhase.START,
+  var monsterHp: Int,
+  val monsterMaxHp: Int,
+  var pendingRoll: Int? = null,
+  var pendingModified: Float? = null
 )

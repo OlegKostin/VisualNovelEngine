@@ -70,7 +70,31 @@ sealed interface EngineOutput {
   data class ShowEffect(
     val image: String
   ) : EngineOutput
+
+  data class ShowBattle(
+    val battleId: String,
+    val title: String,
+    val monsterName: String,
+    val monsterImage: String,
+    val monsterHp: Int,
+    val monsterMaxHp: Int,
+    val playerHealth: Int,
+    val playerSanity: Int,
+    val phase: BattlePhase,
+    val diceName: String? = null,
+    val sides: Int? = null,
+    val difficulty: Int? = null,
+    val result: Int? = null,
+    val modifier: Float = 0f,
+    val canUseCards: Boolean = false,
+    val canEscape: Boolean = false
+  ) : EngineOutput
 }
+
+enum class BattlePhase {
+  START, HORROR, ACTION, COMBAT, ESCAPE, RESOLVE, WIN, LOSE, ESCAPED
+}
+
 enum class DicePhase {
   ROLL,
   RESULT,

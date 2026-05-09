@@ -313,6 +313,40 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
 
+        is EngineOutput.ShowBattle -> {
+          BattleScreen(
+            title = o.title,
+            monsterName = o.monsterName,
+            monsterImagePainter = rememberPainter(
+              viewModel.assets.image(o.monsterImage),
+              viewModel.reader
+            ),
+            monsterHp = o.monsterHp,
+            monsterMaxHp = o.monsterMaxHp,
+            playerHealth = o.playerHealth,
+            playerSanity = o.playerSanity,
+            phase = o.phase,
+            diceName = o.diceName,
+            sides = o.sides,
+            difficulty = o.difficulty,
+            result = o.result,
+            modifier = o.modifier,
+            canUseCards = o.canUseCards,
+            canEscape = o.canEscape,
+            cards = viewModel.getCards(),
+            cardPainter = { path ->
+              rememberPainter(viewModel.assets.card(path), viewModel.reader)
+            },
+            onChooseFight = { viewModel.battleChooseFight() },
+            onChooseEscape = { viewModel.battleChooseEscape() },
+            onRoll = { viewModel.battleRoll() },
+            onApplyCards = { value, usedCards ->
+              viewModel.battleApplyModifier(value, usedCards)
+            },
+            onContinue = { viewModel.battleContinue() }
+          )
+        }
+
         is EngineOutput.ShowSceneView -> Unit
 
         else -> Text("Загрузка...")
