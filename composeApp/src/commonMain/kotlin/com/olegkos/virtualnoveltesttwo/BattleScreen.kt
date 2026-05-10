@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,12 +34,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.vnengine.engine.BattlePhase
 import com.olegkos.vnengine.engine.UiCard
@@ -47,6 +51,7 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BattleScreen(
+  playerName: String = "",
   title: String,
   monsterName: String,
   monsterImagePainter: BitmapPainter?,
@@ -120,7 +125,7 @@ fun BattleScreen(
     val screenMaxWidth = this.maxWidth
     val fontSize = (maxHeight.value * 0.045f).sp
     val panelPadding = 12.dp
-    val iconSize = (screenMaxWidth * 0.05f).coerceAtLeast(20.dp).coerceAtMost(34.dp)
+    val modIconSize = (screenMaxWidth * 0.05f).coerceAtLeast(20.dp).coerceAtMost(34.dp)
     val monsterImageSize = (screenMaxWidth * 0.22f).coerceAtMost(screenMaxHeight * 0.45f)
     val diceSize = (screenMaxHeight * 0.70f)
       .coerceAtLeast(180.dp)
@@ -157,24 +162,31 @@ fun BattleScreen(
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
+        if (playerName.isNotBlank()) {
+          Text(
+            text = playerName,
+            fontSize = fontSize,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+          )
+          Spacer(Modifier.height(10.dp))
+        }
 
-        Text("Здоровье", fontSize = fontSize)
         IconStatRow(
           stat = StatType.fromKey("health"),
           count = playerHealth,
-          iconSize = iconSize,
           fontSize = fontSize
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
 
-        Text("Рассудок", fontSize = fontSize)
         IconStatRow(
           stat = StatType.fromKey("mental_health"),
           count = playerSanity,
-          iconSize = iconSize,
           fontSize = fontSize
         )
+
+        Spacer(Modifier.height(12.dp))
 
         Row(
           verticalAlignment = Alignment.CenterVertically,
@@ -184,7 +196,7 @@ fun BattleScreen(
             Image(
               painter = painterResource(it.image),
               contentDescription = null,
-              modifier = Modifier.size(iconSize)
+              modifier = Modifier.size(modIconSize)
             )
           }
           Text(modifier.toString(), fontSize = fontSize)
@@ -402,30 +414,101 @@ fun BattleScreen(
   }
 }
 
+private data class ScatterToken(
+  val nx: Float,
+  val ny: Float,
+  val rotationDeg: Float
+)
+
 @Composable
 private fun IconStatRow(
   stat: StatType?,
   count: Int,
-  iconSize: Dp,
   fontSize: TextUnit
 ) {
-  val safeCount = count.coerceAtLeast(0).coerceAtMost(20)
+  val capped = count.coerceIn(0, 8)
 
-  if (safeCount == 0 || stat == null) {
-    Text(safeCount.toString(), fontSize = fontSize)
+  if (stat == null) {
+    Text(capped.toString(), fontSize = fontSize)
     return
   }
 
-  Row(
-    horizontalArrangement = Arrangement.spacedBy(4.dp),
-    verticalAlignment = Alignment.CenterVertically
+  if (capped == 0) {
+    Text("0", fontSize = fontSize)
+    return
+  }
+
+  BoxWithConstraints(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 2.dp)
   ) {
-    repeat(safeCount) {
-      Image(
-        painter = painterResource(stat.image),
-        contentDescription = null,
-        modifier = Modifier.size(iconSize)
-      )
+    val widthPx = maxWidth
+
+    val tokenSize = (widthPx * 0.38f).coerceIn(42.dp, 92.dp)
+
+    val sidePad = 2.dp
+    val center = widthPx / 2
+
+    val preferredStep = tokenSize * 0.68f
+    val maxStep = if (capped <= 1) {
+      0.dp
+    } else {
+      (widthPx - tokenSize - sidePad * 2) / (capped - 1)
+    }
+    val step = if (capped <= 1) 0.dp else minOf(preferredStep, maxStep)
+
+    val rowH = tokenSize * 1.75f
+
+    val scatter = remember(stat, count) {
+      List(capped) { i ->
+        var s = (i * 1_009 + stat.hashCode() * 9_176 + count * 50_927) and 0x7FFFFFFF
+        fun next(): Int {
+          s = (s * 1_103_515_245 + 12_345) and 0x7FFFFFFF
+          return s
+        }
+        val nx = (next() % 2001) / 1000f - 1f
+        val ny = (next() % 2001) / 1000f - 1f
+        val rot = ((next() % 81) - 40).toFloat()
+        ScatterToken(nx, ny, rot)
+      }
+    }
+
+    val jitterXMax = kotlin.math.min(14f, step.value * 0.40f).coerceAtLeast(2f).dp
+    val jitterYMax = kotlin.math.min(24f, tokenSize.value * 0.42f).dp
+
+    Box(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(rowH)
+    ) {
+      val baselineY = rowH - tokenSize - 4.dp
+
+      repeat(capped) { idx ->
+        val offsetFromCenter = (idx - (capped - 1) / 2f) * step
+        val iconCenterX = center + offsetFromCenter
+        val baseX = iconCenterX - tokenSize / 2
+
+        val dx = jitterXMax * scatter[idx].nx
+        val dy = jitterYMax * scatter[idx].ny
+        val rot = scatter[idx].rotationDeg
+
+        Box(
+          modifier = Modifier
+            .offset(x = baseX + dx, y = baselineY + dy)
+            .graphicsLayer {
+              rotationZ = rot
+              transformOrigin = TransformOrigin(0.5f, 0.92f)
+            }
+            .size(tokenSize)
+        ) {
+          Image(
+            painter = painterResource(stat.image),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize()
+          )
+        }
+      }
     }
   }
 }
