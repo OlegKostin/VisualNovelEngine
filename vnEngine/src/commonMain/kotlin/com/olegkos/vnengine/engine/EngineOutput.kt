@@ -71,6 +71,25 @@ sealed interface EngineOutput {
     val image: String
   ) : EngineOutput
 
+  data class ShowDiceDuel(
+    val duelId: String,
+    val title: String,
+    val sides: Int,
+    val playerName: String?,
+    val playerModifier: Float,
+    val playerRoll: Int?,
+    val playerTotal: Float?,
+    val opponentName: String,
+    val opponentImage: String,
+    val opponentModifier: Float,
+    val opponentRoll: Int?,
+    val opponentTotal: Float?,
+    val phase: DiceDuelPhase,
+    val canUseCards: Boolean,
+    val cards: List<UiCard> = emptyList(),
+    val resultText: String? = null
+  ) : EngineOutput
+
   data class ShowBattle(
     val battleId: String,
     val title: String,
@@ -100,4 +119,12 @@ enum class DicePhase {
   RESULT,
   CARD_SELECTION,
   FINAL
+}
+
+enum class DiceDuelPhase {
+  START,
+  PLAYER_ROLL,
+  PLAYER_MODIFY,
+  OPPONENT_ROLL,
+  RESOLVE
 }

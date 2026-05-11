@@ -12,6 +12,7 @@ data class GameState(
   var waitingForUi: Boolean = false,
   val scenarioStack: ArrayDeque<NodePointer> = ArrayDeque(),
   var isGameInitialized: Boolean = false,
+  var diceDuel: DiceDuelState? = null,
   var battle: BattleState? = null
 )
 
@@ -23,3 +24,19 @@ data class BattleState(
   var pendingRoll: Int? = null,
   var pendingModified: Float? = null
 )
+
+data class DiceDuelState(
+  val duelId: String,
+  var phase: DiceDuelPhase = DiceDuelPhase.START,
+  var playerRoll: Int? = null,
+  var playerModified: Float? = null,
+  var opponentRoll: Int? = null,
+  var opponentModified: Float? = null,
+  var winner: DiceDuelWinner? = null
+)
+
+enum class DiceDuelWinner {
+  PLAYER,
+  OPPONENT,
+  DRAW
+}
