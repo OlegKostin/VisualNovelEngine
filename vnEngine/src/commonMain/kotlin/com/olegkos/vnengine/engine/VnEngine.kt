@@ -147,6 +147,12 @@ class VnEngine(
           continue
         }
 
+        is SceneNode.WeightedRandomJump -> {
+          val target = pickWeightedRandomJump(node)
+          jumpToScene(target)
+          continue
+        }
+
         is SceneNode.Text -> {
           val speakerName =
             node.speakerVar?.let { variables.getString(it) }
@@ -720,6 +726,67 @@ class VnEngine(
     jumpToScene(target)
   }
 
+  private fun pickWeightedRandomJump(node: SceneNode.WeightedRandomJump): String {
+    val eligible = node.entries
+      .filter { entry -> entry.requires.all { req -> checkRequirement(req) } }
+      .map { it.copy(weight = it.weight.coerceAtLeast(0)) }
+      .filter { it.weight > 0 }
+
+    if (eligible.isEmpty()) return node.defaultScene
+
+    val total = eligible.sumOf { it.weight }
+    val roll = (1..total).random()
+
+    var acc = 0
+    for (e in eligible) {
+      acc += e.weight
+      if (roll <= acc) return e.scene
+    }
+
+    return eligible.last().scene
+  }
+
+  private fun checkRequirement(req: SceneNode.WeightedRandomJump.Requirement): Boolean {
+    val current = state.variables[req.variable] ?: return false
+    val expected = req.value
+
+    fun cmpNumbers(a: Float, b: Float): Boolean = when (req.op) {
+      SceneNode.WeightedRandomJump.Op.EQ -> a == b
+      SceneNode.WeightedRandomJump.Op.NEQ -> a != b
+      SceneNode.WeightedRandomJump.Op.GTE -> a >= b
+      SceneNode.WeightedRandomJump.Op.LTE -> a <= b
+      SceneNode.WeightedRandomJump.Op.GT -> a > b
+      SceneNode.WeightedRandomJump.Op.LT -> a < b
+    }
+
+    return when {
+      current is GameValue.IntVal && expected is GameValue.IntVal ->
+        cmpNumbers(current.value.toFloat(), expected.value.toFloat())
+
+      current is GameValue.FloatVal && expected is GameValue.FloatVal ->
+        cmpNumbers(current.value.round2(), expected.value.round2())
+
+      current is GameValue.IntVal && expected is GameValue.FloatVal ->
+        cmpNumbers(current.value.toFloat().round2(), expected.value.round2())
+
+      current is GameValue.FloatVal && expected is GameValue.IntVal ->
+        cmpNumbers(current.value.round2(), expected.value.toFloat().round2())
+
+      current is GameValue.Bool && expected is GameValue.Bool -> when (req.op) {
+        SceneNode.WeightedRandomJump.Op.EQ -> current.value == expected.value
+        SceneNode.WeightedRandomJump.Op.NEQ -> current.value != expected.value
+        else -> false
+      }
+
+      current is GameValue.StringVal && expected is GameValue.StringVal -> when (req.op) {
+        SceneNode.WeightedRandomJump.Op.EQ -> current.value == expected.value
+        SceneNode.WeightedRandomJump.Op.NEQ -> current.value != expected.value
+        else -> false
+      }
+
+      else -> false
+    }
+  }
   private fun resolveTextVariables(rawText: String): String {
     val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()
     return regex.replace(rawText) {
