@@ -147,6 +147,24 @@
       currentNode = node
     }
 
+    fun diceDuelRoll() {
+      val (output, node) = controller.diceDuelRoll()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun diceDuelApplyModifier(extra: Float, usedCards: List<String>) {
+      val (output, node) = controller.diceDuelApplyModifier(extra, usedCards)
+      currentOutput = output
+      currentNode = node ?: controller.requireEngine.currentNode()
+    }
+
+    fun diceDuelContinue() {
+      val (output, node) = controller.diceDuelContinue()
+      currentOutput = output
+      currentNode = node
+    }
+
     fun useCards(cardIds: List<String>) {
       cardIds.forEach { controller.consumeCard(it) }
     }

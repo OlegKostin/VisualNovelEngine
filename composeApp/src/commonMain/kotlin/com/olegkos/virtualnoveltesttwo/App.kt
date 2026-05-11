@@ -260,6 +260,37 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           }
         }
 
+        is EngineOutput.ShowDiceDuel -> {
+          DiceDuelScreen(
+            title = o.title,
+            sides = o.sides,
+            playerName = o.playerName,
+            playerModifier = o.playerModifier,
+            playerRoll = o.playerRoll,
+            playerTotal = o.playerTotal,
+            opponentName = o.opponentName,
+            opponentImagePainter = rememberPainter(
+              viewModel.assets.image(o.opponentImage),
+              viewModel.reader
+            ),
+            opponentModifier = o.opponentModifier,
+            opponentRoll = o.opponentRoll,
+            opponentTotal = o.opponentTotal,
+            phase = o.phase,
+            cards = o.cards,
+            canUseCards = o.canUseCards,
+            resultText = o.resultText,
+            cardPainter = { path ->
+              rememberPainter(viewModel.assets.card(path), viewModel.reader)
+            },
+            onRoll = { viewModel.diceDuelRoll() },
+            onApplyCards = { value, usedCards ->
+              viewModel.diceDuelApplyModifier(value, usedCards)
+            },
+            onContinue = { viewModel.diceDuelContinue() }
+          )
+        }
+
         is EngineOutput.ShowText -> {
           VNTextBox(
             speaker = o.speaker,

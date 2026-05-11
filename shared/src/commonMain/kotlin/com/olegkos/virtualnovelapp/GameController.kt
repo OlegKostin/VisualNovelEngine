@@ -6,6 +6,7 @@ import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.GameLoading.ScenarioParser
 import com.olegkos.vnengine.engine.BattlePhase
+import com.olegkos.vnengine.engine.DiceDuelPhase
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
@@ -147,6 +148,10 @@ class GameController(
         output.copy(cards = cards) to engine.currentNode()
       }
 
+      is EngineOutput.ShowDiceDuel -> {
+        val cards = getPlayerCards()
+        output.copy(cards = cards) to engine.currentNode()
+      }
       is EngineOutput.DrawCardRequest -> {
         val card = when {
           output.random == true -> cardManager.drawCard()
@@ -339,6 +344,11 @@ class GameController(
 
     return when (output) {
 
+      is EngineOutput.ShowDiceDuel -> {
+        val cards = getPlayerCards()
+        output.copy(cards = cards) to engine.currentNode()
+      }
+
       is EngineOutput.ShowDice -> {
         val cards = getPlayerCards()
         output.copy(cards = cards) to engine.currentNode()
@@ -354,7 +364,37 @@ class GameController(
 
     return "$currentScenario|${pointer.sceneId}|${pointer.nodeIndex}"
   }
+  fun diceDuelRoll(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    val node = engine.currentNode() as? SceneNode.DiceDuel ?: return step()
+    val ds = engine.state.diceDuel ?: return step()
 
+    when (ds.phase) {
+      DiceDuelPhase.PLAYER_ROLL -> engine.diceDuelRollPlayer()
+      DiceDuelPhase.OPPONENT_ROLL -> engine.diceDuelRollOpponent()
+      else -> Unit
+    }
+
+    return step()
+  }
+
+  fun diceDuelApplyModifier(extra: Float, usedCards: List<String>): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+
+    engine.diceDuelApplyModifier(extra)
+
+    usedCards.forEach { cardId ->
+      metaManager.consumeCard(cardId)
+    }
+
+    return step()
+  }
+
+  fun diceDuelContinue(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.diceDuelContinue()
+    return step()
+  }
   fun listSaves(): List<String> =
     saveManager.listSaves()
 }

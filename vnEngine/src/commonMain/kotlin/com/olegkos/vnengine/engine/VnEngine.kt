@@ -316,6 +316,8 @@ class VnEngine(
         is SceneNode.Battle -> {
           return handleBattleNode(node)
         }
+
+        is SceneNode.DiceDuel ->  { return handleDiceDuelNode(node)}
       }
     }
   }
@@ -567,12 +569,181 @@ class VnEngine(
 
     state.pointer = NodePointer(sceneId, 0)
     state.diceResult = null
+    state.diceModifiedResult = null
+    state.diceDuel = null
   }
 
   private fun advance() {
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )
+  }
+
+  private fun handleDiceDuelNode(node: SceneNode.DiceDuel): EngineOutput {
+    val ds = state.diceDuel ?: DiceDuelState(
+      duelId = node.id,
+      phase = DiceDuelPhase.START
+    ).also { state.diceDuel = it }
+
+    val playerName = variables.getString("my_name")
+    val playerBaseModifier = variables.getModifier(node.playerModifierVar).round2()
+    val opponentBaseModifier = resolveOpponentModifier(node).round2()
+
+    when (ds.phase) {
+      DiceDuelPhase.START -> ds.phase = DiceDuelPhase.PLAYER_ROLL
+
+      DiceDuelPhase.PLAYER_ROLL -> {
+        return EngineOutput.ShowDiceDuel(
+          duelId = node.id,
+          title = node.title,
+          sides = node.sides,
+          playerName = playerName,
+          playerModifier = playerBaseModifier,
+          playerRoll = null,
+          playerTotal = null,
+          opponentName = node.opponent.name,
+          opponentImage = node.opponent.image,
+          opponentModifier = opponentBaseModifier,
+          opponentRoll = null,
+          opponentTotal = null,
+          phase = DiceDuelPhase.PLAYER_ROLL,
+          canUseCards = false
+        )
+      }
+
+      DiceDuelPhase.PLAYER_MODIFY -> {
+        return EngineOutput.ShowDiceDuel(
+          duelId = node.id,
+          title = node.title,
+          sides = node.sides,
+          playerName = playerName,
+          playerModifier = playerBaseModifier,
+          playerRoll = ds.playerRoll,
+          playerTotal = ds.playerModified,
+          opponentName = node.opponent.name,
+          opponentImage = node.opponent.image,
+          opponentModifier = opponentBaseModifier,
+          opponentRoll = null,
+          opponentTotal = null,
+          phase = DiceDuelPhase.PLAYER_MODIFY,
+          canUseCards = node.cards.allowCards
+        )
+      }
+
+      DiceDuelPhase.OPPONENT_ROLL -> {
+        return EngineOutput.ShowDiceDuel(
+          duelId = node.id,
+          title = node.title,
+          sides = node.sides,
+          playerName = playerName,
+          playerModifier = playerBaseModifier,
+          playerRoll = ds.playerRoll,
+          playerTotal = ds.playerModified,
+          opponentName = node.opponent.name,
+          opponentImage = node.opponent.image,
+          opponentModifier = opponentBaseModifier,
+          opponentRoll = ds.opponentRoll,
+          opponentTotal = ds.opponentModified,
+          phase = DiceDuelPhase.OPPONENT_ROLL,
+          canUseCards = false
+        )
+      }
+
+      DiceDuelPhase.RESOLVE -> {
+        if (ds.winner == null) {
+          val playerTotal = ds.playerModified ?: 0f
+          val opponentTotal = ds.opponentModified ?: 0f
+
+          ds.winner = when {
+            playerTotal > opponentTotal -> DiceDuelWinner.PLAYER
+            playerTotal < opponentTotal -> DiceDuelWinner.OPPONENT
+            else -> DiceDuelWinner.DRAW
+          }
+        }
+
+        val resultText = when (ds.winner) {
+          DiceDuelWinner.PLAYER -> "Победа"
+          DiceDuelWinner.OPPONENT -> "Поражение"
+          DiceDuelWinner.DRAW -> "Ничья"
+          null -> null
+        }
+
+        return EngineOutput.ShowDiceDuel(
+          duelId = node.id,
+          title = node.title,
+          sides = node.sides,
+          playerName = playerName,
+          playerModifier = playerBaseModifier,
+          playerRoll = ds.playerRoll,
+          playerTotal = ds.playerModified,
+          opponentName = node.opponent.name,
+          opponentImage = node.opponent.image,
+          opponentModifier = opponentBaseModifier,
+          opponentRoll = ds.opponentRoll,
+          opponentTotal = ds.opponentModified,
+          phase = DiceDuelPhase.RESOLVE,
+          canUseCards = false,
+          resultText = resultText
+        )
+      }
+    }
+
+    return handleDiceDuelNode(node)
+  }
+
+  private fun resolveOpponentModifier(node: SceneNode.DiceDuel): Float {
+    val varMod = node.opponent.modifierVar?.let { variables.getModifier(it) } ?: 0f
+    return (node.opponent.modifier + varMod).round2()
+  }
+
+  fun diceDuelRollPlayer() {
+    val node = currentNode() as? SceneNode.DiceDuel ?: return
+    val ds = state.diceDuel ?: return
+    if (ds.phase != DiceDuelPhase.PLAYER_ROLL) return
+
+    ds.playerRoll = dice.roll(node.sides)
+    ds.playerModified = null
+    ds.phase = DiceDuelPhase.PLAYER_MODIFY
+  }
+
+  fun diceDuelApplyModifier(extra: Float) {
+    val node = currentNode() as? SceneNode.DiceDuel ?: return
+    val ds = state.diceDuel ?: return
+    val roll = ds.playerRoll ?: return
+    if (ds.phase != DiceDuelPhase.PLAYER_MODIFY) return
+
+    val base = variables.getModifier(node.playerModifierVar)
+    ds.playerModified = (roll + base + extra).round2()
+    ds.phase = DiceDuelPhase.OPPONENT_ROLL
+  }
+
+  fun diceDuelRollOpponent() {
+    val node = currentNode() as? SceneNode.DiceDuel ?: return
+    val ds = state.diceDuel ?: return
+    if (ds.phase != DiceDuelPhase.OPPONENT_ROLL) return
+
+    val roll = dice.roll(node.sides)
+    val mod = resolveOpponentModifier(node)
+
+    ds.opponentRoll = roll
+    ds.opponentModified = (roll + mod).round2()
+    ds.phase = DiceDuelPhase.RESOLVE
+  }
+
+  fun diceDuelContinue() {
+    val node = currentNode() as? SceneNode.DiceDuel ?: return
+    val ds = state.diceDuel ?: return
+    if (ds.phase != DiceDuelPhase.RESOLVE) return
+
+    val target = when (ds.winner) {
+      DiceDuelWinner.PLAYER -> node.transitions.winScene
+      DiceDuelWinner.OPPONENT -> node.transitions.loseScene
+      DiceDuelWinner.DRAW -> node.transitions.drawScene ?: node.transitions.loseScene
+      null -> node.transitions.loseScene
+    }
+
+    state.diceDuel = null
+    jumpToScene(target)
   }
 
   private fun resolveTextVariables(rawText: String): String {

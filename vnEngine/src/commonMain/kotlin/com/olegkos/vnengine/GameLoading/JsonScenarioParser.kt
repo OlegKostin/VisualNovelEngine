@@ -165,20 +165,20 @@ class JsonScenarioParser : ScenarioParser {
               is SceneNodeJson.BattleNode -> Battle(
                 id = nodeJson.id,
                 title = nodeJson.title,
-                monster = SceneNode.Monster(
+                monster = Monster(
                   name = nodeJson.monster.name,
                   image = nodeJson.monster.image,
                   health = nodeJson.monster.health,
                   horrorDamage = nodeJson.monster.horrorDamage,
                   combatDamage = nodeJson.monster.combatDamage
                 ),
-                player = SceneNode.PlayerRefs(
+                player = PlayerRefs(
                   healthVar = nodeJson.player.healthVar,
                   sanityVar = nodeJson.player.sanityVar
                 ),
-                phases = SceneNode.BattlePhases(
+                phases = BattlePhases(
                   horror = nodeJson.phases.horror?.let {
-                    SceneNode.CheckPhase(
+                    CheckPhase(
                       enabled = it.enabled,
                       name = it.name,
                       sides = it.sides,
@@ -187,7 +187,7 @@ class JsonScenarioParser : ScenarioParser {
                       onFailSanityDamage = it.onFailSanityDamage
                     )
                   },
-                  combat = SceneNode.CombatPhase(
+                  combat = CombatPhase(
                     name = nodeJson.phases.combat.name,
                     sides = nodeJson.phases.combat.sides,
                     difficulty = nodeJson.phases.combat.difficulty,
@@ -197,13 +197,13 @@ class JsonScenarioParser : ScenarioParser {
                     damageToPlayerOnFail = nodeJson.phases.combat.damageToPlayerOnFail
                   )
                 ),
-                transitions = SceneNode.BattleTransitions(
+                transitions = BattleTransitions(
                   winScene = nodeJson.transitions.winScene,
                   loseScene = nodeJson.transitions.loseScene,
                   escapeScene = nodeJson.transitions.escapeScene
                 ),
                 escape = nodeJson.escape?.let {
-                  SceneNode.EscapeConfig(
+                  EscapeConfig(
                     allowed = it.allowed,
                     name = it.name,
                     sides = it.sides,
@@ -212,6 +212,27 @@ class JsonScenarioParser : ScenarioParser {
                     onFailPlayerDamage = it.onFailPlayerDamage
                   )
                 }
+              )
+
+              is DiceDuelNode -> SceneNode.DiceDuel(
+                id = nodeJson.id,
+                title = nodeJson.title,
+                sides = nodeJson.sides,
+                playerModifierVar = nodeJson.playerModifierVar,
+                opponent = SceneNode.DiceDuelOpponent(
+                  name = nodeJson.opponent.name,
+                  image = nodeJson.opponent.image,
+                  modifier = nodeJson.opponent.modifier,
+                  modifierVar = nodeJson.opponent.modifierVar
+                ),
+                cards = SceneNode.DiceDuelCards(
+                  allowCards = nodeJson.cards.allowCards
+                ),
+                transitions = SceneNode.DiceDuelTransitions(
+                  winScene = nodeJson.transitions.winScene,
+                  loseScene = nodeJson.transitions.loseScene,
+                  drawScene = nodeJson.transitions.drawScene
+                )
               )
             }
           }
@@ -485,6 +506,38 @@ data class HotspotJson(
 data class CharacterHideNode(
   val id: String
 ) : SceneNodeJson()
+@Serializable
+@SerialName("diceDuel")
+data class DiceDuelNode(
+  val id: String,
+  val title: String,
+  val sides: Int = 20,
+  val playerModifierVar: String,
+  val opponent: DiceDuelOpponentJson,
+  val cards: DiceDuelCardsJson = DiceDuelCardsJson(),
+  val transitions: DiceDuelTransitionsJson
+) : SceneNodeJson()
+
+@Serializable
+data class DiceDuelOpponentJson(
+  val name: String,
+  val image: String,
+  val modifier: Float = 0f,
+  val modifierVar: String? = null
+)
+
+@Serializable
+data class DiceDuelCardsJson(
+  val allowCards: Boolean = true
+)
+
+@Serializable
+data class DiceDuelTransitionsJson(
+  val winScene: String,
+  val loseScene: String,
+  val drawScene: String? = null
+)
+
 @Serializable
 @SerialName("initGame")
 data class InitGameNode(
