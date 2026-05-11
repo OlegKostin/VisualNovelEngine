@@ -173,4 +173,31 @@ sealed interface SceneNode {
     val escapeScene: String? = null
   )
 
+  data class DiceDuel(
+    val id: String,
+    val title: String,
+    val sides: Int = 20,
+    val playerModifierVar: String,
+    val opponent: DiceDuelOpponent,
+    val cards: DiceDuelCards = DiceDuelCards(),
+    val transitions: DiceDuelTransitions
+  ) : SceneNode
+
+  data class DiceDuelOpponent(
+    val name: String,
+    val image: String,
+    val modifier: Float = 0f,
+    val modifierVar: String? = null
+  )
+
+  data class DiceDuelCards(
+    val allowCards: Boolean = true
+  )
+
+  data class DiceDuelTransitions(
+    val winScene: String,
+    val loseScene: String,
+    val drawScene: String? = null
+  )
+
 }
