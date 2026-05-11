@@ -41,6 +41,8 @@ import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
+import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.scene.SceneNode.NavLink
 import com.olegkos.vnengine.scene.SubClass
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -65,7 +67,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     return step * index
   }
 
-  // ---------------- SAFE SIDE EFFECTS ----------------
   LaunchedEffect(sceneView) {
     sceneView?.let {
       background = it.background
@@ -128,8 +129,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
     advancing = false
   }
-
-  // ---------------- UI ----------------
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 
@@ -200,10 +199,38 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       val boxHeight = maxHeight
 
       view.navigation?.let { nav ->
-        nav.left?.let { ArrowButton(Alignment.CenterStart) { viewModel.jumpScenario(it) } }
-        nav.right?.let { ArrowButton(Alignment.CenterEnd) { viewModel.jumpScenario(it) } }
-        nav.up?.let { ArrowButton(Alignment.TopCenter) { viewModel.jumpScenario(it) } }
-        nav.down?.let { ArrowButton(Alignment.BottomCenter) { viewModel.jumpScenario(it) } }
+        nav.left?.let { link ->
+          SceneNavControl(
+            alignment = Alignment.CenterStart,
+            link = link,
+            assets = viewModel.assets,
+            reader = viewModel.reader
+          ) { viewModel.jumpScenario(link.scenarioFile) }
+        }
+        nav.right?.let { link ->
+          SceneNavControl(
+            alignment = Alignment.CenterEnd,
+            link = link,
+            assets = viewModel.assets,
+            reader = viewModel.reader
+          ) { viewModel.jumpScenario(link.scenarioFile) }
+        }
+        nav.up?.let { link ->
+          SceneNavControl(
+            alignment = Alignment.TopCenter,
+            link = link,
+            assets = viewModel.assets,
+            reader = viewModel.reader
+          ) { viewModel.jumpScenario(link.scenarioFile) }
+        }
+        nav.down?.let { link ->
+          SceneNavControl(
+            alignment = Alignment.BottomCenter,
+            link = link,
+            assets = viewModel.assets,
+            reader = viewModel.reader
+          ) { viewModel.jumpScenario(link.scenarioFile) }
+        }
       }
 
       view.hotspots.forEach { spot ->
@@ -385,8 +412,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
-    // ---------------- MENU ----------------
-
     Box(
       modifier = Modifier
         .fillMaxSize()
@@ -428,6 +453,78 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
   }
 }
+
+@Composable
+private fun SceneNavControl(
+  alignment: Alignment,
+  link: NavLink,
+  assets: AssetPathResolver,
+  reader: AssetReader,
+  onNavigate: () -> Unit
+) {
+  Box(
+    modifier = Modifier.fillMaxSize(),
+    contentAlignment = alignment
+  ) {
+    val pad = Modifier.padding(12.dp)
+
+    val icon = link.icon
+    val label = link.label
+
+    when {
+      !icon.isNullOrBlank() -> {
+        val painter = rememberPainter(assets.image(icon), reader)
+        Box(
+          modifier = pad
+            .size(72.dp)
+            .clickable(onClick = onNavigate),
+          contentAlignment = Alignment.Center
+        ) {
+          if (painter != null) {
+            Image(
+              painter = painter,
+              contentDescription = label,
+              modifier = Modifier.fillMaxSize(),
+              contentScale = ContentScale.Fit
+            )
+          } else {
+            Text(
+              text = defaultNavGlyph(alignment),
+              modifier = Modifier.clickable(onClick = onNavigate)
+            )
+          }
+        }
+      }
+
+      !label.isNullOrBlank() -> {
+        Button(
+          onClick = onNavigate,
+          modifier = pad
+        ) {
+          Text(text = label)
+        }
+      }
+
+      else -> {
+        Button(
+          onClick = onNavigate,
+          modifier = pad.size(56.dp)
+        ) {
+          Text(text = defaultNavGlyph(alignment))
+        }
+      }
+    }
+  }
+}
+
+private fun defaultNavGlyph(alignment: Alignment): String = when (alignment) {
+  Alignment.TopCenter -> "↑"
+  Alignment.BottomCenter -> "↓"
+  Alignment.CenterStart -> "←"
+  Alignment.CenterEnd -> "→"
+  else -> ">"
+}
+
 @Composable
 fun rememberPainter(
   path: String,
@@ -441,23 +538,4 @@ fun rememberPainter(
   }
 
   return painter
-}
-
-@Composable
-fun ArrowButton(
-  alignment: Alignment,
-  onClick: () -> Unit
-) {
-  Box(
-    modifier = Modifier
-      .fillMaxSize(),
-    contentAlignment = alignment
-  ) {
-    Button(
-      onClick = onClick,
-      modifier = Modifier.size(60.dp)
-    ) {
-      Text(">")
-    }
-  }
 }

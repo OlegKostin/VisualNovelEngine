@@ -61,11 +61,17 @@ sealed interface SceneNode {
     val hotspots: List<Hotspot>
   ) : SceneNode
 
+  data class NavLink(
+    val scenarioFile: String,
+    val label: String? = null,
+    val icon: String? = null
+  )
+
   data class Navigation(
-    val up: String?,
-    val down: String?,
-    val left: String?,
-    val right: String?
+    val up: NavLink? = null,
+    val down: NavLink? = null,
+    val left: NavLink? = null,
+    val right: NavLink? = null
   )
 
   data class Hotspot(

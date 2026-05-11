@@ -21,6 +21,12 @@ import com.olegkos.vnengine.scene.SubClass.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 
 class JsonScenarioParser : ScenarioParser {
@@ -137,14 +143,7 @@ class JsonScenarioParser : ScenarioParser {
               is HideImageNode -> HideImage
               is SceneViewNode -> SceneView(
                 background = nodeJson.background,
-                navigation = nodeJson.navigation?.let {
-                  Navigation(
-                    up = it.up,
-                    down = it.down,
-                    left = it.left,
-                    right = it.right
-                  )
-                },
+                navigation = nodeJson.navigation?.let { parseNavigation(it) },
                 hotspots = nodeJson.hotspots.map {
                   Hotspot(
                     xPercent = it.xPercent,
@@ -241,6 +240,34 @@ class JsonScenarioParser : ScenarioParser {
     return Scenario(
       startSceneId = parsed.startSceneId,
       scenes = scenes
+    )
+  }
+  private fun parseNavigation(obj: JsonObject): Navigation {
+    fun link(key: String): NavLink? {
+      val el = obj[key] ?: return null
+      return when (el) {
+        is JsonPrimitive -> {
+          if (!el.isString) return null
+          NavLink(scenarioFile = el.content)
+        }
+        is JsonObject -> {
+          val file = el["scenarioFile"]?.jsonPrimitive?.content
+            ?: el["scenario"]?.jsonPrimitive?.content
+            ?: return null
+          NavLink(
+            scenarioFile = file,
+            label = el["label"]?.jsonPrimitive?.contentOrNull,
+            icon = el["icon"]?.jsonPrimitive?.contentOrNull
+          )
+        }
+        else -> null
+      }
+    }
+    return Navigation(
+      up = link("up"),
+      down = link("down"),
+      left = link("left"),
+      right = link("right")
     )
   }
 }
@@ -481,18 +508,9 @@ data class HideImageNode(
 @SerialName("navigation")
 data class SceneViewNode(
   val background: String,
-
-  val navigation: NavigationJson? = null,
+  val navigation: JsonObject? = null,
   val hotspots: List<HotspotJson> = emptyList()
 ) : SceneNodeJson()
-@Serializable
-data class NavigationJson(
-  val up: String? = null,
-  val down: String? = null,
-  val left: String? = null,
-  val right: String? = null
-)
-
 @Serializable
 data class HotspotJson(
   val xPercent: Float,
