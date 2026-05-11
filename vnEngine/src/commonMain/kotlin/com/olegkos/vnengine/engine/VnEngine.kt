@@ -545,10 +545,16 @@ class VnEngine(
           return
         }
       }
-      else -> advance()
+      is SceneNode.DiceRoll,
+      is SceneNode.Battle,
+      is SceneNode.DiceDuel -> {
+        return
+      }
+      else -> Unit
     }
-  }
 
+    advance()
+  }
   fun jumpToScene(sceneId: String) {
     require(scenes.containsKey(sceneId)) {
       "Scene '$sceneId' not found"
