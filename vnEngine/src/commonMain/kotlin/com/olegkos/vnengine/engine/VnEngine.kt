@@ -7,6 +7,7 @@ import com.olegkos.vnengine.engine.EngineOutput.JumpScenarioOutput
 import com.olegkos.vnengine.engine.EngineOutput.ShowBackground
 import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
+import com.olegkos.vnengine.engine.EngineOutput.ShowDiceDuel
 import com.olegkos.vnengine.engine.EngineOutput.ShowImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
 import com.olegkos.vnengine.engine.variables.GameValue
@@ -51,13 +52,9 @@ class VnEngine(
     return node
   }
 
-  // =========================
-  // ЕДИНАЯ ТОЧКА ВХОДА
-  // =========================
   fun tick(option: Option? = null): EngineOutput {
     println("STEP: ${state.pointer}")
     println("CURRENT NODE: ${currentNode()}")
-    // обработка выбора игрока — оставляем как у тебя было (inline логика)
     if (option != null) {
       val node = currentNode()
 
@@ -74,10 +71,6 @@ class VnEngine(
         ?: return EndOfScene
 
       when (node) {
-
-        // =========================
-        // AUTO NODES
-        // =========================
 
         is SceneNode.SetVar -> {
           variables.set(node.varName, node.value.resolve())
@@ -153,10 +146,6 @@ class VnEngine(
           jumpToScene(targetScene)
           continue
         }
-
-        // =========================
-        // UI OUTPUT
-        // =========================
 
         is SceneNode.Text -> {
           val speakerName =
@@ -317,7 +306,9 @@ class VnEngine(
           return handleBattleNode(node)
         }
 
-        is SceneNode.DiceDuel ->  { return handleDiceDuelNode(node)}
+        is SceneNode.DiceDuel -> {
+          return handleDiceDuelNode(node)
+        }
       }
     }
   }
@@ -391,6 +382,7 @@ class VnEngine(
 
     return handleBattleNode(node)
   }
+
   private fun buildBattleDiceOutput(
     node: SceneNode.Battle,
     bs: BattleState,
@@ -406,7 +398,6 @@ class VnEngine(
     val baseMod = variables.getModifier(modifierVar).round2()
     val modified = state.diceModifiedResult
 
-    // 1) Ждем бросок
     if (roll == null) {
       return EngineOutput.ShowBattle(
         battleId = node.id,
@@ -428,7 +419,6 @@ class VnEngine(
       )
     }
 
-    // 2) Бросок есть, ждем модификатор (карты/бафы)
     if (modified == null) {
       return EngineOutput.ShowBattle(
         battleId = node.id,
@@ -450,7 +440,6 @@ class VnEngine(
       )
     }
 
-    // 3) Финал проверки
     val total = modified.round2()
     val finalModifier = (total - roll).round2()
 
@@ -520,7 +509,6 @@ class VnEngine(
       else -> Unit
     }
 
-    // Сброс кубика после резолва проверки
     state.diceResult = null
     state.diceModifiedResult = null
 
@@ -540,12 +528,11 @@ class VnEngine(
   fun battleChooseFight() {
     state.battle?.phase = BattlePhase.COMBAT
   }
+
   fun battleChooseEscape() {
     state.battle?.phase = BattlePhase.ESCAPE
   }
-  // =========================
-  // BACKWARD COMPAT (НЕ ЛОМАЕМ APP)
-  // =========================
+
   fun step(option: Option? = null): EngineOutput = tick(option)
 
   fun advanceExternal(option: Option?) {
@@ -585,24 +572,31 @@ class VnEngine(
       phase = DiceDuelPhase.START
     ).also { state.diceDuel = it }
 
+    val titleResolved = resolveTextVariables(node.title)
+    val opponentNameResolved = resolveTextVariables(node.opponent.name)
+    val opponentImageResolved = resolveTextVariables(node.opponent.image)
+
     val playerName = variables.getString("my_name")
     val playerBaseModifier = variables.getModifier(node.playerModifierVar).round2()
     val opponentBaseModifier = resolveOpponentModifier(node).round2()
 
     when (ds.phase) {
-      DiceDuelPhase.START -> ds.phase = DiceDuelPhase.PLAYER_ROLL
+      DiceDuelPhase.START -> {
+        ds.phase = DiceDuelPhase.PLAYER_ROLL
+        return handleDiceDuelNode(node)
+      }
 
       DiceDuelPhase.PLAYER_ROLL -> {
-        return EngineOutput.ShowDiceDuel(
+        return ShowDiceDuel(
           duelId = node.id,
-          title = node.title,
+          title = titleResolved,
           sides = node.sides,
           playerName = playerName,
           playerModifier = playerBaseModifier,
           playerRoll = null,
           playerTotal = null,
-          opponentName = node.opponent.name,
-          opponentImage = node.opponent.image,
+          opponentName = opponentNameResolved,
+          opponentImage = opponentImageResolved,
           opponentModifier = opponentBaseModifier,
           opponentRoll = null,
           opponentTotal = null,
@@ -612,41 +606,27 @@ class VnEngine(
       }
 
       DiceDuelPhase.PLAYER_MODIFY -> {
-        return EngineOutput.ShowDiceDuel(
+        return ShowDiceDuel(
           duelId = node.id,
-          title = node.title,
+          title = titleResolved,
           sides = node.sides,
           playerName = playerName,
           playerModifier = playerBaseModifier,
           playerRoll = ds.playerRoll,
           playerTotal = ds.playerModified,
-          opponentName = node.opponent.name,
-          opponentImage = node.opponent.image,
+          opponentName = opponentNameResolved,
+          opponentImage = opponentImageResolved,
           opponentModifier = opponentBaseModifier,
-          opponentRoll = null,
-          opponentTotal = null,
+          opponentRoll = ds.opponentRoll,
+          opponentTotal = ds.opponentModified,
           phase = DiceDuelPhase.PLAYER_MODIFY,
           canUseCards = node.cards.allowCards
         )
       }
 
       DiceDuelPhase.OPPONENT_ROLL -> {
-        return EngineOutput.ShowDiceDuel(
-          duelId = node.id,
-          title = node.title,
-          sides = node.sides,
-          playerName = playerName,
-          playerModifier = playerBaseModifier,
-          playerRoll = ds.playerRoll,
-          playerTotal = ds.playerModified,
-          opponentName = node.opponent.name,
-          opponentImage = node.opponent.image,
-          opponentModifier = opponentBaseModifier,
-          opponentRoll = ds.opponentRoll,
-          opponentTotal = ds.opponentModified,
-          phase = DiceDuelPhase.OPPONENT_ROLL,
-          canUseCards = false
-        )
+        ds.phase = DiceDuelPhase.RESOLVE
+        return handleDiceDuelNode(node)
       }
 
       DiceDuelPhase.RESOLVE -> {
@@ -668,16 +648,16 @@ class VnEngine(
           null -> null
         }
 
-        return EngineOutput.ShowDiceDuel(
+        return ShowDiceDuel(
           duelId = node.id,
-          title = node.title,
+          title = titleResolved,
           sides = node.sides,
           playerName = playerName,
           playerModifier = playerBaseModifier,
           playerRoll = ds.playerRoll,
           playerTotal = ds.playerModified,
-          opponentName = node.opponent.name,
-          opponentImage = node.opponent.image,
+          opponentName = opponentNameResolved,
+          opponentImage = opponentImageResolved,
           opponentModifier = opponentBaseModifier,
           opponentRoll = ds.opponentRoll,
           opponentTotal = ds.opponentModified,
@@ -687,8 +667,6 @@ class VnEngine(
         )
       }
     }
-
-    return handleDiceDuelNode(node)
   }
 
   private fun resolveOpponentModifier(node: SceneNode.DiceDuel): Float {
@@ -696,12 +674,15 @@ class VnEngine(
     return (node.opponent.modifier + varMod).round2()
   }
 
-  fun diceDuelRollPlayer() {
+  fun diceDuelRollBoth() {
     val node = currentNode() as? SceneNode.DiceDuel ?: return
     val ds = state.diceDuel ?: return
     if (ds.phase != DiceDuelPhase.PLAYER_ROLL) return
 
     ds.playerRoll = dice.roll(node.sides)
+    ds.opponentRoll = dice.roll(node.sides)
+    val oppMod = resolveOpponentModifier(node)
+    ds.opponentModified = ((ds.opponentRoll ?: 0) + oppMod).round2()
     ds.playerModified = null
     ds.phase = DiceDuelPhase.PLAYER_MODIFY
   }
@@ -714,19 +695,6 @@ class VnEngine(
 
     val base = variables.getModifier(node.playerModifierVar)
     ds.playerModified = (roll + base + extra).round2()
-    ds.phase = DiceDuelPhase.OPPONENT_ROLL
-  }
-
-  fun diceDuelRollOpponent() {
-    val node = currentNode() as? SceneNode.DiceDuel ?: return
-    val ds = state.diceDuel ?: return
-    if (ds.phase != DiceDuelPhase.OPPONENT_ROLL) return
-
-    val roll = dice.roll(node.sides)
-    val mod = resolveOpponentModifier(node)
-
-    ds.opponentRoll = roll
-    ds.opponentModified = (roll + mod).round2()
     ds.phase = DiceDuelPhase.RESOLVE
   }
 

@@ -43,7 +43,7 @@ class GameController(
 ) {
 
   private val basePath = "game/"
-  private val gameConfigPath = basePath +"game.json"
+  private val gameConfigPath = basePath + "game.json"
 
   private var engine: VnEngine? = null
   val requireEngine: VnEngine
@@ -63,16 +63,12 @@ class GameController(
       loader.load(gameConfigPath)
     }
 
-    // assets
     this.assets = game.assets
     this.reader = assetReader
     currentScenario = game.scenarioPath
 
     val json = Json { ignoreUnknownKeys = true }
 
-    // =========================
-    // VARIABLES
-    // =========================
     val varsRaw = assetReader.readText(basePath + game.variables)
     val varsMap = json.decodeFromString<Map<String, JsonElement>>(varsRaw)
 
@@ -98,9 +94,6 @@ class GameController(
       }
     }
 
-    // =========================
-    // CARDS
-    // =========================
     println("LOAD CARDS FROM: ${game.cards}")
 
     val cardsRaw = assetReader.readText(basePath + game.cards)
@@ -116,21 +109,15 @@ class GameController(
 
     cardManager.setCards(cardsList)
 
-    // =========================
-    // ENGINE
-    // =========================
     engine = VnEngine(state, dice).apply {
       addScenes(game.scenario.scenes)
     }
 
-    // =========================
-    // START GAME
-    // =========================
     return step()
   }
+
   fun next(option: Option? = null): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
-
 
     println("👉 NEXT CALLED option=$option pointer=${engine.state.pointer}")
 
@@ -140,7 +127,7 @@ class GameController(
 
     println("👉 ENGINE OUTPUT = $output")
     println("👉 NODE = ${engine.currentNode()}")
-    // 3. post-processing (карты / дайс / сцена)
+
     return when (output) {
 
       is EngineOutput.ShowDice -> {
@@ -152,6 +139,7 @@ class GameController(
         val cards = getPlayerCards()
         output.copy(cards = cards) to engine.currentNode()
       }
+
       is EngineOutput.DrawCardRequest -> {
         val card = when {
           output.random == true -> cardManager.drawCard()
@@ -176,6 +164,7 @@ class GameController(
       else -> output to engine.currentNode()
     }
   }
+
   suspend fun switchScenario(path: String): Pair<EngineOutput, SceneNode?> {
     val scenario = loadScenario(path)
 
@@ -187,8 +176,6 @@ class GameController(
     return step()
   }
 
-
-
   fun getPlayerCards(): List<UiCard> {
     return metaManager.getCards().map {
       UiCard(
@@ -198,6 +185,7 @@ class GameController(
       )
     }
   }
+
   fun rollDice(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
     val node = engine.currentNode() as? SceneNode.DiceRoll ?: return step()
@@ -219,17 +207,18 @@ class GameController(
     println("DICE ID: $diceId RESULT: $result (saved=${saved != null})")
     return step()
   }
+
   fun applyDiceModifier(extra: Float, usedCards: List<String>): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
-    val base = engine.state.diceResult ?: return next()
+    engine.state.diceResult ?: return next()
 
     val currentNode = engine.currentNode() as? SceneNode.DiceRoll
       ?: return next()
 
     val currentMod = engine.variables.getModifier(currentNode.modifierVar)
 
-    engine.state.diceModifiedResult = base + currentMod + extra
+    engine.state.diceModifiedResult = engine.state.diceResult!! + currentMod + extra
 
     usedCards.forEach { cardId ->
       metaManager.consumeCard(cardId)
@@ -237,9 +226,11 @@ class GameController(
 
     return next()
   }
+
   fun consumeCard(cardId: String) {
     metaManager.consumeCard(cardId)
   }
+
   fun saveGame(slot: String) {
     val engine = engine ?: return
 
@@ -310,11 +301,11 @@ class GameController(
 
     return step()
   }
+
   fun battleContinue(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
-    val node = engine.currentNode() as? SceneNode.Battle ?: return step()
-    // просто еще один tick/step на той же Battle-ноде
-    return engine.step() to node
+    engine.currentNode() as? SceneNode.Battle ?: return step()
+    return engine.step() to engine.currentNode()
   }
 
   suspend fun loadSave(slot: String): Pair<EngineOutput, SceneNode?> {
@@ -364,15 +355,14 @@ class GameController(
 
     return "$currentScenario|${pointer.sceneId}|${pointer.nodeIndex}"
   }
+
   fun diceDuelRoll(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
-    val node = engine.currentNode() as? SceneNode.DiceDuel ?: return step()
+    engine.currentNode() as? SceneNode.DiceDuel ?: return step()
     val ds = engine.state.diceDuel ?: return step()
 
-    when (ds.phase) {
-      DiceDuelPhase.PLAYER_ROLL -> engine.diceDuelRollPlayer()
-      DiceDuelPhase.OPPONENT_ROLL -> engine.diceDuelRollOpponent()
-      else -> Unit
+    if (ds.phase == DiceDuelPhase.PLAYER_ROLL) {
+      engine.diceDuelRollBoth()
     }
 
     return step()
@@ -395,6 +385,7 @@ class GameController(
     engine.diceDuelContinue()
     return step()
   }
+
   fun listSaves(): List<String> =
     saveManager.listSaves()
 }
