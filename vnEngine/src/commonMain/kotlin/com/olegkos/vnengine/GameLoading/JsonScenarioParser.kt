@@ -4,28 +4,47 @@ import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
-import com.olegkos.vnengine.scene.SceneNode.*
 import com.olegkos.vnengine.scene.SceneNode.Background
+import com.olegkos.vnengine.scene.SceneNode.Battle
+import com.olegkos.vnengine.scene.SceneNode.BattlePhases
+import com.olegkos.vnengine.scene.SceneNode.BattleTransitions
+import com.olegkos.vnengine.scene.SceneNode.CheckPhase
 import com.olegkos.vnengine.scene.SceneNode.Choice
+import com.olegkos.vnengine.scene.SceneNode.CombatPhase
+import com.olegkos.vnengine.scene.SceneNode.DiceDuel
+import com.olegkos.vnengine.scene.SceneNode.DiceDuelCards
+import com.olegkos.vnengine.scene.SceneNode.DiceDuelOpponent
+import com.olegkos.vnengine.scene.SceneNode.DiceDuelTransitions
 import com.olegkos.vnengine.scene.SceneNode.DiceRoll
+import com.olegkos.vnengine.scene.SceneNode.DrawCard
+import com.olegkos.vnengine.scene.SceneNode.EscapeConfig
+import com.olegkos.vnengine.scene.SceneNode.HideCharacter
+import com.olegkos.vnengine.scene.SceneNode.HideImage
+import com.olegkos.vnengine.scene.SceneNode.Hotspot
 import com.olegkos.vnengine.scene.SceneNode.If
 import com.olegkos.vnengine.scene.SceneNode.Image
+import com.olegkos.vnengine.scene.SceneNode.InitGame
 import com.olegkos.vnengine.scene.SceneNode.Jump
 import com.olegkos.vnengine.scene.SceneNode.JumpScenario
 import com.olegkos.vnengine.scene.SceneNode.ModifyVar
+import com.olegkos.vnengine.scene.SceneNode.Monster
+import com.olegkos.vnengine.scene.SceneNode.NavLink
+import com.olegkos.vnengine.scene.SceneNode.Navigation
+import com.olegkos.vnengine.scene.SceneNode.PlayerRefs
+import com.olegkos.vnengine.scene.SceneNode.SceneView
 import com.olegkos.vnengine.scene.SceneNode.SetVar
+import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
 import com.olegkos.vnengine.scene.SceneNode.Switch
+import com.olegkos.vnengine.scene.SceneNode.SwitchRange
 import com.olegkos.vnengine.scene.SceneNode.Text
-import com.olegkos.vnengine.scene.SubClass
-import com.olegkos.vnengine.scene.SubClass.*
+import com.olegkos.vnengine.scene.SubClass.GameClass
+import com.olegkos.vnengine.scene.SubClass.RangeCase
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 
@@ -213,25 +232,42 @@ class JsonScenarioParser : ScenarioParser {
                 }
               )
 
-              is DiceDuelNode -> SceneNode.DiceDuel(
+              is DiceDuelNode -> DiceDuel(
                 id = nodeJson.id,
                 title = nodeJson.title,
                 sides = nodeJson.sides,
                 playerModifierVar = nodeJson.playerModifierVar,
-                opponent = SceneNode.DiceDuelOpponent(
+                opponent = DiceDuelOpponent(
                   name = nodeJson.opponent.name,
                   image = nodeJson.opponent.image,
                   modifier = nodeJson.opponent.modifier,
                   modifierVar = nodeJson.opponent.modifierVar
                 ),
-                cards = SceneNode.DiceDuelCards(
+                cards = DiceDuelCards(
                   allowCards = nodeJson.cards.allowCards
                 ),
-                transitions = SceneNode.DiceDuelTransitions(
+                transitions = DiceDuelTransitions(
                   winScene = nodeJson.transitions.winScene,
                   loseScene = nodeJson.transitions.loseScene,
                   drawScene = nodeJson.transitions.drawScene
                 )
+              )
+
+              is WeightedRandomJump -> SceneNode.WeightedRandomJump(
+                entries = nodeJson.entries.map { e ->
+                  SceneNode.WeightedRandomJump.Entry(
+                    scene = e.scene,
+                    weight = e.weight,
+                    requires = e.requires.map { r ->
+                      SceneNode.WeightedRandomJump.Requirement(
+                        variable = r.variable,
+                        op = r.op.toWeightedOp(),
+                        value = r.value.toGameValue()
+                      )
+                    }
+                  )
+                },
+                defaultScene = nodeJson.defaultScene
               )
             }
           }
@@ -287,6 +323,28 @@ data class SceneJson(
 data class JumpScenarioJson(
   val scenarioFile: String
 ) : SceneNodeJson()
+
+@Serializable
+@SerialName("weightedRandomJump")
+data class WeightedRandomJump(
+  val entries: List<EntryJson>,
+  val defaultScene: String
+) : SceneNodeJson() {
+  @Serializable
+  data class EntryJson(
+    val scene: String,
+    val weight: Int = 1,
+    val requires: List<RequirementJson> = emptyList()
+  )
+
+  @Serializable
+  data class RequirementJson(
+    val variable: String,
+    val op: String,
+    val value: GameValueJson
+  )
+}
+
 @Serializable
 sealed class SceneNodeJson {
 
@@ -574,3 +632,13 @@ data class GameClassJson(
 @SerialName("effect")
 data class EffectNode(val image: String) : SceneNodeJson()
 
+private fun String.toWeightedOp(): SceneNode.WeightedRandomJump.Op =
+  when (trim().uppercase()) {
+    "EQ", "==" -> SceneNode.WeightedRandomJump.Op.EQ
+    "NEQ", "!=", "<>" -> SceneNode.WeightedRandomJump.Op.NEQ
+    "GTE", ">=" -> SceneNode.WeightedRandomJump.Op.GTE
+    "LTE", "<=" -> SceneNode.WeightedRandomJump.Op.LTE
+    "GT", ">" -> SceneNode.WeightedRandomJump.Op.GT
+    "LT", "<" -> SceneNode.WeightedRandomJump.Op.LT
+    else -> SceneNode.WeightedRandomJump.Op.EQ
+  }

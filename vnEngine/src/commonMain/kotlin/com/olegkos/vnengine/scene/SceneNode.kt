@@ -82,6 +82,25 @@ sealed interface SceneNode {
     val targetScenarioFile: String
   )
 
+  data class WeightedRandomJump(
+    val entries: List<Entry>,
+    val defaultScene: String
+  ) : SceneNode {
+    data class Entry(
+      val scene: String,
+      val weight: Int = 1,
+      val requires: List<Requirement> = emptyList()
+    )
+
+    data class Requirement(
+      val variable: String,
+      val op: Op,
+      val value: GameValue
+    )
+
+    enum class Op { EQ, NEQ, GTE, LTE, GT, LT }
+  }
+
   data class Background(
     val image: String
   ) : SceneNode
