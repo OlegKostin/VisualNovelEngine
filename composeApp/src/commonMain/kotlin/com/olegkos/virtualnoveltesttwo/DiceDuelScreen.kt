@@ -162,7 +162,7 @@ fun DiceDuelScreen(
           )
           Spacer(Modifier.height(4.dp))
           Text("Мод $playerModifier", fontSize = fontSize, textAlign = TextAlign.Center)
-          Text("Σ $playerSumText", fontSize = fontSize, textAlign = TextAlign.Center)
+          Text("Результат $playerSumText", fontSize = fontSize, textAlign = TextAlign.Center)
         }
 
         Column(
@@ -380,7 +380,7 @@ fun DiceDuelScreen(
           )
           Spacer(Modifier.height(4.dp))
           Text("Мод $opponentModifier", fontSize = fontSize, textAlign = TextAlign.Center)
-          Text("Σ $opponentSumText", fontSize = fontSize, textAlign = TextAlign.Center)
+          Text("Результат $opponentSumText", fontSize = fontSize, textAlign = TextAlign.Center)
         }
       }
     }
