@@ -206,6 +206,15 @@ class VnEngine(
 
         is SceneNode.DiceRoll -> {
 
+          val pending = state.pendingDiceJumpScene
+          if (pending != null) {
+            state.pendingDiceJumpScene = null
+            state.diceResult = null
+            state.diceModifiedResult = null
+            jumpToScene(pending)
+            continue
+          }
+
           val roll = state.diceResult
           val baseMod = variables.getModifier(node.modifierVar).round2()
           val modified = state.diceModifiedResult
@@ -244,22 +253,19 @@ class VnEngine(
             phase = DicePhase.FINAL
           )
 
-          when {
+          state.pendingDiceJumpScene = when {
             roll == 1 && node.critFailScene != null ->
-              jumpToScene(node.critFailScene)
+              node.critFailScene
 
             roll == node.sides && node.critSuccessScene != null ->
-              jumpToScene(node.critSuccessScene)
+              node.critSuccessScene
 
             total >= node.difficulty ->
-              jumpToScene(node.successScene)
+              node.successScene
 
             else ->
-              jumpToScene(node.failScene)
+              node.failScene
           }
-
-          state.diceResult = null
-          state.diceModifiedResult = null
 
           return resultOutput
         }
@@ -561,6 +567,7 @@ class VnEngine(
 
     advance()
   }
+
   fun jumpToScene(sceneId: String) {
     require(scenes.containsKey(sceneId)) {
       "Scene '$sceneId' not found"
@@ -570,6 +577,7 @@ class VnEngine(
     state.diceResult = null
     state.diceModifiedResult = null
     state.diceDuel = null
+    state.pendingDiceJumpScene = null
   }
 
   private fun advance() {
@@ -787,6 +795,7 @@ class VnEngine(
       else -> false
     }
   }
+
   private fun resolveTextVariables(rawText: String): String {
     val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()
     return regex.replace(rawText) {
@@ -794,6 +803,7 @@ class VnEngine(
     }
   }
 }
+
 fun Float.round2(): Float = (this * 100).toInt() / 100f
 
 data class UiCard(

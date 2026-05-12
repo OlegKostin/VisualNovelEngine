@@ -11,6 +11,7 @@ data class GameState(
   var pendingOutput: EngineOutput? = null,
   var waitingForUi: Boolean = false,
   val scenarioStack: ArrayDeque<NodePointer> = ArrayDeque(),
+  var pendingDiceJumpScene: String? = null,
   var isGameInitialized: Boolean = false,
   var diceDuel: DiceDuelState? = null,
   var battle: BattleState? = null
