@@ -1,5 +1,7 @@
 package com.olegkos.vnengine.scene
 
+import com.olegkos.vnengine.engine.variables.GameValue
+
 sealed interface  SubClass {
   data class RangeCase(
     val min: Float,
@@ -10,6 +12,6 @@ sealed interface  SubClass {
   data class GameClass(
     val id: String,
     val name: String,
-    val stats: Map<String, Int>
+    val stats: Map<String, GameValue>
   )
 }

@@ -19,7 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -185,7 +185,7 @@ fun DiceDuelScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
               ) {
-                Button(
+                VnOutlinedButton(
                   enabled = !isRolling,
                   onClick = {
                     onRoll()
@@ -260,7 +260,7 @@ fun DiceDuelScreen(
                     }
 
                     Spacer(Modifier.height(8.dp))
-                    Button(
+                    VnOutlinedButton(
                       onClick = {
                         onApplyCards(bonus, selectedCards.toList())
                         selectedCards = emptySet()
@@ -284,14 +284,14 @@ fun DiceDuelScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                   ) {
-                    Button(
+                    VnOutlinedButton(
                       onClick = { onApplyCards(0f, emptyList()) },
                       modifier = Modifier.fillMaxWidth(0.95f)
                     ) {
                       Text("Без карт", fontSize = fontSize)
                     }
                     Spacer(Modifier.height(8.dp))
-                    Button(
+                    VnOutlinedButton(
                       onClick = {
                         selectedCards = emptySet()
                         showCards = true
@@ -309,7 +309,7 @@ fun DiceDuelScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                   ) {
-                    Button(
+                    VnOutlinedButton(
                       onClick = { onApplyCards(0f, emptyList()) },
                       modifier = Modifier.fillMaxWidth(0.95f)
                     ) {
@@ -337,7 +337,7 @@ fun DiceDuelScreen(
                     .padding(horizontal = 4.dp)
                 )
                 Spacer(Modifier.height(12.dp))
-                Button(
+                VnOutlinedButton(
                   onClick = onContinue,
                   modifier = Modifier.fillMaxWidth(0.95f)
                 ) {

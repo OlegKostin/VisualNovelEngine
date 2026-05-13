@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,13 +44,13 @@ fun SaveSlotsMenu(viewModel: GameViewModel) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-          Button(
+          VnOutlinedButton(
             onClick = { viewModel.saveGame(slot) }
           ) {
             Text("Save")
           }
 
-          Button(
+          VnOutlinedButton(
             enabled = exists,
             onClick = { viewModel.loadSave(slot) }
           ) {

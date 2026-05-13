@@ -43,10 +43,17 @@ import com.olegkos.vnengine.scene.SubClass.RangeCase
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
 
 
 class JsonScenarioParser : ScenarioParser {
@@ -154,7 +161,9 @@ class JsonScenarioParser : ScenarioParser {
                   GameClass(
                     id = it.id,
                     name = it.name,
-                    stats = it.stats
+                    stats = it.stats.mapValues { (_, el) ->
+                      parseFlexibleStatValue(json, el)
+                    }
                   )
                 },
                 nextSceneId = nodeJson.nextSceneId
@@ -654,7 +663,7 @@ data class InitGameNode(
 data class GameClassJson(
   val id: String,
   val name: String,
-  val stats: Map<String, Int> = emptyMap()
+  val stats: Map<String, JsonElement> = emptyMap()
 )
 @Serializable
 @SerialName("effect")
@@ -670,3 +679,25 @@ private fun String.toWeightedOp(): SceneNode.WeightedRandomJump.Op =
     "LT", "<" -> SceneNode.WeightedRandomJump.Op.LT
     else -> SceneNode.WeightedRandomJump.Op.EQ
   }
+
+/**
+ * Class `stats` in JSON are usually plain numbers/strings; full [GameValueJson] objects
+ * (with `"type": "int"` etc.) are also accepted.
+ */
+private fun parseFlexibleStatValue(json: Json, element: JsonElement): GameValue {
+  if (element is JsonObject && "type" in element) {
+    return json.decodeFromJsonElement<GameValueJson>(element).toGameValue()
+  }
+  val prim = element as? JsonPrimitive
+    ?: return GameValue.StringVal(element.toString())
+  prim.booleanOrNull?.let { return GameValue.Bool(it) }
+  prim.intOrNull?.let { return GameValue.IntVal(it) }
+  prim.longOrNull?.let {
+    return GameValue.IntVal(it.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt())
+  }
+  prim.floatOrNull?.let { return GameValue.FloatVal(it) }
+  prim.doubleOrNull?.let { return GameValue.FloatVal(it.toFloat()) }
+  if (prim.isString) return GameValue.StringVal(prim.content)
+  prim.contentOrNull?.let { return GameValue.StringVal(it) }
+  return GameValue.StringVal(prim.toString())
+}

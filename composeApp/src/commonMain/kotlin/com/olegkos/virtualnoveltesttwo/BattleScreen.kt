@@ -25,7 +25,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -312,11 +312,11 @@ fun BattleScreen(
         when (phase) {
           BattlePhase.ACTION -> {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-              Button(onClick = onChooseFight) {
+              VnOutlinedButton(onClick = onChooseFight) {
                 Text("Сражаться", fontSize = fontSize)
               }
               if (canEscape) {
-                Button(onClick = onChooseEscape) {
+                VnOutlinedButton(onClick = onChooseEscape) {
                   Text("Сбежать", fontSize = fontSize)
                 }
               }
@@ -325,7 +325,7 @@ fun BattleScreen(
 
           BattlePhase.HORROR, BattlePhase.COMBAT, BattlePhase.ESCAPE -> {
             if (result == null) {
-              Button(
+              VnOutlinedButton(
                 enabled = !isRolling,
                 onClick = {
                   onRoll()
@@ -335,16 +335,16 @@ fun BattleScreen(
                 Text("Бросить", fontSize = fontSize)
               }
             } else if (isRolling || !revealResult) {
-              Button(enabled = false, onClick = {}) {
+              VnOutlinedButton(enabled = false, onClick = {}) {
                 Text("Считаем...", fontSize = fontSize)
               }
             } else {
               if (canUseCards && !showCards) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                  Button(onClick = { onApplyCards(0f, emptyList()) }) {
+                  VnOutlinedButton(onClick = { onApplyCards(0f, emptyList()) }) {
                     Text("Без карт", fontSize = fontSize)
                   }
-                  Button(onClick = {
+                  VnOutlinedButton(onClick = {
                     selectedCards = emptySet()
                     showCards = true
                   }) {
@@ -352,7 +352,7 @@ fun BattleScreen(
                   }
                 }
               } else if (showCards) {
-                Button(
+                VnOutlinedButton(
                   onClick = {
                     if (selectedCards.isEmpty()) {
                       onApplyCards(0f, emptyList())
@@ -370,7 +370,7 @@ fun BattleScreen(
                   )
                 }
               } else {
-                Button(onClick = onContinue) {
+                VnOutlinedButton(onClick = onContinue) {
                   Text("Продолжить", fontSize = fontSize)
                 }
               }
@@ -382,7 +382,7 @@ fun BattleScreen(
           }
 
           else -> {
-            Button(onClick = onContinue) {
+            VnOutlinedButton(onClick = onContinue) {
               Text("Продолжить", fontSize = fontSize)
             }
           }

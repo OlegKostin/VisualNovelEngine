@@ -3,7 +3,7 @@ package com.olegkos.virtualnoveltesttwo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -82,7 +82,7 @@ fun DiceScreen(
     when (uiPhase) {
 
       DicePhase.ROLL -> {
-        Button(onClick = {
+        VnOutlinedButton(onClick = {
           onRoll()
           isRolling = true
         }) {
@@ -98,7 +98,7 @@ fun DiceScreen(
 
           Spacer(Modifier.height(16.dp))
 
-          Button(onClick = {
+          VnOutlinedButton(onClick = {
             onApplyCard(0f, emptyList())
           }) {
             Text("Без карт")
@@ -106,7 +106,7 @@ fun DiceScreen(
 
           Spacer(Modifier.height(8.dp))
 
-          Button(onClick = {
+          VnOutlinedButton(onClick = {
             selectedCards = emptySet()
             showCards = true
           }) {
@@ -125,7 +125,7 @@ fun DiceScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        Button(onClick = onContinue) {
+        VnOutlinedButton(onClick = onContinue) {
           Text("Продолжить")
         }
       }
@@ -203,7 +203,7 @@ fun DiceScreen(
             .sumOf { it.value.toDouble() }
             .toFloat()
 
-          Button(
+          VnOutlinedButton(
             enabled = selectedCards.isNotEmpty(),
             onClick = {
               val usedCards = selectedCards.toList()

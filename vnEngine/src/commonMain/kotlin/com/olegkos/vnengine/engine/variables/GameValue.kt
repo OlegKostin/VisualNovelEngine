@@ -25,3 +25,15 @@ fun GameValue.resolve(): GameValue {
     else -> this
   }
 }
+
+/** Short text for UI (e.g. class selection stats block). */
+fun GameValue.forStatPreview(): String {
+  val r = resolve()
+  return when (r) {
+    is GameValue.Bool -> r.value.toString()
+    is GameValue.IntVal -> r.value.toString()
+    is GameValue.StringVal -> r.value
+    is GameValue.FloatVal -> r.value.toString()
+    else -> r.toString()
+  }
+}

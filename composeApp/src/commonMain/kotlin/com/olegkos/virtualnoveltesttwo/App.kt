@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -340,7 +340,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
         is EngineOutput.ShowChoices -> {
           o.options.forEach { option ->
-            Button(
+            VnOutlinedButton(
               onClick = { viewModel.next(option) },
               modifier = Modifier
                 .fillMaxWidth()
@@ -427,7 +427,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         .padding(16.dp),
       contentAlignment = Alignment.TopEnd
     ) {
-      Button(onClick = { showMenu = true }) {
+      VnOutlinedButton(onClick = { showMenu = true }) {
         Text("⚙")
       }
     }
@@ -454,7 +454,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
           Spacer(Modifier.height(12.dp))
 
-          Button(onClick = { showMenu = false }) {
+          VnOutlinedButton(onClick = { showMenu = false }) {
             Text("Закрыть")
           }
         }
@@ -506,7 +506,7 @@ private fun SceneNavControl(
       }
 
       !label.isNullOrBlank() -> {
-        Button(
+        VnOutlinedButton(
           onClick = onNavigate,
           modifier = pad
         ) {
@@ -515,7 +515,7 @@ private fun SceneNavControl(
       }
 
       else -> {
-        Button(
+        VnOutlinedButton(
           onClick = onNavigate,
           modifier = pad.size(56.dp)
         ) {

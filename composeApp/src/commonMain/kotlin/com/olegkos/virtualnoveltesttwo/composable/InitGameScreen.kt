@@ -20,6 +20,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnoveltesttwo.mappers.StatType
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
+import com.olegkos.vnengine.engine.variables.forStatPreview
 import com.olegkos.vnengine.scene.SubClass
 import org.jetbrains.compose.resources.painterResource
 import java.awt.Cursor
@@ -67,7 +69,7 @@ fun InitGameScreen(
 
       Spacer(Modifier.width(12.dp))
 
-      Button(
+      VnOutlinedButton(
         onClick = { onConfirm(name, selectedClass) },
         enabled = name.isNotBlank() && selectedClass != null
       ) {
@@ -233,7 +235,7 @@ fun StatsBlock(
             Spacer(Modifier.width(8.dp))
 
             Text(
-              text = value.toString(),
+              text = value.forStatPreview(),
               style = MaterialTheme.typography.titleMedium
             )
           }

@@ -10,6 +10,7 @@
   import com.olegkos.vnengine.engine.EngineOutput
   import com.olegkos.vnengine.engine.asserts.AssetPathResolver
   import com.olegkos.vnengine.engine.variables.GameValue
+  import com.olegkos.vnengine.engine.variables.resolve
   import com.olegkos.vnengine.scene.Option
   import com.olegkos.vnengine.scene.SceneNode
   import com.olegkos.vnengine.scene.SubClass
@@ -95,7 +96,7 @@
         engine.variables.set(classVar, GameValue.StringVal(selectedClass.id))
 
         selectedClass.stats.forEach { (key, value) ->
-          engine.variables.set(key, GameValue.IntVal(value))
+          engine.variables.set(key, value.resolve())
         }
       }
 
