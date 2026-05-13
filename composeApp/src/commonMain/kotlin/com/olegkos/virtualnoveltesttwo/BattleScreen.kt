@@ -57,6 +57,7 @@ fun BattleScreen(
   monsterImagePainter: BitmapPainter?,
   monsterHp: Int,
   monsterCombatDamage: Int,
+  monsterHorrorDamage: Int,
   playerHealth: Int,
   playerSanity: Int,
   phase: BattlePhase,
@@ -415,6 +416,14 @@ fun BattleScreen(
         IconStatRow(
           stat = StatType.HP,
           count = monsterHp,
+          fontSize = fontSize
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        IconStatRow(
+          stat = StatType.MENTAL,
+          count = monsterHorrorDamage,
           fontSize = fontSize
         )
 

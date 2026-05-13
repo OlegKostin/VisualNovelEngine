@@ -98,6 +98,7 @@ sealed interface EngineOutput {
     val monsterHp: Int,
     val monsterMaxHp: Int,
     val monsterCombatDamage: Int,
+    val monsterHorrorDamage: Int,
     val playerHealth: Int,
     val playerSanity: Int,
     val phase: BattlePhase,
