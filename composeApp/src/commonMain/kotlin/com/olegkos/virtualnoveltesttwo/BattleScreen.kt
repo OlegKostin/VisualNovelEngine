@@ -56,8 +56,7 @@ fun BattleScreen(
   monsterName: String,
   monsterImagePainter: BitmapPainter?,
   monsterHp: Int,
-  monsterMaxHp: Int,
-  monsterAttack: Int,
+  monsterCombatDamage: Int,
   playerHealth: Int,
   playerSanity: Int,
   phase: BattlePhase,
@@ -398,8 +397,6 @@ fun BattleScreen(
           .padding(panelPadding),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
-        Text("Монстр", fontSize = fontSize)
-        Spacer(Modifier.height(8.dp))
         Text(monsterName, textAlign = TextAlign.Center, fontSize = fontSize)
         Spacer(Modifier.height(10.dp))
 
@@ -414,8 +411,20 @@ fun BattleScreen(
         }
 
         Spacer(Modifier.height(12.dp))
-        Text("HP: $monsterHp / $monsterMaxHp", fontSize = fontSize)
-        Text("Сила атаки: $monsterAttack", fontSize = fontSize)
+
+        IconStatRow(
+          stat = StatType.HP,
+          count = monsterHp,
+          fontSize = fontSize
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        IconStatRow(
+          stat = StatType.STR,
+          count = monsterCombatDamage,
+          fontSize = fontSize
+        )
       }
     }
   }
