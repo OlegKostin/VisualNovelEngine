@@ -1,5 +1,6 @@
 package com.olegkos.vnengine.engine
 
+import com.olegkos.vnengine.scene.SceneNode.BattleVnLine
 import com.olegkos.vnengine.engine.variables.GameValue
 
 
@@ -23,7 +24,13 @@ data class BattleState(
   var monsterHp: Int,
   val monsterMaxHp: Int,
   var pendingRoll: Int? = null,
-  var pendingModified: Float? = null
+  var pendingModified: Float? = null,
+  var postCombatVnLines: List<BattleVnLine> = emptyList(),
+  var postCombatVnIndex: Int = 0,
+  var combatSummaryRoll: Int? = null,
+  var combatSummarySides: Int? = null,
+  var combatSummaryDifficulty: Int? = null,
+  var combatSummaryModifier: Float? = null
 )
 
 data class DiceDuelState(

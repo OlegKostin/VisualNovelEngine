@@ -370,6 +370,39 @@ class VnEngine(
         return buildBattleDiceOutput(node, bs, health, sanity, e.name, e.sides, e.difficulty, e.modifierVar, canEscape = true)
       }
 
+      BattlePhase.POST_COMBAT_VN -> {
+        val line = bs.postCombatVnLines.getOrNull(bs.postCombatVnIndex)
+        if (line == null) {
+          bs.postCombatVnLines = emptyList()
+          bs.postCombatVnIndex = 0
+          bs.phase = BattlePhase.RESOLVE
+          return handleBattleNode(node)
+        }
+        val healthNow = variables.getModifier(node.player.healthVar).toInt()
+        val sanityNow = variables.getModifier(node.player.sanityVar).toInt()
+        val speakerResolved = line.speaker?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables)
+        return EngineOutput.ShowBattle(
+          battleId = node.id,
+          title = node.title,
+          monsterName = node.monster.name,
+          monsterImage = node.monster.image,
+          monsterHp = bs.monsterHp,
+          monsterMaxHp = bs.monsterMaxHp,
+          playerHealth = healthNow,
+          playerSanity = sanityNow,
+          phase = BattlePhase.POST_COMBAT_VN,
+          diceName = node.phases.combat.name,
+          sides = bs.combatSummarySides,
+          difficulty = bs.combatSummaryDifficulty,
+          result = bs.combatSummaryRoll,
+          modifier = bs.combatSummaryModifier ?: 0f,
+          canUseCards = false,
+          canEscape = false,
+          postCombatVnSpeaker = speakerResolved,
+          postCombatVnText = resolveTextVariables(line.text)
+        )
+      }
+
       BattlePhase.RESOLVE -> {
         when {
           bs.monsterHp <= 0 -> {
@@ -383,6 +416,10 @@ class VnEngine(
             return tick()
           }
           else -> {
+            bs.combatSummaryRoll = null
+            bs.combatSummarySides = null
+            bs.combatSummaryDifficulty = null
+            bs.combatSummaryModifier = null
             bs.phase = BattlePhase.ACTION
             return handleBattleNode(node)
           }
@@ -455,25 +492,6 @@ class VnEngine(
     val total = modified.round2()
     val finalModifier = (total - roll).round2()
 
-    val output = EngineOutput.ShowBattle(
-      battleId = node.id,
-      title = node.title,
-      monsterName = node.monster.name,
-      monsterImage = node.monster.image,
-      monsterHp = bs.monsterHp,
-      monsterMaxHp = bs.monsterMaxHp,
-      playerHealth = health,
-      playerSanity = sanity,
-      phase = bs.phase,
-      diceName = checkName,
-      sides = sides,
-      difficulty = difficulty,
-      result = roll,
-      modifier = finalModifier,
-      canUseCards = false,
-      canEscape = canEscape
-    )
-
     when (bs.phase) {
       BattlePhase.HORROR -> {
         val horror = node.phases.horror
@@ -493,14 +511,40 @@ class VnEngine(
           else -> 0
         }
 
-        if (monsterDamage > 0) {
-          bs.monsterHp = (bs.monsterHp - monsterDamage).coerceAtLeast(0)
-        } else {
-          val playerDmg = combat.damageToPlayerOnFail
-          if (playerDmg > 0) applyDeltaToVar(node.player.healthVar, -playerDmg)
+        val queuedLines = when {
+          monsterDamage > 0 -> {
+            bs.monsterHp = (bs.monsterHp - monsterDamage).coerceAtLeast(0)
+            combat.vnAfterMonsterHit[bs.monsterHp] ?: emptyList()
+          }
+          else -> {
+            val playerDmg = combat.damageToPlayerOnFail
+            if (playerDmg > 0) {
+              applyDeltaToVar(node.player.healthVar, -playerDmg)
+            }
+            if (playerDmg > 0) {
+              val newPlayerHp = variables.getModifier(node.player.healthVar).toInt()
+              combat.vnAfterPlayerHit[newPlayerHp] ?: emptyList()
+            } else {
+              emptyList()
+            }
+          }
         }
 
-        bs.phase = BattlePhase.RESOLVE
+        if (queuedLines.isNotEmpty()) {
+          bs.postCombatVnLines = queuedLines
+          bs.postCombatVnIndex = 0
+          bs.phase = BattlePhase.POST_COMBAT_VN
+          bs.combatSummaryRoll = roll
+          bs.combatSummarySides = sides
+          bs.combatSummaryDifficulty = difficulty
+          bs.combatSummaryModifier = finalModifier
+        } else {
+          bs.phase = BattlePhase.RESOLVE
+          bs.combatSummaryRoll = null
+          bs.combatSummarySides = null
+          bs.combatSummaryDifficulty = null
+          bs.combatSummaryModifier = null
+        }
       }
 
       BattlePhase.ESCAPE -> {
@@ -524,7 +568,35 @@ class VnEngine(
     state.diceResult = null
     state.diceModifiedResult = null
 
-    return output
+    val healthNow = variables.getModifier(node.player.healthVar).toInt()
+    val sanityNow = variables.getModifier(node.player.sanityVar).toInt()
+
+    val vnLine = if (bs.phase == BattlePhase.POST_COMBAT_VN) {
+      bs.postCombatVnLines.getOrNull(bs.postCombatVnIndex)
+    } else {
+      null
+    }
+
+    return EngineOutput.ShowBattle(
+      battleId = node.id,
+      title = node.title,
+      monsterName = node.monster.name,
+      monsterImage = node.monster.image,
+      monsterHp = bs.monsterHp,
+      monsterMaxHp = bs.monsterMaxHp,
+      playerHealth = healthNow,
+      playerSanity = sanityNow,
+      phase = bs.phase,
+      diceName = checkName,
+      sides = sides,
+      difficulty = difficulty,
+      result = roll,
+      modifier = finalModifier,
+      canUseCards = false,
+      canEscape = canEscape,
+      postCombatVnSpeaker = vnLine?.speaker?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables),
+      postCombatVnText = vnLine?.let { resolveTextVariables(it.text) }
+    )
   }
 
   private fun applyDeltaToVar(varName: String, delta: Int) {
@@ -543,6 +615,17 @@ class VnEngine(
 
   fun battleChooseEscape() {
     state.battle?.phase = BattlePhase.ESCAPE
+  }
+
+  fun battlePostCombatVnNext() {
+    val bs = state.battle ?: return
+    if (bs.phase != BattlePhase.POST_COMBAT_VN) return
+    bs.postCombatVnIndex++
+    if (bs.postCombatVnIndex >= bs.postCombatVnLines.size) {
+      bs.postCombatVnLines = emptyList()
+      bs.postCombatVnIndex = 0
+      bs.phase = BattlePhase.RESOLVE
+    }
   }
 
   fun step(option: Option? = null): EngineOutput = tick(option)

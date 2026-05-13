@@ -103,7 +103,7 @@ fun BattleScreen(
 
   val modifierStat = when (phase) {
     BattlePhase.HORROR -> StatType.fromKey("opt_will")
-    BattlePhase.COMBAT -> StatType.fromKey("opt_str")
+    BattlePhase.COMBAT, BattlePhase.POST_COMBAT_VN -> StatType.fromKey("opt_str")
     BattlePhase.ESCAPE -> StatType.fromKey("opt_luck")
     else -> null
   }
@@ -143,8 +143,11 @@ fun BattleScreen(
     val centerActive = phase == BattlePhase.HORROR ||
         phase == BattlePhase.COMBAT ||
         phase == BattlePhase.ESCAPE ||
-        phase == BattlePhase.ACTION
-    val monsterActive = phase == BattlePhase.COMBAT || phase == BattlePhase.RESOLVE
+        phase == BattlePhase.ACTION ||
+        phase == BattlePhase.POST_COMBAT_VN
+    val monsterActive = phase == BattlePhase.COMBAT ||
+        phase == BattlePhase.RESOLVE ||
+        phase == BattlePhase.POST_COMBAT_VN
 
     Row(modifier = Modifier.fillMaxSize()) {
 
@@ -367,6 +370,10 @@ fun BattleScreen(
                 }
               }
             }
+          }
+
+          BattlePhase.POST_COMBAT_VN -> {
+            Spacer(Modifier.height(8.dp))
           }
 
           else -> {

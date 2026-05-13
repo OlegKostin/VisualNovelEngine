@@ -147,6 +147,12 @@
       currentNode = node
     }
 
+    fun battlePostCombatVnNext() {
+      val (output, node) = controller.battlePostCombatVnNext()
+      currentOutput = output
+      currentNode = node
+    }
+
     fun diceDuelRoll() {
       val (output, node) = controller.diceDuelRoll()
       currentOutput = output

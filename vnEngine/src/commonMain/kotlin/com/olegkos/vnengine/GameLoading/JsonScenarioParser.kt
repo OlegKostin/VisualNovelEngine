@@ -8,6 +8,7 @@ import com.olegkos.vnengine.scene.SceneNode.Background
 import com.olegkos.vnengine.scene.SceneNode.Battle
 import com.olegkos.vnengine.scene.SceneNode.BattlePhases
 import com.olegkos.vnengine.scene.SceneNode.BattleTransitions
+import com.olegkos.vnengine.scene.SceneNode.BattleVnLine
 import com.olegkos.vnengine.scene.SceneNode.CheckPhase
 import com.olegkos.vnengine.scene.SceneNode.Choice
 import com.olegkos.vnengine.scene.SceneNode.CombatPhase
@@ -212,7 +213,9 @@ class JsonScenarioParser : ScenarioParser {
                     modifierVar = nodeJson.phases.combat.modifierVar,
                     damageOnSuccess = nodeJson.phases.combat.damageOnSuccess,
                     damageOnCritSuccess = nodeJson.phases.combat.damageOnCritSuccess,
-                    damageToPlayerOnFail = nodeJson.phases.combat.damageToPlayerOnFail
+                    damageToPlayerOnFail = nodeJson.phases.combat.damageToPlayerOnFail,
+                    vnAfterMonsterHit = battleVnLinesByHpFromJson(nodeJson.phases.combat.vnAfterMonsterHit),
+                    vnAfterPlayerHit = battleVnLinesByHpFromJson(nodeJson.phases.combat.vnAfterPlayerHit)
                   )
                 ),
                 transitions = BattleTransitions(
@@ -278,6 +281,23 @@ class JsonScenarioParser : ScenarioParser {
       scenes = scenes
     )
   }
+  private fun battleVnLinesFromMap(map: Map<String, BattleVnLineJson>?): List<BattleVnLine> {
+    if (map == null) return emptyList()
+    return map.entries
+      .sortedBy { it.key }
+      .map { (_, v) -> BattleVnLine(text = v.text, speaker = v.speaker) }
+  }
+
+  private fun battleVnLinesByHpFromJson(
+    outer: Map<String, Map<String, BattleVnLineJson>>?
+  ): Map<Int, List<BattleVnLine>> {
+    if (outer == null) return emptyMap()
+    return outer.mapNotNull { (hpKey, linesMap) ->
+      val hp = hpKey.toIntOrNull() ?: return@mapNotNull null
+      hp to battleVnLinesFromMap(linesMap)
+    }.toMap()
+  }
+
   private fun parseNavigation(obj: JsonObject): Navigation {
     fun link(key: String): NavLink? {
       val el = obj[key] ?: return null
@@ -344,6 +364,12 @@ data class WeightedRandomJump(
     val value: GameValueJson
   )
 }
+
+@Serializable
+data class BattleVnLineJson(
+  val text: String,
+  val speaker: String? = null
+)
 
 @Serializable
 sealed class SceneNodeJson {
@@ -418,7 +444,9 @@ sealed class SceneNodeJson {
     val modifierVar: String,
     val damageOnSuccess: Int = 1,
     val damageOnCritSuccess: Int = 2,
-    val damageToPlayerOnFail: Int = 1
+    val damageToPlayerOnFail: Int = 1,
+    val vnAfterMonsterHit: Map<String, Map<String, BattleVnLineJson>>? = null,
+    val vnAfterPlayerHit: Map<String, Map<String, BattleVnLineJson>>? = null
   )
 
   @Serializable data class EscapeJson(

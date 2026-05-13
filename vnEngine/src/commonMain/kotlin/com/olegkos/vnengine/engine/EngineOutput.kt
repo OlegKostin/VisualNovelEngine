@@ -106,12 +106,14 @@ sealed interface EngineOutput {
     val result: Int? = null,
     val modifier: Float = 0f,
     val canUseCards: Boolean = false,
-    val canEscape: Boolean = false
+    val canEscape: Boolean = false,
+    val postCombatVnSpeaker: String? = null,
+    val postCombatVnText: String? = null
   ) : EngineOutput
 }
 
 enum class BattlePhase {
-  START, HORROR, ACTION, COMBAT, ESCAPE, RESOLVE, WIN, LOSE, ESCAPED
+  START, HORROR, ACTION, COMBAT, ESCAPE, RESOLVE, POST_COMBAT_VN, WIN, LOSE, ESCAPED
 }
 
 enum class DicePhase {

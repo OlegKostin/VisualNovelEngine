@@ -305,7 +305,14 @@ class GameController(
   fun battleContinue(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
     engine.currentNode() as? SceneNode.Battle ?: return step()
-    return engine.step() to engine.currentNode()
+    return step()
+  }
+
+  fun battlePostCombatVnNext(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.currentNode() as? SceneNode.Battle ?: return step()
+    engine.battlePostCombatVnNext()
+    return step()
   }
 
   suspend fun loadSave(slot: String): Pair<EngineOutput, SceneNode?> {

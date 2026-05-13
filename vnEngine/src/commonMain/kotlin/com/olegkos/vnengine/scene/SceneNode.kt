@@ -173,6 +173,11 @@ sealed interface SceneNode {
     val onFailSanityDamage: Int = 0
   )
 
+  data class BattleVnLine(
+    val text: String,
+    val speaker: String? = null
+  )
+
   data class CombatPhase(
     val name: String,
     val sides: Int,
@@ -180,7 +185,9 @@ sealed interface SceneNode {
     val modifierVar: String,
     val damageOnSuccess: Int = 1,
     val damageOnCritSuccess: Int = 2,
-    val damageToPlayerOnFail: Int = 1
+    val damageToPlayerOnFail: Int = 1,
+    val vnAfterMonsterHit: Map<Int, List<BattleVnLine>> = emptyMap(),
+    val vnAfterPlayerHit: Map<Int, List<BattleVnLine>> = emptyMap()
   )
 
   data class EscapeConfig(
