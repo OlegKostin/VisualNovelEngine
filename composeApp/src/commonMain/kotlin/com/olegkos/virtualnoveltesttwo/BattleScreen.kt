@@ -1,5 +1,8 @@
 package com.olegkos.virtualnoveltesttwo
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,8 +29,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -445,6 +450,53 @@ private data class ScatterToken(
   val rotationDeg: Float
 )
 
+private data class FallingEntry(
+  val id: Int,
+  val slotIndex: Int,
+  val fromCount: Int
+)
+
+private fun scatterForSlot(stat: StatType, slotIndex: Int): ScatterToken {
+  var s = (slotIndex * 1_009 + stat.hashCode() * 9_176 + 7_917) and 0x7FFFFFFF
+  fun next(): Int {
+    s = (s * 1_103_515_245 + 12_345) and 0x7FFFFFFF
+    return s
+  }
+  val nx = (next() % 2001) / 1000f - 1f
+  val ny = (next() % 2001) / 1000f - 1f
+  val rot = ((next() % 81) - 40).toFloat()
+  return ScatterToken(nx, ny, rot)
+}
+
+private fun computeSlotOffset(
+  slotIndex: Int,
+  tokenCount: Int,
+  widthPx: Dp,
+  tokenSize: Dp,
+  scatter: ScatterToken
+): Triple<Dp, Dp, Float> {
+  val capped = tokenCount.coerceIn(1, 8)
+  val sidePad = 2.dp
+  val center = widthPx / 2
+  val preferredStep = tokenSize * 0.68f
+  val maxStep = if (capped <= 1) {
+    0.dp
+  } else {
+    (widthPx - tokenSize - sidePad * 2) / (capped - 1)
+  }
+  val step = if (capped <= 1) 0.dp else minOf(preferredStep, maxStep)
+  val rowH = tokenSize * 1.75f
+  val baselineY = rowH - tokenSize - 4.dp
+  val offsetFromCenter = (slotIndex - (capped - 1) / 2f) * step
+  val iconCenterX = center + offsetFromCenter
+  val baseX = iconCenterX - tokenSize / 2
+  val jitterXMax = kotlin.math.min(14f, step.value * 0.40f).coerceAtLeast(2f).dp
+  val jitterYMax = kotlin.math.min(24f, tokenSize.value * 0.42f).dp
+  val dx = jitterXMax * scatter.nx
+  val dy = jitterYMax * scatter.ny
+  return Triple(baseX + dx, baselineY + dy, scatter.rotationDeg)
+}
+
 @Composable
 private fun IconStatRow(
   stat: StatType?,
@@ -458,7 +510,31 @@ private fun IconStatRow(
     return
   }
 
-  if (capped == 0) {
+  val falling = remember(stat) { mutableStateListOf<FallingEntry>() }
+  var fallingIdSeq by remember(stat) { mutableIntStateOf(0) }
+  var lastCapped by remember(stat) { mutableIntStateOf(-1) }
+
+  LaunchedEffect(capped) {
+    if (lastCapped == -1) {
+      lastCapped = capped
+      return@LaunchedEffect
+    }
+    val prev = lastCapped
+    if (capped < prev) {
+      val old = prev.coerceIn(0, 8)
+      val new = capped.coerceIn(0, 8)
+      if (old > 0 && new < old) {
+        for (slot in new until old) {
+          val id = fallingIdSeq
+          fallingIdSeq = fallingIdSeq + 1
+          falling.add(FallingEntry(id = id, slotIndex = slot, fromCount = old))
+        }
+      }
+    }
+    lastCapped = capped
+  }
+
+  if (capped == 0 && falling.isEmpty()) {
     Text("0", fontSize = fontSize)
     return
   }
@@ -469,12 +545,11 @@ private fun IconStatRow(
       .padding(horizontal = 2.dp)
   ) {
     val widthPx = maxWidth
-
     val tokenSize = (widthPx * 0.38f).coerceIn(42.dp, 92.dp)
+    val rowH = tokenSize * 1.75f
 
     val sidePad = 2.dp
     val center = widthPx / 2
-
     val preferredStep = tokenSize * 0.68f
     val maxStep = if (capped <= 1) {
       0.dp
@@ -482,22 +557,6 @@ private fun IconStatRow(
       (widthPx - tokenSize - sidePad * 2) / (capped - 1)
     }
     val step = if (capped <= 1) 0.dp else minOf(preferredStep, maxStep)
-
-    val rowH = tokenSize * 1.75f
-
-    val scatter = remember(stat, count) {
-      List(capped) { i ->
-        var s = (i * 1_009 + stat.hashCode() * 9_176 + count * 50_927) and 0x7FFFFFFF
-        fun next(): Int {
-          s = (s * 1_103_515_245 + 12_345) and 0x7FFFFFFF
-          return s
-        }
-        val nx = (next() % 2001) / 1000f - 1f
-        val ny = (next() % 2001) / 1000f - 1f
-        val rot = ((next() % 81) - 40).toFloat()
-        ScatterToken(nx, ny, rot)
-      }
-    }
 
     val jitterXMax = kotlin.math.min(14f, step.value * 0.40f).coerceAtLeast(2f).dp
     val jitterYMax = kotlin.math.min(24f, tokenSize.value * 0.42f).dp
@@ -510,13 +569,13 @@ private fun IconStatRow(
       val baselineY = rowH - tokenSize - 4.dp
 
       repeat(capped) { idx ->
+        val scatter = scatterForSlot(stat, idx)
         val offsetFromCenter = (idx - (capped - 1) / 2f) * step
         val iconCenterX = center + offsetFromCenter
         val baseX = iconCenterX - tokenSize / 2
-
-        val dx = jitterXMax * scatter[idx].nx
-        val dy = jitterYMax * scatter[idx].ny
-        val rot = scatter[idx].rotationDeg
+        val dx = jitterXMax * scatter.nx
+        val dy = jitterYMax * scatter.ny
+        val rot = scatter.rotationDeg
 
         Box(
           modifier = Modifier
@@ -534,6 +593,57 @@ private fun IconStatRow(
           )
         }
       }
+
+      falling.forEach { entry ->
+        key(entry.id) {
+          FallingStatChip(
+            stat = stat,
+            entry = entry,
+            widthPx = widthPx,
+            tokenSize = tokenSize,
+            onFinished = { falling.removeAll { it.id == entry.id } }
+          )
+        }
+      }
     }
+  }
+}
+
+@Composable
+private fun FallingStatChip(
+  stat: StatType,
+  entry: FallingEntry,
+  widthPx: Dp,
+  tokenSize: Dp,
+  onFinished: () -> Unit
+) {
+  val scatter = scatterForSlot(stat, entry.slotIndex)
+  val (baseX, baseY, baseRot) = remember(entry.id, entry.fromCount, entry.slotIndex, widthPx, tokenSize) {
+    computeSlotOffset(entry.slotIndex, entry.fromCount, widthPx, tokenSize, scatter)
+  }
+  val progress = remember(entry.id) { Animatable(0f) }
+  LaunchedEffect(entry.id) {
+    progress.animateTo(
+      targetValue = 1f,
+      animationSpec = tween(durationMillis = 440, easing = FastOutSlowInEasing)
+    )
+    onFinished()
+  }
+  val fall = (tokenSize.value * 0.55f + progress.value * 140f).dp
+  Box(
+    modifier = Modifier
+      .offset(x = baseX, y = baseY + fall)
+      .graphicsLayer {
+        alpha = 1f - progress.value
+        rotationZ = baseRot + progress.value * 42f
+        transformOrigin = TransformOrigin(0.5f, 0.92f)
+      }
+      .size(tokenSize)
+  ) {
+    Image(
+      painter = painterResource(stat.image),
+      contentDescription = null,
+      modifier = Modifier.fillMaxSize()
+    )
   }
 }
