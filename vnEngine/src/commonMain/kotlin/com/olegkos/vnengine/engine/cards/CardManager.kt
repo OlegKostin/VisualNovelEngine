@@ -11,10 +11,7 @@ class CardManager {
   fun drawCard(): CardData {
     require(cards.isNotEmpty()) { "Cards not loaded!" }
 
-    println("CARDS SIZE: ${cards.size}")
-
     val totalWeight = cards.sumOf { it.weight }
-    println("TOTAL WEIGHT: $totalWeight")
 
     val rnd = (1..totalWeight).random()
 

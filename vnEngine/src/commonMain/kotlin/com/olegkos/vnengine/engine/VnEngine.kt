@@ -23,6 +23,10 @@ class VnEngine(
   val state: GameState,
   val dice: DiceRoller
 ) {
+  companion object {
+    /** Включайте только при отладке сценария — синхронный вывод на каждый step сильно тормозит UI. */
+    private const val TRACE_STEPS = false
+  }
   val variables = VariableStore(state.variables)
   private val scenes = mutableMapOf<String, Scene>()
 
@@ -53,8 +57,10 @@ class VnEngine(
   }
 
   fun tick(option: Option? = null): EngineOutput {
-    println("STEP: ${state.pointer}")
-    println("CURRENT NODE: ${currentNode()}")
+    if (TRACE_STEPS) {
+      println("STEP: ${state.pointer}")
+      println("CURRENT NODE: ${currentNode()}")
+    }
     if (option != null) {
       val node = currentNode()
 

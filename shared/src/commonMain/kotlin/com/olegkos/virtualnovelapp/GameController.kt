@@ -44,6 +44,11 @@ class GameController(
   private val ioDispatcher: CoroutineDispatcher
 ) {
 
+  companion object {
+    /** Синхронный println на каждый next сильно просаживает FPS (особенно анимации кубика). */
+    private const val TRACE_ENGINE_STEPS = false
+  }
+
   private val basePath = "game/"
   private val gameConfigPath = basePath + "game.json"
 
@@ -129,14 +134,18 @@ class GameController(
   fun next(option: Option? = null): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
-    println("👉 NEXT CALLED option=$option pointer=${engine.state.pointer}")
+    if (TRACE_ENGINE_STEPS) {
+      println("👉 NEXT CALLED option=$option pointer=${engine.state.pointer}")
+    }
 
     engine.advanceExternal(option)
 
     val output = engine.step()
 
-    println("👉 ENGINE OUTPUT = $output")
-    println("👉 NODE = ${engine.currentNode()}")
+    if (TRACE_ENGINE_STEPS) {
+      println("👉 ENGINE OUTPUT = $output")
+      println("👉 NODE = ${engine.currentNode()}")
+    }
 
     return when (output) {
 

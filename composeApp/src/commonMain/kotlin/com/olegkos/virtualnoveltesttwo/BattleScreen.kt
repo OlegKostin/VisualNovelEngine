@@ -1,7 +1,9 @@
 package com.olegkos.virtualnoveltesttwo
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -93,8 +96,9 @@ fun BattleScreen(
 
     revealResult = false
     val diceSides = sides ?: 20
-    var delayMs = 40L
 
+    // Как раньше: нарастающая пауза, но с более высокого старта — грани успевают читаться.
+    var delayMs = 70L
     repeat(15) {
       rollingValue = (1..diceSides).random()
       delay(delayMs)
@@ -200,9 +204,10 @@ fun BattleScreen(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-          modifierStat?.let {
+          val modStat = modifierStat
+          if (modStat != null) {
             Image(
-              painter = painterResource(it.image),
+              painter = painterResource(modStat.image),
               contentDescription = null,
               modifier = Modifier.size(modIconSize)
             )
@@ -291,11 +296,17 @@ fun BattleScreen(
         ) {
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(8.dp))
-            Image(
-              painter = painterResource(diceImage(valueToShow)),
-              contentDescription = null,
-              modifier = Modifier.size(diceSize)
-            )
+            Crossfade(
+              targetState = valueToShow,
+              animationSpec = tween(durationMillis = 95, easing = LinearEasing),
+              label = "battleDiceFace"
+            ) { face ->
+              Image(
+                painter = diceFacePainter(face),
+                contentDescription = null,
+                modifier = Modifier.size(diceSize)
+              )
+            }
             Spacer(Modifier.height(8.dp))
             Text("d${sides ?: "-"}", fontSize = fontSize)
             Text("Сложность: ${difficulty ?: "-"}", fontSize = fontSize)
@@ -510,9 +521,13 @@ private fun IconStatRow(
     return
   }
 
-  val falling = remember(stat) { mutableStateListOf<FallingEntry>() }
-  var fallingIdSeq by remember(stat) { mutableIntStateOf(0) }
-  var lastCapped by remember(stat) { mutableIntStateOf(-1) }
+  val rowStat: StatType = stat
+
+  val chipPainter = painterResource(rowStat.image)
+
+  val falling = remember(rowStat) { mutableStateListOf<FallingEntry>() }
+  var fallingIdSeq by remember(rowStat) { mutableIntStateOf(0) }
+  var lastCapped by remember(rowStat) { mutableIntStateOf(-1) }
 
   LaunchedEffect(capped) {
     if (lastCapped == -1) {
@@ -569,7 +584,7 @@ private fun IconStatRow(
       val baselineY = rowH - tokenSize - 4.dp
 
       repeat(capped) { idx ->
-        val scatter = scatterForSlot(stat, idx)
+        val scatter = scatterForSlot(rowStat, idx)
         val offsetFromCenter = (idx - (capped - 1) / 2f) * step
         val iconCenterX = center + offsetFromCenter
         val baseX = iconCenterX - tokenSize / 2
@@ -587,7 +602,7 @@ private fun IconStatRow(
             .size(tokenSize)
         ) {
           Image(
-            painter = painterResource(stat.image),
+            painter = chipPainter,
             contentDescription = null,
             modifier = Modifier.fillMaxSize()
           )
@@ -597,7 +612,8 @@ private fun IconStatRow(
       falling.forEach { entry ->
         key(entry.id) {
           FallingStatChip(
-            stat = stat,
+            stat = rowStat,
+            chipPainter = chipPainter,
             entry = entry,
             widthPx = widthPx,
             tokenSize = tokenSize,
@@ -612,6 +628,7 @@ private fun IconStatRow(
 @Composable
 private fun FallingStatChip(
   stat: StatType,
+  chipPainter: Painter,
   entry: FallingEntry,
   widthPx: Dp,
   tokenSize: Dp,
@@ -641,7 +658,7 @@ private fun FallingStatChip(
       .size(tokenSize)
   ) {
     Image(
-      painter = painterResource(stat.image),
+      painter = chipPainter,
       contentDescription = null,
       modifier = Modifier.fillMaxSize()
     )

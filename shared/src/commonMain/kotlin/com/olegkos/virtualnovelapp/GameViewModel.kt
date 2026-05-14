@@ -42,7 +42,6 @@
     }
 
     fun next(option: Option? = null) {
-      println("VM NEXT option=$option")
       val result = controller.next(option)
       val output = result.first
 

@@ -74,7 +74,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   }
 
   LaunchedEffect(output) {
-    println("UI OUTPUT = $output")
     if (advancing) return@LaunchedEffect
     advancing = true
 
@@ -116,7 +115,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
 
       is EngineOutput.ShowCard -> {
-        println("CARD IN UI: ${o.image}")
         cardImage = o.image
       }
 

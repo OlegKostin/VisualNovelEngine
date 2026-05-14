@@ -39,7 +39,6 @@ import com.olegkos.vnengine.engine.DiceDuelPhase
 import com.olegkos.vnengine.engine.UiCard
 import kotlin.math.abs
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
 
 private fun formatSum(value: Float): String {
   val r = (value * 100f).toInt() / 100f
@@ -153,8 +152,9 @@ fun DiceDuelScreen(
             playerRoll != null -> playerRoll
             else -> 1
           }
+          val pDicePainter = diceFacePainter(pFace)
           Image(
-            painter = painterResource(diceImage(pFace)),
+            painter = pDicePainter,
             contentDescription = null,
             modifier = Modifier
               .fillMaxWidth()
@@ -371,8 +371,9 @@ fun DiceDuelScreen(
             opponentRoll != null -> opponentRoll
             else -> 1
           }
+          val oDicePainter = diceFacePainter(oFace)
           Image(
-            painter = painterResource(diceImage(oFace)),
+            painter = oDicePainter,
             contentDescription = null,
             modifier = Modifier
               .fillMaxWidth()

@@ -1,5 +1,6 @@
 package com.olegkos.virtualnoveltesttwo.mappers
 
+import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.DrawableResource
 import virtualnoveltesttwo.composeapp.generated.resources.Res
 import virtualnoveltesttwo.composeapp.generated.resources.stat_health
@@ -9,6 +10,7 @@ import virtualnoveltesttwo.composeapp.generated.resources.stat_str
 import virtualnoveltesttwo.composeapp.generated.resources.stat_will
 import virtualnoveltesttwo.composeapp.generated.resources.stat_wisdom
 
+@Immutable
 enum class StatType(
   val key: String,
   val image: DrawableResource,

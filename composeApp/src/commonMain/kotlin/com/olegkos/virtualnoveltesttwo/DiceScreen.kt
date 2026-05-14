@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.engine.DicePhase
@@ -66,8 +67,10 @@ fun DiceScreen(
       else -> 1
     }
 
+    val dicePainter = diceFacePainter(valueToShow)
+
     Image(
-      painter = painterResource(diceImage(valueToShow)),
+      painter = dicePainter,
       contentDescription = null,
       modifier = Modifier.size(160.dp)
     )
@@ -221,6 +224,13 @@ fun DiceScreen(
     }
   }
 }
+
+@Composable
+fun diceFacePainter(face: Int): Painter {
+  val v = face.coerceIn(1, 20)
+  return painterResource(diceImage(v))
+}
+
 fun diceImage(value: Int): DrawableResource =
   when (value) {
     1 -> Res.drawable.d1
