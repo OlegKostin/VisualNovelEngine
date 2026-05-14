@@ -24,7 +24,6 @@ class MetaManager(
     return newCard
   }
 
-
   fun consumeCard(cardId: String) {
     state = state.copy(
       cards = state.cards.filterNot { it.id == cardId }
@@ -43,5 +42,4 @@ class MetaManager(
     state = state.copy(diceResults = newMap)
     storage.save(state)
   }
-
 }

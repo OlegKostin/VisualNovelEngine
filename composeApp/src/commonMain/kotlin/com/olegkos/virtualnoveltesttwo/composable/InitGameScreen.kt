@@ -4,20 +4,28 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -25,6 +33,7 @@ import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.variables.forStatPreview
 import com.olegkos.vnengine.scene.SubClass
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import java.awt.Cursor
 
@@ -32,6 +41,8 @@ import java.awt.Cursor
 @Composable
 fun InitGameScreen(
   classes: List<SubClass.GameClass>,
+  cardPainter: @Composable (String) -> Painter?,
+  resolveStartingCardPreview: (SubClass.ClassStartingCard) -> Pair<Int, String>?,
   onConfirm: (String, SubClass.GameClass?) -> Unit
 ) {
 
@@ -134,7 +145,7 @@ fun InitGameScreen(
               .fillMaxSize()
               .padding(14.dp)
               .graphicsLayer { clip = false },
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(12.dp)
           ) {
 
             // =======================
@@ -143,10 +154,12 @@ fun InitGameScreen(
             Text(cls.name, style = MaterialTheme.typography.titleLarge)
 
             // =======================
-            // DESCRIPTION (HARDCODE)
+            // DESCRIPTION (JSON: description)
             // =======================
             Text(
-              text = getDescription(cls.id),
+              text = cls.description.ifBlank {
+                "Описание не задано в JSON (поле description у класса)."
+              },
               style = MaterialTheme.typography.bodyMedium
             )
 
@@ -154,14 +167,22 @@ fun InitGameScreen(
             // STATS (2x3 GRID)
             // =======================
             StatsBlock(
+              modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
               cls = cls,
               statIconSize = statIconSize
             )
 
             // =======================
-            // CARDS (HARDCODE)
+            // STARTING CARDS (JSON: startingCards)
             // =======================
-            CardBlock()
+            ClassStartingCardsRow(
+              classId = cls.id,
+              startingCards = cls.startingCards,
+              resolvePreview = resolveStartingCardPreview,
+              cardPainter = cardPainter
+            )
 
             Text(
               if (isSelected) "Выбрано (клик снова — снять)" else "Клик для выбора"
@@ -174,17 +195,191 @@ fun InitGameScreen(
   }
 }
 
-private fun getDescription(id: String): String {
-  return when (id) {
-    "hikki" -> "Воин — ближний бой и высокая выживаемость."
-    "nerd" -> "Маг — дальний урон и контроль."
-    "lucky" -> "Разбойник — крит и скорость."
-    else -> "Класс без описания."
+@Composable
+private fun ClassStartingCardsRow(
+  classId: String,
+  startingCards: List<SubClass.ClassStartingCard>,
+  resolvePreview: (SubClass.ClassStartingCard) -> Pair<Int, String>?,
+  cardPainter: @Composable (String) -> Painter?
+) {
+  Column(
+    Modifier
+      .fillMaxWidth()
+      .padding(top = 8.dp)
+  ) {
+    Text(
+      text = "Стартовые карты",
+      style = MaterialTheme.typography.labelMedium
+    )
+    Spacer(Modifier.height(6.dp))
+    if (startingCards.isEmpty()) {
+      Text(
+        text = "В JSON класса задайте startingCards — как drawCard: random, value или image.",
+        style = MaterialTheme.typography.bodySmall,
+        color = Color(0xFF5C6575)
+      )
+      return@Column
+    }
+    val gap = 8.dp
+    val slotsVisible = 3
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
+    BoxWithConstraints(
+      Modifier
+        .fillMaxWidth()
+        .background(Color(0x18000000), RoundedCornerShape(10.dp))
+        .padding(vertical = 4.dp, horizontal = 2.dp)
+    ) {
+      val cardWidth =
+        ((maxWidth - gap * (slotsVisible - 1)) / slotsVisible).coerceAtLeast(28.dp)
+      val rowHeight = cardWidth * (3.5f / 2.5f)
+
+      Row(
+        modifier = Modifier
+          .height(rowHeight)
+          .pointerInput(scrollState) {
+            awaitPointerEventScope {
+              while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Main)
+                var wheel = 0f
+                event.changes.forEach { change ->
+                  val d = change.scrollDelta
+                  if (d != Offset.Zero) {
+                    wheel += d.y + d.x
+                    change.consume()
+                  }
+                }
+                if (wheel != 0f) {
+                  scope.launch {
+                    scrollState.scroll {
+                      scrollBy(-wheel)
+                    }
+                  }
+                }
+              }
+            }
+          }
+          .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(gap),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        startingCards.forEachIndexed { index, spec ->
+          StartingCardPreviewSlot(
+            modifier = Modifier
+              .width(cardWidth)
+              .height(rowHeight),
+            classId = classId,
+            slotIndex = index,
+            spec = spec,
+            resolvePreview = resolvePreview,
+            cardPainter = cardPainter
+          )
+        }
+      }
+    }
   }
 }
+
+@Composable
+private fun StartingCardPreviewSlot(
+  modifier: Modifier,
+  classId: String,
+  slotIndex: Int,
+  spec: SubClass.ClassStartingCard,
+  resolvePreview: (SubClass.ClassStartingCard) -> Pair<Int, String>?,
+  cardPainter: @Composable (String) -> Painter?
+) {
+  val specSignature = buildString {
+    append(spec.random?.toString() ?: "n")
+    append('|')
+    append(spec.value?.toString() ?: "n")
+    append('|')
+    append(spec.image ?: "n")
+  }
+  val preview = remember(classId, slotIndex, specSignature) {
+    resolvePreview(spec)
+  }
+  Box(
+    modifier
+      .clip(RoundedCornerShape(8.dp))
+      .background(Color(0xFF2E3A59))
+  ) {
+    if (preview != null) {
+      val (value, path) = preview
+      val p = cardPainter(path)
+      if (p != null) {
+        Image(
+          painter = p,
+          contentDescription = null,
+          contentScale = ContentScale.Fit,
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 2.dp, vertical = 2.dp)
+        )
+      } else {
+        Box(
+          Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center
+        ) {
+          Text(
+            text = "+$value",
+            color = Color.White,
+            style = MaterialTheme.typography.titleSmall
+          )
+        }
+      }
+      Box(
+        modifier = Modifier
+          .align(Alignment.BottomCenter)
+          .fillMaxWidth()
+          .background(Color(0xCC000000)),
+        contentAlignment = Alignment.Center
+      ) {
+        Text(
+          text = "+$value",
+          color = Color.White,
+          style = MaterialTheme.typography.labelSmall
+        )
+      }
+    } else {
+      Column(
+        Modifier
+          .fillMaxSize()
+          .padding(4.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text(
+          text = when {
+            spec.random == true -> "?"
+            spec.value != null -> "×"
+            spec.image != null -> "×"
+            else -> "—"
+          },
+          color = Color.White,
+          style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+          text = when {
+            spec.random == true -> "Случайная"
+            spec.value != null -> "value=${spec.value}"
+            spec.image != null -> spec.image!!.take(12) + if ((spec.image!!.length) > 12) "…" else ""
+            else -> "пусто"
+          },
+          color = Color(0xFFCCCCCC),
+          style = MaterialTheme.typography.labelSmall,
+          maxLines = 2
+        )
+      }
+    }
+  }
+}
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StatsBlock(
+  modifier: Modifier = Modifier,
   cls: SubClass.GameClass,
   statIconSize: Dp
 ) {
@@ -211,8 +406,9 @@ fun StatsBlock(
   val cellMaxWidth = iconTrackWidth + iconTextGap + 120.dp
 
   Box(
-    Modifier
+    modifier
       .fillMaxWidth()
+      .fillMaxHeight()
       .padding(horizontal = 4.dp, vertical = 4.dp),
     contentAlignment = Alignment.Center
   ) {
@@ -334,50 +530,4 @@ private fun Modifier.cursorForHand(): Modifier {
   return pointerHoverIcon(
     PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
   )
-}
-@Composable
-fun CardBlock() {
-
-  Column(
-    Modifier
-      .fillMaxWidth()
-      .padding(top = 8.dp)
-  ) {
-
-    Text(
-      text = "Карты персонажа",
-      style = MaterialTheme.typography.labelMedium
-    )
-
-    Spacer(Modifier.height(6.dp))
-
-    Row(
-      Modifier
-        .fillMaxWidth()
-        .height(60.dp),
-      horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-
-      repeat(3) { index ->
-
-        Box(
-          modifier = Modifier
-            .weight(1f)
-            .fillMaxHeight()
-            .background(
-              color = Color(0xFF2E3A59),
-              shape = RoundedCornerShape(10.dp)
-            )
-            .clickable { /* позже добавишь логику */ },
-          contentAlignment = Alignment.Center
-        ) {
-          Text(
-            text = "Карта ${index + 1}",
-            color = Color.White,
-            style = MaterialTheme.typography.bodySmall
-          )
-        }
-      }
-    }
-  }
 }

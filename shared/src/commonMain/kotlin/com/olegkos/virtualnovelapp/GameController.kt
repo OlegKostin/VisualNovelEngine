@@ -14,11 +14,13 @@ import com.olegkos.vnengine.engine.UiCard
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.cards.CardConfig
+import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.game.GameLoader
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.SubClass.ClassStartingCard
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -96,14 +98,17 @@ class GameController(
 
     println("LOAD CARDS FROM: ${game.cards}")
 
-    val cardsRaw = assetReader.readText(basePath + game.cards)
-
-    val cardsList = try {
-      val wrapper = json.decodeFromString<CardConfig>(cardsRaw)
-      wrapper.cards
-    } catch (e: Exception) {
-      println("❌ ERROR PARSING CARDS: ${e.message}")
+    val cardsList = if (game.cards.isBlank()) {
       emptyList()
+    } else {
+      val cardsRaw = assetReader.readText(basePath + game.cards)
+      try {
+        val wrapper = json.decodeFromString<CardConfig>(cardsRaw)
+        wrapper.cards
+      } catch (e: Exception) {
+        println("❌ ERROR PARSING CARDS: ${e.message}")
+        emptyList()
+      }
     }
     println("CARDS LOADED: ${cardsList.size}")
 
@@ -141,12 +146,11 @@ class GameController(
       }
 
       is EngineOutput.DrawCardRequest -> {
-        val card = when {
-          output.random == true -> cardManager.drawCard()
-          output.value != null -> cardManager.getByValue(output.value!!)
-          output.image != null -> cardManager.drawCard()
-          else -> null
-        }
+        val card = resolveCardPick(
+          random = output.random,
+          value = output.value,
+          image = output.image
+        )
 
         requireNotNull(card) { "Card not found: $output" }
 
@@ -177,6 +181,7 @@ class GameController(
   }
 
   fun getPlayerCards(): List<UiCard> {
+    if (engine == null) return emptyList()
     return metaManager.getCards().map {
       UiCard(
         id = it.id,
@@ -184,6 +189,38 @@ class GameController(
         value = it.value
       )
     }
+  }
+
+  /** Превью стартовой карты для экрана init (те же правила, что у [resolveCardPick]). */
+  fun previewStartingCard(spec: ClassStartingCard): Pair<Int, String>? =
+    resolveCardPick(random = spec.random, value = spec.value, image = spec.image)
+      ?.let { it.value to it.image }
+
+  /** Выдать стартовые карты выбранного класса (после initGame), в MetaManager как и остальная рука. */
+  fun grantStartingCards(specs: List<ClassStartingCard>) {
+    specs.forEach { spec ->
+      val card = resolveCardPick(random = spec.random, value = spec.value, image = spec.image)
+      if (card == null) {
+        println("⚠️ STARTING CARD SKIPPED (пустая колода или неверный spec): $spec")
+        return@forEach
+      }
+      metaManager.addCard(card)
+    }
+  }
+
+  private fun resolveCardPick(
+    random: Boolean?,
+    value: Int?,
+    image: String?
+  ): CardData? = try {
+    when {
+      random == true -> cardManager.drawCard()
+      value != null -> cardManager.getByValue(value)
+      image != null -> cardManager.getByImage(image)
+      else -> null
+    }
+  } catch (_: IllegalArgumentException) {
+    null
   }
 
   fun rollDice(): Pair<EngineOutput, SceneNode?> {
@@ -221,7 +258,7 @@ class GameController(
     engine.state.diceModifiedResult = engine.state.diceResult!! + currentMod + extra
 
     usedCards.forEach { cardId ->
-      metaManager.consumeCard(cardId)
+      consumeCard(cardId)
     }
 
     return next()
@@ -296,7 +333,7 @@ class GameController(
     engine.state.diceModifiedResult = base + currentMod + extra
 
     usedCards.forEach { cardId ->
-      metaManager.consumeCard(cardId)
+      consumeCard(cardId)
     }
 
     return step()
@@ -381,7 +418,7 @@ class GameController(
     engine.diceDuelApplyModifier(extra)
 
     usedCards.forEach { cardId ->
-      metaManager.consumeCard(cardId)
+      consumeCard(cardId)
     }
 
     return step()

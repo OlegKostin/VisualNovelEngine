@@ -263,6 +263,10 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         is EngineOutput.ShowInitGame -> {
           InitGameScreen(
             classes = o.classes,
+            cardPainter = { path ->
+              rememberPainter(viewModel.assets.card(path), viewModel.reader)
+            },
+            resolveStartingCardPreview = { spec -> viewModel.previewStartingCard(spec) },
             onConfirm = { name, selectedClass ->
               viewModel.initGame(
                 playerName = name,

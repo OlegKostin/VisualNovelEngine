@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MetaState(
-  val cards: List<CardInstance>,
+  val cards: List<CardInstance> = emptyList(),
   val diceResults: Map<String, DiceInstance> = emptyMap()
 )
 

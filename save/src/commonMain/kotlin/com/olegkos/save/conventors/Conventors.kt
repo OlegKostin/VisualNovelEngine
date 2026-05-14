@@ -4,9 +4,8 @@ import com.olegkos.save.GameStateSerializable
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.GameValueSerializable
 import com.olegkos.vnengine.engine.variables.GameValue
+import kotlin.collections.ArrayDeque
 import kotlinx.serialization.json.Json
-
-
 
 fun GameValue.toSerializable(): GameValueSerializable = when(this) {
   is GameValue.IntVal -> GameValueSerializable.IntVal(value)
@@ -22,6 +21,7 @@ fun GameValueSerializable.toGameValue(): GameValue = when(this) {
   is GameValueSerializable.BoolVal -> GameValue.Bool(value)
   is GameValueSerializable.StringVal -> GameValue.StringVal(value)
 }
+
 fun GameState.toSerializable(
   scenario: String,
   timestamp: Long = System.currentTimeMillis()
@@ -33,6 +33,7 @@ fun GameState.toSerializable(
     scenarioStack = scenarioStack.toList(),
     scenario = scenario
   )
+
 fun GameStateSerializable.toGameState(): GameState =
   GameState(
     pointer = pointer,
@@ -41,10 +42,12 @@ fun GameStateSerializable.toGameState(): GameState =
       .toMutableMap(),
     scenarioStack = ArrayDeque(scenarioStack)
   )
+
 val SaveJson = Json {
   prettyPrint = true
   ignoreUnknownKeys = true
 }
+
 fun GameStateSerializable.toJson(): String =
   SaveJson.encodeToString(GameStateSerializable.serializer(), this)
 

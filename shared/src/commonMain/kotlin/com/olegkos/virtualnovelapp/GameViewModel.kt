@@ -100,10 +100,18 @@
         }
       }
 
+      selectedClass?.startingCards?.let { specs ->
+        controller.grantStartingCards(specs)
+      }
+
       engine.state.isGameInitialized = true
 
       next()
     }
+
+    fun previewStartingCard(spec: SubClass.ClassStartingCard): Pair<Int, String>? =
+      controller.previewStartingCard(spec)
+
     fun applyDiceModifier(extra: Float, usedCards: List<String>) {
       val (output, node) = controller.applyDiceModifier(extra, usedCards)
 

@@ -31,4 +31,11 @@ class CardManager {
       .filter { it.value == value }
       .randomOrNull()
   }
+
+  /** Карта с точным путём изображения (как в колоде). */
+  fun getByImage(image: String): CardData? {
+    return cards
+      .filter { it.image == image }
+      .randomOrNull()
+  }
 }

@@ -12,6 +12,14 @@ sealed interface  SubClass {
   data class GameClass(
     val id: String,
     val name: String,
-    val stats: Map<String, GameValue>
+    val description: String,
+    val stats: Map<String, GameValue>,
+    val startingCards: List<ClassStartingCard> = emptyList()
+  )
+
+  data class ClassStartingCard(
+    val random: Boolean? = null,
+    val value: Int? = null,
+    val image: String? = null
   )
 }

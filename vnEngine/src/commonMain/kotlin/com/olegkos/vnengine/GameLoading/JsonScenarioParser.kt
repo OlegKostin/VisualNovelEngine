@@ -38,6 +38,7 @@ import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
 import com.olegkos.vnengine.scene.SceneNode.Switch
 import com.olegkos.vnengine.scene.SceneNode.SwitchRange
 import com.olegkos.vnengine.scene.SceneNode.Text
+import com.olegkos.vnengine.scene.SubClass.ClassStartingCard
 import com.olegkos.vnengine.scene.SubClass.GameClass
 import com.olegkos.vnengine.scene.SubClass.RangeCase
 import kotlinx.serialization.SerialName
@@ -161,8 +162,16 @@ class JsonScenarioParser : ScenarioParser {
                   GameClass(
                     id = it.id,
                     name = it.name,
+                    description = it.description,
                     stats = it.stats.mapValues { (_, el) ->
                       parseFlexibleStatValue(json, el)
+                    },
+                    startingCards = it.startingCards.map { sc ->
+                      ClassStartingCard(
+                        random = sc.random,
+                        value = sc.value,
+                        image = sc.image
+                      )
                     }
                   )
                 },
@@ -660,10 +669,19 @@ data class InitGameNode(
   val nextSceneId: String
 ) : SceneNodeJson()
 @Serializable
+data class StartingCardJson(
+  val random: Boolean? = null,
+  val value: Int? = null,
+  val image: String? = null
+)
+
+@Serializable
 data class GameClassJson(
   val id: String,
   val name: String,
-  val stats: Map<String, JsonElement> = emptyMap()
+  val description: String = "",
+  val stats: Map<String, JsonElement> = emptyMap(),
+  val startingCards: List<StartingCardJson> = emptyList()
 )
 @Serializable
 @SerialName("effect")

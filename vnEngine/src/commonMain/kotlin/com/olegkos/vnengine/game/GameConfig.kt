@@ -7,5 +7,5 @@ data class GameConfig(
   val startScenario: String,
   val assetsRoot: String,
   val variables: String,
-  val cards: String
+  val cards: String = ""
 )

@@ -41,7 +41,7 @@ class MetaStorage {
   }
 
   fun load(): MetaState {
-    if (!file.exists()) return MetaState(emptyList())
+    if (!file.exists()) return MetaState()
 
     val json = file.readText()
 
@@ -62,14 +62,14 @@ class MetaStorage {
       println("ACTUAL: ${secure.signature}")
       if (expected != secure.signature) {
         println("SAVE FILE TAMPERED!")
-        MetaState(emptyList())
+        MetaState()
       } else {
         secure.data
       }
 
     } catch (e: Exception) {
       println("SAVE LOAD ERROR: ${e.message}")
-      MetaState(emptyList())
+      MetaState()
     }
   }
 
