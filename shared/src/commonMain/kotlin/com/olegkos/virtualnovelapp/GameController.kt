@@ -52,6 +52,9 @@ class GameController(
     get() = engine ?: error("Engine not initialized")
   private var currentScenario: String = ""
 
+  /** Превью init и выдача в Meta используют одну и ту же карту на слот (особенно для random). */
+  private val startingCardPickCache = mutableMapOf<String, CardData>()
+
   lateinit var assets: AssetPathResolver
     private set
 
@@ -60,6 +63,8 @@ class GameController(
 
   suspend fun init(): Pair<EngineOutput, SceneNode?> {
     println("ENGINE INSTANCE: ${System.identityHashCode(engine)}")
+
+    startingCardPickCache.clear()
 
     val game = withContext(ioDispatcher) {
       loader.load(gameConfigPath)
@@ -191,22 +196,45 @@ class GameController(
     }
   }
 
-  /** Превью стартовой карты для экрана init (те же правила, что у [resolveCardPick]). */
-  fun previewStartingCard(spec: ClassStartingCard): Pair<Int, String>? =
-    resolveCardPick(random = spec.random, value = spec.value, image = spec.image)
-      ?.let { it.value to it.image }
+  /** Превью стартовой карты для экрана init; результат закэширован на (classId, slot). */
+  fun previewStartingCard(
+    classId: String,
+    slotIndex: Int,
+    spec: ClassStartingCard
+  ): Pair<Int, String>? {
+    val key = startingSlotKey(classId, slotIndex, spec)
+    startingCardPickCache[key]?.let { return it.value to it.image }
+    val card = resolveCardPick(random = spec.random, value = spec.value, image = spec.image)
+      ?: return null
+    startingCardPickCache[key] = card
+    return card.value to card.image
+  }
 
-  /** Выдать стартовые карты выбранного класса (после initGame), в MetaManager как и остальная рука. */
-  fun grantStartingCards(specs: List<ClassStartingCard>) {
-    specs.forEach { spec ->
-      val card = resolveCardPick(random = spec.random, value = spec.value, image = spec.image)
+  /** Выдать стартовые карты выбранного класса — те же экземпляры, что в превью init (если слот уже открывали). */
+  fun grantStartingCards(classId: String, specs: List<ClassStartingCard>) {
+    specs.forEachIndexed { index, spec ->
+      val key = startingSlotKey(classId, index, spec)
+      val card = startingCardPickCache.remove(key)
+        ?: resolveCardPick(random = spec.random, value = spec.value, image = spec.image)
       if (card == null) {
         println("⚠️ STARTING CARD SKIPPED (пустая колода или неверный spec): $spec")
-        return@forEach
+        return@forEachIndexed
       }
       metaManager.addCard(card)
     }
+    val prefix = "$classId|"
+    startingCardPickCache.keys.filter { it.startsWith(prefix) }.forEach { startingCardPickCache.remove(it) }
   }
+
+  private fun startingSlotKey(classId: String, slotIndex: Int, spec: ClassStartingCard): String =
+    "$classId|$slotIndex|${specFingerprint(spec)}"
+
+  private fun specFingerprint(spec: ClassStartingCard): String =
+    listOf(
+      spec.random?.toString() ?: "n",
+      spec.value?.toString() ?: "n",
+      spec.image ?: "n"
+    ).joinToString("|")
 
   private fun resolveCardPick(
     random: Boolean?,
@@ -356,6 +384,8 @@ class GameController(
 
     val loaded = saveManager.load(slot)
       ?: return EngineOutput.Loading to null
+
+    startingCardPickCache.clear()
 
     val scenario = loadScenario(loaded.scenario)
 

@@ -266,7 +266,9 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             cardPainter = { path ->
               rememberPainter(viewModel.assets.card(path), viewModel.reader)
             },
-            resolveStartingCardPreview = { spec -> viewModel.previewStartingCard(spec) },
+            resolveStartingCardPreview = { classId, slot, spec ->
+              viewModel.previewStartingCard(classId, slot, spec)
+            },
             onConfirm = { name, selectedClass ->
               viewModel.initGame(
                 playerName = name,

@@ -22,9 +22,9 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.Dp
@@ -42,7 +42,7 @@ import java.awt.Cursor
 fun InitGameScreen(
   classes: List<SubClass.GameClass>,
   cardPainter: @Composable (String) -> Painter?,
-  resolveStartingCardPreview: (SubClass.ClassStartingCard) -> Pair<Int, String>?,
+  resolveStartingCardPreview: (String, Int, SubClass.ClassStartingCard) -> Pair<Int, String>?,
   onConfirm: (String, SubClass.GameClass?) -> Unit
 ) {
 
@@ -180,7 +180,7 @@ fun InitGameScreen(
             ClassStartingCardsRow(
               classId = cls.id,
               startingCards = cls.startingCards,
-              resolvePreview = resolveStartingCardPreview,
+              resolvePreview = { cid, slot, spec -> resolveStartingCardPreview(cid, slot, spec) },
               cardPainter = cardPainter
             )
 
@@ -199,7 +199,7 @@ fun InitGameScreen(
 private fun ClassStartingCardsRow(
   classId: String,
   startingCards: List<SubClass.ClassStartingCard>,
-  resolvePreview: (SubClass.ClassStartingCard) -> Pair<Int, String>?,
+  resolvePreview: (String, Int, SubClass.ClassStartingCard) -> Pair<Int, String>?,
   cardPainter: @Composable (String) -> Painter?
 ) {
   Column(
@@ -253,7 +253,7 @@ private fun ClassStartingCardsRow(
                 if (wheel != 0f) {
                   scope.launch {
                     scrollState.scroll {
-                      scrollBy(-wheel)
+                      scrollBy(-wheel * 8f)
                     }
                   }
                 }
@@ -287,7 +287,7 @@ private fun StartingCardPreviewSlot(
   classId: String,
   slotIndex: Int,
   spec: SubClass.ClassStartingCard,
-  resolvePreview: (SubClass.ClassStartingCard) -> Pair<Int, String>?,
+  resolvePreview: (String, Int, SubClass.ClassStartingCard) -> Pair<Int, String>?,
   cardPainter: @Composable (String) -> Painter?
 ) {
   val specSignature = buildString {
@@ -298,7 +298,7 @@ private fun StartingCardPreviewSlot(
     append(spec.image ?: "n")
   }
   val preview = remember(classId, slotIndex, specSignature) {
-    resolvePreview(spec)
+    resolvePreview(classId, slotIndex, spec)
   }
   Box(
     modifier
