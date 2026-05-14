@@ -14,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
@@ -36,24 +38,19 @@ fun InitGameScreen(
   var name by remember { mutableStateOf("") }
   var selectedClass by remember { mutableStateOf<SubClass.GameClass?>(null) }
   var hoveredClassId by remember { mutableStateOf<String?>(null) }
-  val infinite = rememberInfiniteTransition(label = "pulse")
 
-  val pulse by infinite.animateFloat(
-    initialValue = 1f,
-    targetValue = if (selectedClass != null && hoveredClassId == selectedClass?.id) 1.08f else 1f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(1200),
-      repeatMode = RepeatMode.Reverse
-    ),
-    label = "pulse"
-  )
-  Column(
+  BoxWithConstraints(
     Modifier
       .fillMaxSize()
       .background(Color(0xFFE9ECF3))
-      .padding(16.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
+      .padding(16.dp)
   ) {
+    val statIconSize = maxWidth * 0.05f
+
+    Column(
+      Modifier.fillMaxSize(),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
     Text("Создание персонажа", style = MaterialTheme.typography.headlineMedium)
 
@@ -92,15 +89,13 @@ fun InitGameScreen(
           label = ""
         )
 
-        val base = Color(0xFFC9D6F5)
-
         val selectedColor = when (index) {
           0 -> Color(0xFF6FAF73)
           1 -> Color(0xFF7B86C2)
           else -> Color(0xFFC07C7C)
         }
 
-        val bg = if (isSelected) selectedColor else base
+        val bg = if (isSelected) selectedColor else Color(0xFFC9D6F5)
 
         val brush = Brush.verticalGradient(
           listOf(bg.copy(0.95f), bg.copy(0.65f))
@@ -113,6 +108,8 @@ fun InitGameScreen(
             .graphicsLayer {
               scaleX = scale
               scaleY = scale
+              transformOrigin = TransformOrigin(0.5f, 0.5f)
+              clip = false
             }
             .shadow(10.dp, RoundedCornerShape(14.dp))
             .background(brush, RoundedCornerShape(14.dp))
@@ -127,13 +124,16 @@ fun InitGameScreen(
               }
             )
             .cursorForHand()
-            .clickable { selectedClass = cls }
+            .clickable {
+              selectedClass = if (selectedClass?.id == cls.id) null else cls
+            }
         ) {
 
           Column(
             Modifier
               .fillMaxSize()
-              .padding(14.dp),
+              .padding(14.dp)
+              .graphicsLayer { clip = false },
             verticalArrangement = Arrangement.SpaceBetween
           ) {
 
@@ -155,9 +155,7 @@ fun InitGameScreen(
             // =======================
             StatsBlock(
               cls = cls,
-              isSelected = isSelected,
-              pulse = pulse,
-              hovered = isHovered
+              statIconSize = statIconSize
             )
 
             // =======================
@@ -166,11 +164,12 @@ fun InitGameScreen(
             CardBlock()
 
             Text(
-              if (isSelected) "Выбрано" else "Клик для выбора"
+              if (isSelected) "Выбрано (клик снова — снять)" else "Клик для выбора"
             )
           }
         }
       }
+    }
     }
   }
 }
@@ -183,66 +182,149 @@ private fun getDescription(id: String): String {
     else -> "Класс без описания."
   }
 }
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StatsBlock(
   cls: SubClass.GameClass,
-  isSelected: Boolean,
-  pulse: Float,
-  hovered: Boolean
+  statIconSize: Dp
 ) {
+  var hoveredStatKey by remember { mutableStateOf<String?>(null) }
 
-  Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+  val statPulseTransition = rememberInfiniteTransition(label = "statIconPulse")
+  val statPulse by statPulseTransition.animateFloat(
+    initialValue = 1f,
+    targetValue = 1.08f,
+    animationSpec = infiniteRepeatable(
+      animation = tween(1200),
+      repeatMode = RepeatMode.Reverse
+    ),
+    label = "statPulseWave"
+  )
 
-    cls.stats.entries.chunked(2).take(3).forEach { row ->
+  val tooltipMaxWidth = 168.dp
+  val tooltipOffset = 6.dp
 
-      Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-      ) {
+  val statRowGap = statIconSize * 0.35f + 6.dp
+  val iconTextGap = statIconSize * 0.2f + 4.dp
+  val iconTrackWidth = tooltipMaxWidth + tooltipOffset + statIconSize
+  val cellMinWidth = iconTrackWidth + iconTextGap + 28.dp
+  val cellMaxWidth = iconTrackWidth + iconTextGap + 120.dp
 
-        row.forEach { (key, value) ->
+  Box(
+    Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 4.dp, vertical = 4.dp),
+    contentAlignment = Alignment.Center
+  ) {
+    Column(
+      Modifier.fillMaxWidth(),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
 
-          val stat = StatType.fromKey(key)
+      cls.stats.entries.chunked(2).take(3).forEach { row ->
 
-          val scale by animateFloatAsState(
-            targetValue = when {
-              hovered -> 1.15f
-              isSelected -> pulse
-              else -> 1f
-            },
-            animationSpec = spring(dampingRatio = 0.7f),
-            label = "statScale"
-          )
+        Row(
+          Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(statRowGap, Alignment.CenterHorizontally),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
 
-          Row(
-            modifier = Modifier
-              .weight(1f)
-              .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-              },
-            verticalAlignment = Alignment.CenterVertically
-          ) {
+          row.forEachIndexed { colIndex, (key, value) ->
 
-            stat?.let {
-              Image(
-                painter = painterResource(it.image),
-                contentDescription = key,
-                modifier = Modifier.size(40.dp) // 👈 УВЕЛИЧИЛ ИКОНКУ
-              )
-            }
+            val stat = StatType.fromKey(key)
+            val statHovered = hoveredStatKey == key
 
-            Spacer(Modifier.width(8.dp))
+            val pulseFactor = if (statHovered) statPulse else 1f
 
-            Text(
-              text = value.forStatPreview(),
-              style = MaterialTheme.typography.titleMedium
+            val hoverScale by animateFloatAsState(
+              targetValue = if (statHovered) 1.06f else 1f,
+              animationSpec = spring(dampingRatio = 0.72f),
+              label = "statHover"
             )
-          }
-        }
 
-        if (row.size == 1) {
-          Spacer(Modifier.weight(1f))
+            val combinedScale = pulseFactor * hoverScale
+
+            Column(
+              modifier = Modifier
+                .widthIn(min = cellMinWidth, max = cellMaxWidth)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .graphicsLayer { clip = false },
+              horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+              ) {
+
+                stat?.let {
+                  Box(
+                    Modifier
+                      .width(iconTrackWidth)
+                      .height(statIconSize)
+                      .graphicsLayer { clip = false }
+                      .pointerMoveFilter(
+                        onEnter = {
+                          hoveredStatKey = key
+                          false
+                        },
+                        onExit = {
+                          if (hoveredStatKey == key) hoveredStatKey = null
+                          false
+                        }
+                      )
+                      .cursorForHand()
+                  ) {
+                    Image(
+                      painter = painterResource(it.image),
+                      contentDescription = key,
+                      modifier = Modifier
+                        .align(
+                          if (colIndex == 0) Alignment.CenterEnd else Alignment.CenterStart
+                        )
+                        .size(statIconSize)
+                        .graphicsLayer {
+                          scaleX = combinedScale
+                          scaleY = combinedScale
+                          transformOrigin = TransformOrigin(0.5f, 0.5f)
+                          clip = false
+                        }
+                    )
+
+                    if (statHovered) {
+                      val hint = StatType.hoverHintForKey(key)
+                      Surface(
+                        color = Color(0xE6FFFFFF),
+                        shape = RoundedCornerShape(8.dp),
+                        tonalElevation = 4.dp,
+                        modifier = Modifier
+                          .widthIn(max = tooltipMaxWidth)
+                          .align(Alignment.CenterStart)
+                          .offset(
+                            x = if (colIndex == 0) 0.dp else statIconSize + tooltipOffset,
+                            y = 0.dp
+                          )
+                      ) {
+                        Text(
+                          text = hint,
+                          style = MaterialTheme.typography.bodySmall,
+                          color = Color(0xFF2A3142),
+                          modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                        )
+                      }
+                    }
+                  }
+                  Spacer(Modifier.width(iconTextGap))
+                }
+
+                Text(
+                  text = value.forStatPreview(),
+                  style = MaterialTheme.typography.headlineSmall
+                )
+              }
+            }
+          }
         }
       }
     }
