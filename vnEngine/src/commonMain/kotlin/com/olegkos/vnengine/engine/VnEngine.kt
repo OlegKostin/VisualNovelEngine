@@ -198,15 +198,26 @@ class VnEngine(
             else -> node.image
           }
 
+          val imagePath = finalImage ?: ""
+          state.visibleCharacters =
+            state.visibleCharacters.filter { it.id != node.id } +
+              VisibleCharacter(
+                id = node.id,
+                image = imagePath,
+                position = node.position,
+                scale = node.scale
+              )
+
           return ShowCharacter(
             id = node.id,
-            image = finalImage ?: "",
+            image = imagePath,
             position = node.position,
             scale = node.scale,
           )
         }
 
         is SceneNode.HideCharacter -> {
+          state.visibleCharacters = state.visibleCharacters.filter { it.id != node.id }
           return HideCharacter(node.id)
         }
 

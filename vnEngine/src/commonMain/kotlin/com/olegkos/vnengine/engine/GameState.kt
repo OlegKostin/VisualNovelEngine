@@ -2,7 +2,16 @@ package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.scene.SceneNode.BattleVnLine
 import com.olegkos.vnengine.engine.variables.GameValue
+import kotlinx.serialization.Serializable
 
+
+@Serializable
+data class VisibleCharacter(
+  val id: String,
+  val image: String,
+  val position: String,
+  val scale: Float = 1f
+)
 
 data class GameState(
   var pointer: NodePointer,
@@ -15,7 +24,9 @@ data class GameState(
   var pendingDiceJumpScene: String? = null,
   var isGameInitialized: Boolean = false,
   var diceDuel: DiceDuelState? = null,
-  var battle: BattleState? = null
+  var battle: BattleState? = null,
+  /** Персонажи на экране (ShowCharacter без HideCharacter); участвует в save/load. */
+  var visibleCharacters: List<VisibleCharacter> = emptyList()
 )
 
 data class BattleState(

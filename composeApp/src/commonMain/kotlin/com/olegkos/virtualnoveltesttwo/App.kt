@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,15 +34,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
-import com.olegkos.virtualnoveltesttwo.UiState.CharacterState
 import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
 import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.scene.SceneNode.NavLink
-import com.olegkos.vnengine.scene.SubClass
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -55,7 +53,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
   var background by remember { mutableStateOf<String?>(null) }
   var image by remember { mutableStateOf<String?>(null) }
-  var characters by remember { mutableStateOf<List<CharacterState>>(emptyList()) }
   var sceneView by remember { mutableStateOf<EngineOutput.ShowSceneView?>(null) }
   var cardImage by remember { mutableStateOf<String?>(null) }
 
@@ -94,13 +91,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
 
       is EngineOutput.ShowCharacter -> {
-        characters = characters.filterNot { it.id == o.id } + CharacterState(
-          id = o.id,
-          image = o.image,
-          alignment = Alignment.BottomStart,
-          scale = o.scale,
-          position = o.position
-        )
         viewModel.next()
       }
 
@@ -110,7 +100,6 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
 
       is EngineOutput.HideCharacter -> {
-        characters = characters.filterNot { it.id == o.id }
         viewModel.next()
       }
 
@@ -172,7 +161,9 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
-    characters.forEach { char ->
+    val visibleCharacters = viewModel.visibleCharacters
+
+    visibleCharacters.forEach { char ->
       val painter = rememberPainter(viewModel.assets.character(char.image), viewModel.reader)
       painter?.let {
         val xOffset = positionOffsetFromString(char.position, boxWidth)

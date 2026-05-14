@@ -2,6 +2,7 @@ package com.olegkos.save
 
 import com.olegkos.vnengine.engine.GameValueSerializable
 import com.olegkos.vnengine.engine.NodePointer
+import com.olegkos.vnengine.engine.VisibleCharacter
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,5 +11,6 @@ data class GameStateSerializable(
   val variables: Map<String, GameValueSerializable>,
   val timestamp: Long,
   val scenarioStack: List<NodePointer> = emptyList(),
-  val scenario: String
+  val scenario: String,
+  val visibleCharacters: List<VisibleCharacter> = emptyList()
 )

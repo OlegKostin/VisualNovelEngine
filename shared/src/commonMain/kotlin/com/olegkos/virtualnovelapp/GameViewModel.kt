@@ -8,6 +8,7 @@
   import com.olegkos.save.SaveManager
   import com.olegkos.vnengine.GameLoading.AssetReader
   import com.olegkos.vnengine.engine.EngineOutput
+  import com.olegkos.vnengine.engine.VisibleCharacter
   import com.olegkos.vnengine.engine.asserts.AssetPathResolver
   import com.olegkos.vnengine.engine.variables.GameValue
   import com.olegkos.vnengine.engine.variables.resolve
@@ -32,6 +33,9 @@
 
     var currentNode by mutableStateOf<SceneNode?>(null)
       private set
+
+    val visibleCharacters: List<VisibleCharacter>
+      get() = controller.visibleCharactersInWorld()
 
     init {
       viewModelScope.launch {

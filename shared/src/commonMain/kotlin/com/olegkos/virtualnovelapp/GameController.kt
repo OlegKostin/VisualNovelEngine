@@ -11,6 +11,7 @@ import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.UiCard
+import com.olegkos.vnengine.engine.VisibleCharacter
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.cards.CardConfig
@@ -204,6 +205,9 @@ class GameController(
       )
     }
   }
+
+  fun visibleCharactersInWorld(): List<VisibleCharacter> =
+    engine?.state?.visibleCharacters ?: emptyList()
 
   /** Превью стартовой карты для экрана init; результат закэширован на (classId, slot). */
   fun previewStartingCard(
