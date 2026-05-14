@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +42,7 @@ import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.scene.SceneNode.NavLink
 import org.koin.compose.viewmodel.koinViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun App(viewModel: GameViewModel = koinViewModel()) {
@@ -50,6 +50,17 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   val output = viewModel.currentOutput
 
   var showMenu by remember { mutableStateOf(false) }
+  var pendingScreenshotSaveSlot by remember { mutableStateOf<String?>(null) }
+
+  LaunchedEffect(pendingScreenshotSaveSlot) {
+    val slot = pendingScreenshotSaveSlot ?: return@LaunchedEffect
+    showMenu = false
+    delay(150)
+    val png = captureScreenshotPngBytes()
+    viewModel.saveGame(slot, png)
+    pendingScreenshotSaveSlot = null
+    showMenu = true
+  }
 
   var background by remember { mutableStateOf<String?>(null) }
   var image by remember { mutableStateOf<String?>(null) }
@@ -428,32 +439,11 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
 
     if (showMenu) {
-      Box(
-        modifier = Modifier
-          .fillMaxSize()
-          .background(Color.Black.copy(alpha = 0.6f))
-          .clickable { showMenu = false }
+      SaveSlotsMenu(
+        viewModel = viewModel,
+        onRequestSaveWithScreenshot = { slot -> pendingScreenshotSaveSlot = slot },
+        onDismiss = { showMenu = false }
       )
-
-      Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-      ) {
-        Column(
-          modifier = Modifier
-            .padding(16.dp)
-            .background(Color.DarkGray)
-            .padding(16.dp)
-        ) {
-          SaveSlotsMenu(viewModel)
-
-          Spacer(Modifier.height(12.dp))
-
-          VnOutlinedButton(onClick = { showMenu = false }) {
-            Text("Закрыть")
-          }
-        }
-      }
     }
   }
 }

@@ -4,12 +4,15 @@ import com.olegkos.save.conventors.SaveJson
 import com.olegkos.save.conventors.toGameState
 import com.olegkos.save.conventors.toSerializable
 import com.olegkos.vnengine.engine.GameState
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
 
 class SaveManager(
   private val storage: SaveStorage
 ) {
 
-  fun save(slot: String, state: GameState, scenario: String) {
+  fun save(slot: String, state: GameState, scenario: String, previewPng: ByteArray? = null) {
 
     println("=== SAVE START ===")
     println("SLOT: $slot")
@@ -27,6 +30,11 @@ class SaveManager(
     println("SERIALIZED JSON: $json")
 
     storage.save(slot, json)
+    if (previewPng != null && previewPng.isNotEmpty()) {
+      storage.savePreviewPng(slot, previewPng)
+    } else {
+      storage.deletePreviewPng(slot)
+    }
   }
 
   fun load(slot: String): LoadedSave? {
@@ -60,6 +68,19 @@ class SaveManager(
 
   fun delete(slot: String) =
     storage.delete(slot)
+
+  fun loadPreviewPng(slot: String): ByteArray? =
+    storage.loadPreviewPng(slot)
+
+  fun saveTimestampMillis(slot: String): Long? {
+    val json = storage.load(slot) ?: return null
+    return runCatching {
+      SaveJson.parseToJsonElement(json)
+        .jsonObject["timestamp"]
+        ?.jsonPrimitive
+        ?.longOrNull
+    }.getOrNull()
+  }
 }
 
 data class LoadedSave(

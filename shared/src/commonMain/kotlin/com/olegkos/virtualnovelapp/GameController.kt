@@ -309,7 +309,7 @@ class GameController(
     metaManager.consumeCard(cardId)
   }
 
-  fun saveGame(slot: String) {
+  fun saveGame(slot: String, previewPng: ByteArray? = null) {
     val engine = engine ?: return
 
     println("🎮 SAVE GAME CALLED")
@@ -319,9 +319,20 @@ class GameController(
     saveManager.save(
       slot = slot,
       state = engine.state,
-      scenario = currentScenario
+      scenario = currentScenario,
+      previewPng = previewPng
     )
   }
+
+  fun deleteSave(slot: String) {
+    saveManager.delete(slot)
+  }
+
+  fun savePreviewPng(slot: String): ByteArray? =
+    saveManager.loadPreviewPng(slot)
+
+  fun saveTimestampMillis(slot: String): Long? =
+    saveManager.saveTimestampMillis(slot)
 
   fun battleChooseFight(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null

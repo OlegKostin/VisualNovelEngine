@@ -73,9 +73,19 @@
       currentNode = node
     }
 
-    fun saveGame(slot: String) {
-      controller.saveGame(slot)
+    fun saveGame(slot: String, previewPng: ByteArray? = null) {
+      controller.saveGame(slot, previewPng)
     }
+
+    fun deleteSave(slot: String) {
+      controller.deleteSave(slot)
+    }
+
+    fun savePreviewPng(slot: String): ByteArray? =
+      controller.savePreviewPng(slot)
+
+    fun saveTimestampMillis(slot: String): Long? =
+      controller.saveTimestampMillis(slot)
 
     fun loadSave(slot: String) {
       viewModelScope.launch {
