@@ -381,6 +381,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           Box(modifier = Modifier.fillMaxSize()) {
             BattleScreen(
               title = o.title,
+              playerName = o.playerName ?: "",
               monsterName = o.monsterName,
               monsterImagePainter = rememberPainter(
                 viewModel.assets.image(o.monsterImage),

@@ -211,7 +211,8 @@ class JsonScenarioParser : ScenarioParser {
                 ),
                 player = PlayerRefs(
                   healthVar = nodeJson.player.healthVar,
-                  sanityVar = nodeJson.player.sanityVar
+                  sanityVar = nodeJson.player.sanityVar,
+                  playerNameVar = nodeJson.player.playerNameVar
                 ),
                 phases = BattlePhases(
                   horror = nodeJson.phases.horror?.let {
@@ -438,7 +439,8 @@ sealed class SceneNodeJson {
 
   @Serializable data class PlayerRefsJson(
     val healthVar: String,
-    val sanityVar: String
+    val sanityVar: String,
+    val playerNameVar: String? = null
   )
 
   @Serializable data class BattlePhasesJson(

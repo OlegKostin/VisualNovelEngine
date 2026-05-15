@@ -93,6 +93,7 @@ sealed interface EngineOutput {
   data class ShowBattle(
     val battleId: String,
     val title: String,
+    val playerName: String? = null,
     val monsterName: String,
     val monsterImage: String,
     val monsterHp: Int,

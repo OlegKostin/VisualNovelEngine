@@ -46,7 +46,6 @@ class GameController(
 ) {
 
   companion object {
-    /** Синхронный println на каждый next сильно просаживает FPS (особенно анимации кубика). */
     private const val TRACE_ENGINE_STEPS = false
   }
 
@@ -58,8 +57,21 @@ class GameController(
     get() = engine ?: error("Engine not initialized")
   private var currentScenario: String = ""
 
-  /** Превью init и выдача в Meta используют одну и ту же карту на слот (особенно для random). */
   private val startingCardPickCache = mutableMapOf<String, CardData>()
+
+  /**
+   * После [loadSave] первый [step] может снова выдать [EngineOutput.ShowInitGame];
+   * в этом случае нельзя стирать файлы слотов (в т.ч. только что загруженный).
+   */
+  private var suppressInitGameSaveMetaPurge = false
+
+  private fun purgeSavesAndMetaIfInitGame(output: EngineOutput) {
+    if (output !is EngineOutput.ShowInitGame) return
+    if (suppressInitGameSaveMetaPurge) return
+    startingCardPickCache.clear()
+    saveManager.clearAllSaves()
+    metaManager.resetToEmpty()
+  }
 
   lateinit var assets: AssetPathResolver
     private set
@@ -142,6 +154,7 @@ class GameController(
     engine.advanceExternal(option)
 
     val output = engine.step()
+    purgeSavesAndMetaIfInitGame(output)
 
     if (TRACE_ENGINE_STEPS) {
       println("👉 ENGINE OUTPUT = $output")
@@ -417,7 +430,12 @@ class GameController(
       addScenes(scenario.scenes)
     }
 
-    return step()
+    suppressInitGameSaveMetaPurge = true
+    return try {
+      step()
+    } finally {
+      suppressInitGameSaveMetaPurge = false
+    }
   }
 
   private suspend fun loadScenario(path: String) =
@@ -430,6 +448,7 @@ class GameController(
     val engine = engine ?: return EngineOutput.Loading to null
 
     val output = engine.step()
+    purgeSavesAndMetaIfInitGame(output)
 
     return when (output) {
 

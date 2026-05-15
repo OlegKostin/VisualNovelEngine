@@ -69,6 +69,10 @@ class SaveManager(
   fun delete(slot: String) =
     storage.delete(slot)
 
+  fun clearAllSaves() {
+    listSaves().toList().forEach { delete(it) }
+  }
+
   fun loadPreviewPng(slot: String): ByteArray? =
     storage.loadPreviewPng(slot)
 

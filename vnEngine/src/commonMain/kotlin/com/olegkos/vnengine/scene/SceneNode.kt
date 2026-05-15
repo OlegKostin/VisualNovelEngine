@@ -156,7 +156,9 @@ sealed interface SceneNode {
 
   data class PlayerRefs(
     val healthVar: String,
-    val sanityVar: String
+    val sanityVar: String,
+    /** Имя игрока на экране боя; значение читается из переменной (по умолчанию [my_name]). */
+    val playerNameVar: String? = null
   )
 
   data class BattlePhases(

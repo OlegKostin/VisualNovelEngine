@@ -42,4 +42,10 @@ class MetaManager(
     state = state.copy(diceResults = newMap)
     storage.save(state)
   }
+
+  /** Сброс карт и зафиксированных бросков (новая игра / экран InitGame). */
+  fun resetToEmpty() {
+    state = MetaState()
+    storage.save(state)
+  }
 }

@@ -342,6 +342,11 @@ class VnEngine(
     }
   }
 
+  private fun battlePlayerDisplayName(player: SceneNode.PlayerRefs): String? {
+    val varName = player.playerNameVar?.trim()?.takeIf { it.isNotEmpty() } ?: "my_name"
+    return variables.getString(varName).trim().takeIf { it.isNotEmpty() }
+  }
+
   private fun handleBattleNode(node: SceneNode.Battle): EngineOutput {
     val bs = state.battle ?: BattleState(
       battleId = node.id,
@@ -366,6 +371,7 @@ class VnEngine(
         return EngineOutput.ShowBattle(
           battleId = node.id,
           title = node.title,
+          playerName = battlePlayerDisplayName(node.player),
           monsterName = node.monster.name,
           monsterImage = node.monster.image,
           monsterHp = bs.monsterHp,
@@ -403,6 +409,7 @@ class VnEngine(
         return EngineOutput.ShowBattle(
           battleId = node.id,
           title = node.title,
+          playerName = battlePlayerDisplayName(node.player),
           monsterName = node.monster.name,
           monsterImage = node.monster.image,
           monsterHp = bs.monsterHp,
@@ -472,6 +479,7 @@ class VnEngine(
       return EngineOutput.ShowBattle(
         battleId = node.id,
         title = node.title,
+        playerName = battlePlayerDisplayName(node.player),
         monsterName = node.monster.name,
         monsterImage = node.monster.image,
         monsterHp = bs.monsterHp,
@@ -495,6 +503,7 @@ class VnEngine(
       return EngineOutput.ShowBattle(
         battleId = node.id,
         title = node.title,
+        playerName = battlePlayerDisplayName(node.player),
         monsterName = node.monster.name,
         monsterImage = node.monster.image,
         monsterHp = bs.monsterHp,
@@ -605,6 +614,7 @@ class VnEngine(
     return EngineOutput.ShowBattle(
       battleId = node.id,
       title = node.title,
+      playerName = battlePlayerDisplayName(node.player),
       monsterName = node.monster.name,
       monsterImage = node.monster.image,
       monsterHp = bs.monsterHp,
@@ -667,6 +677,7 @@ class VnEngine(
           return
         }
       }
+      is SceneNode.InitGame,
       is SceneNode.DiceRoll,
       is SceneNode.Battle,
       is SceneNode.DiceDuel -> {
