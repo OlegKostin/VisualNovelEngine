@@ -2,14 +2,37 @@ package com.olegkos.vnengine.engine.variables
 
 
 class VariableStore(
-  private val map: MutableMap<String, GameValue>
+  private val map: MutableMap<String, GameValue>,
+  private val intCaps: () -> Map<String, Int> = { emptyMap() }
 ) {
+
+  private fun applyCapIfNeeded(name: String) {
+    val cap = intCaps()[name] ?: return
+    when (val v = map[name]) {
+      is GameValue.IntVal -> {
+        val nv = v.value.coerceIn(0, cap)
+        if (nv != v.value) map[name] = GameValue.IntVal(nv)
+      }
+      is GameValue.FloatVal -> {
+        val maxF = cap.toFloat()
+        val nv = v.value.coerceIn(0f, maxF)
+        if (nv != v.value) map[name] = GameValue.FloatVal(nv)
+      }
+      else -> Unit
+    }
+  }
+
+  fun reapplyCap(name: String) {
+    applyCapIfNeeded(name)
+  }
 
   fun getInt(name: String): Int =
     (map[name] as? GameValue.IntVal)?.value ?: 0
 
   fun setInt(name: String, value: Int) {
-    map[name] = GameValue.IntVal(value)
+    val cap = intCaps()[name]
+    val v = if (cap != null) value.coerceIn(0, cap) else value
+    map[name] = GameValue.IntVal(v)
   }
 
   fun addInt(name: String, value: Int) {
@@ -34,7 +57,9 @@ class VariableStore(
     (map[name] as? GameValue.FloatVal)?.value ?: 0f
 
   fun setFloat(name: String, value: Float) {
-    map[name] = GameValue.FloatVal(value)
+    val cap = intCaps()[name]
+    val v = if (cap != null) value.coerceIn(0f, cap.toFloat()) else value
+    map[name] = GameValue.FloatVal(v)
   }
 
   fun addFloat(name: String, value: Float) {
@@ -51,6 +76,7 @@ class VariableStore(
   }
   fun set(name: String, value: GameValue) {
     map[name] = value
+    applyCapIfNeeded(name)
   }
 
   fun modify(name: String, value: GameValue) {
@@ -72,5 +98,6 @@ class VariableStore(
 
       else -> value
     }
+    applyCapIfNeeded(name)
   }
 }

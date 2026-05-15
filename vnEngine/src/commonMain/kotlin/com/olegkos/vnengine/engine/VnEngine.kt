@@ -27,7 +27,7 @@ class VnEngine(
     /** Включайте только при отладке сценария — синхронный вывод на каждый step сильно тормозит UI. */
     private const val TRACE_STEPS = false
   }
-  val variables = VariableStore(state.variables)
+  val variables = VariableStore(state.variables) { state.statCapsInt }
   private val scenes = mutableMapOf<String, Scene>()
 
   fun addScene(id: String, scene: Scene) {
@@ -644,6 +644,7 @@ class VnEngine(
       null -> state.variables[varName] = GameValue.IntVal(delta)
       else -> Unit
     }
+    variables.reapplyCap(varName)
   }
 
   fun battleChooseFight() {

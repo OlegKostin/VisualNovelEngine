@@ -108,6 +108,8 @@
       if (selectedClass != null && classVar != null) {
         engine.variables.set(classVar, GameValue.StringVal(selectedClass.id))
 
+        engine.state.statCapsInt = statCapsFromClassStats(selectedClass.stats)
+
         selectedClass.stats.forEach { (key, value) ->
           engine.variables.set(key, value.resolve())
         }
@@ -120,6 +122,20 @@
       engine.state.isGameInitialized = true
 
       next()
+    }
+
+    private fun statCapsFromClassStats(stats: Map<String, GameValue>): Map<String, Int> {
+      val caps = mutableMapOf<String, Int>()
+      for (key in listOf("health", "mental_health")) {
+        stats[key]?.let { gv ->
+          when (val r = gv.resolve()) {
+            is GameValue.IntVal -> caps[key] = r.value
+            is GameValue.FloatVal -> caps[key] = r.value.toInt()
+            else -> Unit
+          }
+        }
+      }
+      return caps
     }
 
     fun previewStartingCard(

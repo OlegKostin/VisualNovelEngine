@@ -32,7 +32,8 @@ fun GameState.toSerializable(
     timestamp = timestamp,
     scenarioStack = scenarioStack.toList(),
     scenario = scenario,
-    visibleCharacters = visibleCharacters
+    visibleCharacters = visibleCharacters,
+    statCapsInt = statCapsInt
   )
 
 fun GameStateSerializable.toGameState(): GameState =
@@ -42,7 +43,8 @@ fun GameStateSerializable.toGameState(): GameState =
       .mapValues { it.value.toGameValue() }
       .toMutableMap(),
     scenarioStack = ArrayDeque(scenarioStack),
-    visibleCharacters = visibleCharacters
+    visibleCharacters = visibleCharacters,
+    statCapsInt = statCapsInt
   )
 
 val SaveJson = Json {

@@ -12,5 +12,6 @@ data class GameStateSerializable(
   val timestamp: Long,
   val scenarioStack: List<NodePointer> = emptyList(),
   val scenario: String,
-  val visibleCharacters: List<VisibleCharacter> = emptyList()
+  val visibleCharacters: List<VisibleCharacter> = emptyList(),
+  val statCapsInt: Map<String, Int> = emptyMap()
 )

@@ -25,6 +25,8 @@ data class GameState(
   var isGameInitialized: Boolean = false,
   var diceDuel: DiceDuelState? = null,
   var battle: BattleState? = null,
+  /** Макс. целые значения для переменных после InitGame (сейчас: health, mental_health). */
+  var statCapsInt: Map<String, Int> = emptyMap(),
   /** Персонажи на экране (ShowCharacter без HideCharacter); участвует в save/load. */
   var visibleCharacters: List<VisibleCharacter> = emptyList()
 )
