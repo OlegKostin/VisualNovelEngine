@@ -7,9 +7,11 @@ data class PlayerStatsUi(
   val optWisdom: String,
   val optWill: String,
   val optLuck: String,
+  val optDark: String,
+  val optLight: String,
   val extraOptVars: List<Pair<String, String>> = emptyList()
 ) {
   companion object {
-    fun empty() = PlayerStatsUi(0, 0, "0", "0", "0", "0")
+    fun empty() = PlayerStatsUi(0, 0, "0", "0", "0", "0", "0", "0")
   }
 }

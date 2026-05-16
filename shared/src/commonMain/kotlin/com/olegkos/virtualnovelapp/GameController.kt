@@ -531,6 +531,8 @@ class GameController(
       optWisdom = display("opt_wisdom"),
       optWill = display("opt_will"),
       optLuck = display("opt_luck"),
+      optDark = display("opt_dark"),
+      optLight = display("opt_light"),
       extraOptVars = extras
     )
   }

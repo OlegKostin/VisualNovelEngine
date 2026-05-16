@@ -3,6 +3,8 @@ package com.olegkos.virtualnoveltesttwo.mappers
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.DrawableResource
 import virtualnoveltesttwo.composeapp.generated.resources.Res
+import virtualnoveltesttwo.composeapp.generated.resources.dark_flow
+import virtualnoveltesttwo.composeapp.generated.resources.light_flow
 import virtualnoveltesttwo.composeapp.generated.resources.stat_health
 import virtualnoveltesttwo.composeapp.generated.resources.stat_luck
 import virtualnoveltesttwo.composeapp.generated.resources.stat_mental
@@ -23,7 +25,9 @@ enum class StatType(
   WILL("opt_will", Res.drawable.stat_will, "Воля", "Сопротивление стрессу и проверкам ужаса."),
   LUCK("opt_luck", Res.drawable.stat_luck, "Удача", "Шанс на удачный исход и бонусы к костям."),
   HP("health", Res.drawable.stat_health, "Здоровье", "Запас выносливости до поражения."),
-  MENTAL("mental_health", Res.drawable.stat_mental, "Психика", "Рассудок и устойчивость к ужасу.");
+  MENTAL("mental_health", Res.drawable.stat_mental, "Рассудок", "Рассудок и устойчивость к ужасу."),
+  DARK("opt_dark", Res.drawable.dark_flow, "Течение Тьмы", "Рассудок и устойчивость к ужасу."),
+  LIGHT("opt_light", Res.drawable.light_flow, "Течение Света", "Рассудок и устойчивость к ужасу.");
 
   companion object {
     fun fromKey(key: String): StatType? {

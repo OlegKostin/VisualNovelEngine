@@ -137,25 +137,54 @@ fun PlayerStatsScreen(
             }
           }
 
-          Row(
+          Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
           ) {
-            val optValues = listOf(
-              stats.optStr,
-              stats.optWisdom,
-              stats.optWill,
-              stats.optLuck
-            )
-            coreOptKeys.forEachIndexed { index, key ->
+            Row(
+              modifier = Modifier.fillMaxWidth(0.82f),
+              horizontalArrangement = Arrangement.SpaceEvenly,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              val optValues = listOf(
+                stats.optStr,
+                stats.optWisdom,
+                stats.optWill,
+                stats.optLuck
+              )
+              coreOptKeys.forEachIndexed { index, key ->
+                PulsingStatValue(
+                  statKey = key,
+                  displayValue = optValues[index],
+                  statIconSize = statIconSize,
+                  enablePulse = true,
+                  modifier = Modifier.weight(1f)
+                )
+              }
+            }
+
+            Row(
+              modifier = Modifier.fillMaxWidth(0.82f),
+              horizontalArrangement = Arrangement.SpaceEvenly,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Spacer(Modifier.weight(1f))
               PulsingStatValue(
-                statKey = key,
-                displayValue = optValues[index],
+                statKey = "opt_dark",
+                displayValue = stats.optDark,
                 statIconSize = statIconSize,
                 enablePulse = true,
                 modifier = Modifier.weight(1f)
               )
+              PulsingStatValue(
+                statKey = "opt_light",
+                displayValue = stats.optLight,
+                statIconSize = statIconSize,
+                enablePulse = true,
+                modifier = Modifier.weight(1f)
+              )
+              Spacer(Modifier.weight(1f))
             }
           }
 
