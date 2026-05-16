@@ -157,7 +157,17 @@ private fun CardGameMainRow(
   onBattleContinue: () -> Unit,
   onBreakdownNext: () -> Unit
 ) {
-  Row(Modifier.fillMaxSize().background(Bg)) {
+  var expandedCard by remember(output.gameId) { mutableStateOf<EngineOutput.CardGameUiCard?>(null) }
+
+  LaunchedEffect(output.phase) {
+    expandedCard = null
+  }
+
+  val isBattleArena =
+    output.phase == CardGamePhase.BATTLE_REVEAL || output.phase == CardGamePhase.SCORE_BREAKDOWN
+
+  Box(Modifier.fillMaxSize().background(Bg)) {
+  Row(Modifier.fillMaxSize()) {
     BoxWithConstraints(
       modifier = Modifier
         .weight(0.64f)
@@ -187,6 +197,7 @@ private fun CardGameMainRow(
             cardW = cardW,
             cardH = cardH,
             cardPainter = cardPainter,
+            onCardClick = { expandedCard = it },
             onBattleContinue = onBattleContinue,
             onBreakdownNext = onBreakdownNext
           )
@@ -202,6 +213,18 @@ private fun CardGameMainRow(
         .fillMaxHeight()
         .padding(end = 12.dp, top = 12.dp, bottom = 12.dp)
     )
+  }
+
+    if (isBattleArena) {
+      expandedCard?.let { card ->
+        CardExpandedOverlay(
+          card = card,
+          showEffective = output.phase == CardGamePhase.SCORE_BREAKDOWN,
+          cardPainter = cardPainter,
+          onDismiss = { expandedCard = null }
+        )
+      }
+    }
   }
 }
 
@@ -307,13 +330,14 @@ private fun BattleArenaScreen(
   cardW: Dp,
   cardH: Dp,
   cardPainter: @Composable (String) -> BitmapPainter?,
+  onCardClick: (EngineOutput.CardGameUiCard) -> Unit,
   onBattleContinue: () -> Unit,
   onBreakdownNext: () -> Unit
 ) {
   val showEffective = output.phase == CardGamePhase.SCORE_BREAKDOWN
-  LabeledCardRow("Ваши карты", output.playerPlayed, cardW, cardH, cardPainter, showEffective)
+  LabeledCardRow("Ваши карты", output.playerPlayed, cardW, cardH, cardPainter, showEffective, onCardClick)
   Spacer(Modifier.height(12.dp))
-  LabeledCardRow("Карты противника", output.enemyPlayed, cardW, cardH, cardPainter, showEffective)
+  LabeledCardRow("Карты противника", output.enemyPlayed, cardW, cardH, cardPainter, showEffective, onCardClick)
 
   if (output.phase == CardGamePhase.BATTLE_REVEAL) {
     Spacer(Modifier.height(16.dp))
@@ -323,6 +347,51 @@ private fun BattleArenaScreen(
       Spacer(Modifier.height(12.dp))
       ScoreBreakdownBlock(output, resolution, onBreakdownNext)
     }
+  }
+}
+
+/** Увеличенная карта на весь экран; повторное нажатие закрывает. */
+@Composable
+private fun CardExpandedOverlay(
+  card: EngineOutput.CardGameUiCard,
+  showEffective: Boolean,
+  cardPainter: @Composable (String) -> BitmapPainter?,
+  onDismiss: () -> Unit
+) {
+  BoxWithConstraints(
+    modifier = Modifier
+      .fillMaxSize()
+      .background(Color(0xD9000000))
+      .clickable(onClick = onDismiss),
+    contentAlignment = Alignment.Center
+  ) {
+    val footerH = if (showEffective && card.effectiveValue != null) 28.dp else 24.dp
+    val totalH = maxHeight * 0.96f
+    val previewH = (totalH - footerH).coerceAtLeast(72.dp)
+    val previewW = previewH / 1.38f
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier.height(totalH)
+    ) {
+      GameCardTile(
+        card = card,
+        selected = false,
+        cardW = previewW,
+        cardH = previewH,
+        painter = if (card.faceDown) null else cardPainter(card.image),
+        onClick = onDismiss,
+        showEffective = showEffective,
+        showTagAndValue = false
+      )
+    }
+    SkikoSafeText(
+      "Нажмите, чтобы закрыть",
+      fontSize = 12.sp,
+      color = Color(0x99FFFFFF),
+      modifier = Modifier
+        .align(Alignment.BottomCenter)
+        .padding(bottom = 16.dp)
+    )
   }
 }
 
@@ -447,9 +516,15 @@ private fun SelectableCardRow(
   max: Int,
   onSelected: (Set<String>) -> Unit
 ) {
-  CardRow(cards, selected, cardW, cardH, cardPainter, selectable = true) { id ->
-    onSelected(toggleSelection(selected, id, max))
-  }
+  CardRow(
+    cards = cards,
+    selected = selected,
+    cardW = cardW,
+    cardH = cardH,
+    cardPainter = cardPainter,
+    selectable = true,
+    onToggle = { id -> onSelected(toggleSelection(selected, id, max)) }
+  )
 }
 
 @Composable
@@ -459,10 +534,11 @@ private fun LabeledCardRow(
   cardW: Dp,
   cardH: Dp,
   cardPainter: @Composable (String) -> BitmapPainter?,
-  showEffective: Boolean = false
+  showEffective: Boolean = false,
+  onCardClick: ((EngineOutput.CardGameUiCard) -> Unit)? = null
 ) {
   SkikoSafeText(label, color = Color.White, modifier = Modifier.padding(bottom = 4.dp))
-  CardRow(cards, emptySet(), cardW, cardH, cardPainter, showEffective = showEffective)
+  CardRow(cards, emptySet(), cardW, cardH, cardPainter, showEffective = showEffective, onCardClick = onCardClick)
 }
 
 @Composable
@@ -535,7 +611,8 @@ private fun CardRow(
   cardPainter: @Composable (String) -> BitmapPainter?,
   selectable: Boolean = false,
   showEffective: Boolean = false,
-  onToggle: (String) -> Unit = {}
+  onToggle: (String) -> Unit = {},
+  onCardClick: ((EngineOutput.CardGameUiCard) -> Unit)? = null
 ) {
   val scrollState = rememberScrollState()
   val footerH = if (selectable) 26.dp else 22.dp
@@ -556,7 +633,11 @@ private fun CardRow(
         cardW = cardW,
         cardH = cardH,
         painter = if (card.faceDown) null else cardPainter(card.image),
-        onClick = { if (selectable) onToggle(card.id) },
+        onClick = when {
+          selectable -> ({ onToggle(card.id) })
+          onCardClick != null -> ({ onCardClick(card) })
+          else -> null
+        },
         showEffective = showEffective,
         showTagAndValue = selectable
       )
@@ -572,7 +653,7 @@ private fun GameCardTile(
   cardW: Dp,
   cardH: Dp,
   painter: BitmapPainter?,
-  onClick: () -> Unit,
+  onClick: (() -> Unit)? = null,
   showEffective: Boolean,
   showTagAndValue: Boolean = false
 ) {
@@ -582,15 +663,16 @@ private fun GameCardTile(
     else -> Color.Transparent
   }
   val shape = RoundedCornerShape(8.dp)
+  val artModifier = Modifier
+    .width(cardW)
+    .height(cardH)
+    .border(3.dp, borderColor, shape)
+    .background(if (card.faceDown) Color(0xFF1A237E) else Color(0xFF263238), shape)
+    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
 
   Column(horizontalAlignment = Alignment.CenterHorizontally) {
     Box(
-      Modifier
-        .width(cardW)
-        .height(cardH)
-        .border(3.dp, borderColor, shape)
-        .background(if (card.faceDown) Color(0xFF1A237E) else Color(0xFF263238), shape)
-        .clickable(onClick = onClick),
+      artModifier,
       contentAlignment = Alignment.Center
     ) {
       when {
