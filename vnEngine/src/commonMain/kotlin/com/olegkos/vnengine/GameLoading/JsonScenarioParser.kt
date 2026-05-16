@@ -290,7 +290,7 @@ class JsonScenarioParser : ScenarioParser {
                 draft = CardGameDraftConfig(
                   metaMax = nodeJson.draft.metaMax,
                   offerCount = nodeJson.draft.offerCount,
-                  pickCount = nodeJson.draft.pickCount
+                  handSize = nodeJson.draft.resolvedHandSize(),
                 ),
                 vnAfterClash = nodeJson.vnAfterClash.map {
                   BattleVnLine(text = it.text, speaker = it.speaker)
@@ -677,10 +677,14 @@ data class CardGameOpponentJson(
 
 @Serializable
 data class CardGameDraftJson(
-  val metaMax: Int = 2,
-  val offerCount: Int = 8,
-  val pickCount: Int = 4
-)
+  val metaMax: Int = 4,
+  val offerCount: Int = 7,
+  val handSize: Int = 4,
+  /** Устаревшее: если в JSON только pickCount — считается размером руки. */
+  val pickCount: Int = 4,
+) {
+  fun resolvedHandSize(): Int = handSize.takeIf { it > 0 } ?: pickCount
+}
 
 @Serializable
 data class CardGameTransitionsJson(

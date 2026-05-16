@@ -250,9 +250,12 @@ sealed interface SceneNode {
   )
 
   data class CardGameDraftConfig(
-    val metaMax: Int = 2,
-    val offerCount: Int = 8,
-    val pickCount: Int = 4
+    /** Сколько карт можно взять из meta (не больше [handSize]). */
+    val metaMax: Int = 4,
+    /** Сколько карт показать из глобальной колоды на драфте. */
+    val offerCount: Int = 7,
+    /** Размер руки после драфта: meta + колода = ровно [handSize]. */
+    val handSize: Int = 4,
   )
 
   data class CardGameTransitions(

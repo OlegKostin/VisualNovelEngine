@@ -100,12 +100,22 @@ fun CardGameScreen(
       val cardW = maxOf(maxWidth * 0.14f, 72.dp)
       val cardH = cardW * 1.38f
       val toneLabel = StatType.fromKey(output.battleTone)?.title ?: output.battleTone
+      val showBattleTone = output.phase != CardGamePhase.DRAFT
 
       Column(
         Modifier.fillMaxSize().background(Bg).padding(12.dp).verticalScroll(rememberScrollState())
       ) {
         SkikoSafeText(output.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        SkikoSafeText("Тон боя: $toneLabel", fontSize = 14.sp, color = Accent, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+        if (showBattleTone) {
+          SkikoSafeText(
+            "Тон боя: $toneLabel",
+            fontSize = 14.sp,
+            color = Accent,
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+          )
+        } else {
+          Spacer(Modifier.height(8.dp))
+        }
         output.playerName?.let { SkikoSafeText("Игрок: $it", fontSize = 13.sp, color = Muted) }
         SkikoSafeText(
           "Противник: ${output.opponentName}",
@@ -116,29 +126,32 @@ fun CardGameScreen(
 
         when (output.phase) {
           CardGamePhase.DRAFT -> {
+            val handSize = output.draftHandSize
+            val metaCap = minOf(output.draftMetaMax, handSize - selectedPool.size)
+            val poolCap = handSize - selectedMeta.size
             DraftSection(
-              "Meta — до ${output.draftMetaMax} (сверху)",
+              "Meta — до $metaCap (сверху)",
               output.metaCards,
               selectedMeta,
-              output.draftMetaMax,
+              metaCap,
               cardW,
               cardH,
               cardPainter
             ) { selectedMeta = it }
             Spacer(Modifier.height(16.dp))
             DraftSection(
-              "Колода — ${output.draftPickCount} из ${output.offerCards.size} (снизу)",
+              "Колода — до $poolCap из ${output.offerCards.size} (снизу)",
               output.offerCards,
               selectedPool,
-              output.draftPickCount,
+              poolCap,
               cardW,
               cardH,
               cardPainter
             ) { selectedPool = it }
             Spacer(Modifier.height(12.dp))
             CardGameAction(
-              text = "Собрать руку (${selectedMeta.size}/${output.draftMetaMax} meta, ${selectedPool.size}/${output.draftPickCount} колода)",
-              enabled = selectedPool.size == output.draftPickCount
+              text = "Собрать руку (${selectedMeta.size + selectedPool.size}/$handSize)",
+              enabled = selectedMeta.size + selectedPool.size == handSize
             ) {
               viewModel.cardGameConfirmDraft(selectedMeta.toList(), selectedPool.toList())
             }

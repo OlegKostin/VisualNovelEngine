@@ -47,12 +47,12 @@ fun VnEngine.cardGameConfirmDraft(
   if (gs.phase != CardGamePhase.DRAFT) return
 
   val metaMax = node.draft.metaMax
-  val pickCount = node.draft.pickCount
+  val handSize = node.draft.handSize
   val metaPicked = metaCards
     .filter { it.instanceId in metaSelectedIds.toSet() }
-    .take(metaMax)
+    .take(metaMax.coerceAtMost(handSize))
   val poolPicked = gs.offerCards.filter { it.instanceId in poolSelectedIds.toSet() }
-  if (poolPicked.size != pickCount) return
+  if (metaPicked.size + poolPicked.size != handSize) return
 
   val unpicked = gs.offerCards.filter { it.instanceId !in poolPicked.map { c -> c.instanceId }.toSet() }
   gs.discard = gs.discard + unpicked
@@ -232,7 +232,7 @@ fun VnEngine.buildCardGameOutput(node: SceneNode.CardGame, gs: CardGameState): S
     phase = gs.phase,
     battleTone = gs.battleTone,
     draftMetaMax = node.draft.metaMax,
-    draftPickCount = node.draft.pickCount,
+    draftHandSize = node.draft.handSize,
     offerCards = gs.offerCards.map { it.toUi() },
     hand = gs.hand.map { it.toUi() },
     playerPlayed = playerPlayed,

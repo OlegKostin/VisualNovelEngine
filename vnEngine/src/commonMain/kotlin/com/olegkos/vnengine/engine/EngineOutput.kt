@@ -103,7 +103,8 @@ sealed interface EngineOutput {
     val phase: CardGamePhase,
     val battleTone: String,
     val draftMetaMax: Int,
-    val draftPickCount: Int,
+    /** Сколько карт взять всего (meta + колода). */
+    val draftHandSize: Int,
     val metaCards: List<CardGameUiCard> = emptyList(),
     val metaSelectedIds: Set<String> = emptySet(),
     val offerCards: List<CardGameUiCard> = emptyList(),
