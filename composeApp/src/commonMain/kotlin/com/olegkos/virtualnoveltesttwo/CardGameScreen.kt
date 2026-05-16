@@ -297,10 +297,11 @@ private fun CardRow(
   onToggle: (String) -> Unit = {}
 ) {
   val scrollState = rememberScrollState()
+  val footerH = if (selectable) 38.dp else 22.dp
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .height(cardH + 22.dp)
+      .height(cardH + footerH)
       .padding(vertical = 8.dp)
       .horizontalWheelScroll(scrollState)
       .horizontalScroll(scrollState),
@@ -315,7 +316,8 @@ private fun CardRow(
         cardH = cardH,
         painter = if (card.faceDown) null else cardPainter(card.image),
         onClick = { if (selectable) onToggle(card.id) },
-        showEffective = showEffective
+        showEffective = showEffective,
+        showTagAndValue = selectable
       )
     }
     Spacer(Modifier.width(16.dp))
@@ -330,7 +332,8 @@ private fun GameCardTile(
   cardH: Dp,
   painter: BitmapPainter?,
   onClick: () -> Unit,
-  showEffective: Boolean
+  showEffective: Boolean,
+  showTagAndValue: Boolean = false
 ) {
   val borderColor = when {
     card.countered -> Color(0xFFFF5252)
@@ -366,10 +369,28 @@ private fun GameCardTile(
         color = if (card.countered) Color(0xFFFF8A80) else Accent,
         modifier = Modifier.padding(top = 2.dp)
       )
+      showTagAndValue && !card.faceDown -> {
+        SkikoSafeText(
+          cardTagLabel(card.tag),
+          fontSize = 11.sp,
+          color = Accent,
+          modifier = Modifier.padding(top = 2.dp)
+        )
+        SkikoSafeText(
+          "${card.value}",
+          fontSize = 12.sp,
+          fontWeight = FontWeight.SemiBold,
+          color = Color.White,
+          modifier = Modifier.padding(top = 1.dp)
+        )
+      }
       !card.faceDown -> SkikoSafeText("${card.value}", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(top = 2.dp))
     }
   }
 }
+
+private fun cardTagLabel(tag: String): String =
+  StatType.fromKey(tag)?.title ?: tag.removePrefix("opt_")
 
 private fun toggleSelection(current: Set<String>, id: String, max: Int): Set<String> = when {
   id in current -> current - id
