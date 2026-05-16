@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,6 +42,7 @@ import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.EngineOutput
+import org.jetbrains.compose.resources.painterResource
 import com.olegkos.vnengine.engine.cardgame.CardGamePhase
 import com.olegkos.vnengine.engine.cardgame.ClashResolution
 
@@ -297,7 +300,7 @@ private fun CardRow(
   onToggle: (String) -> Unit = {}
 ) {
   val scrollState = rememberScrollState()
-  val footerH = if (selectable) 38.dp else 22.dp
+  val footerH = if (selectable) 26.dp else 22.dp
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -361,6 +364,9 @@ private fun GameCardTile(
           contentScale = ContentScale.Crop
         )
       }
+      if (!card.faceDown) {
+        CardTagBadge(tag = card.tag, iconSize = (cardW * 0.24f).coerceIn(18.dp, 26.dp))
+      }
     }
     when {
       showEffective && card.effectiveValue != null -> SkikoSafeText(
@@ -369,28 +375,45 @@ private fun GameCardTile(
         color = if (card.countered) Color(0xFFFF8A80) else Accent,
         modifier = Modifier.padding(top = 2.dp)
       )
-      showTagAndValue && !card.faceDown -> {
-        SkikoSafeText(
-          cardTagLabel(card.tag),
-          fontSize = 11.sp,
-          color = Accent,
-          modifier = Modifier.padding(top = 2.dp)
-        )
-        SkikoSafeText(
-          "${card.value}",
-          fontSize = 12.sp,
-          fontWeight = FontWeight.SemiBold,
-          color = Color.White,
-          modifier = Modifier.padding(top = 1.dp)
-        )
-      }
+      showTagAndValue && !card.faceDown -> SkikoSafeText(
+        "${card.value}",
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = Color.White,
+        modifier = Modifier.padding(top = 2.dp)
+      )
       !card.faceDown -> SkikoSafeText("${card.value}", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(top = 2.dp))
     }
   }
 }
 
-private fun cardTagLabel(tag: String): String =
-  StatType.fromKey(tag)?.title ?: tag.removePrefix("opt_")
+/** Иконка тега на арте карты (левый верхний угол). */
+@Composable
+private fun BoxScope.CardTagBadge(tag: String, iconSize: Dp) {
+  val stat = StatType.fromKey(tag)
+  Box(
+    Modifier
+      .align(Alignment.TopStart)
+      .padding(4.dp)
+      .background(Color(0xD010141C), RoundedCornerShape(6.dp))
+      .padding(horizontal = 4.dp, vertical = 3.dp),
+    contentAlignment = Alignment.Center
+  ) {
+    if (stat != null) {
+      Image(
+        painter = painterResource(stat.image),
+        contentDescription = stat.title,
+        modifier = Modifier.size(iconSize)
+      )
+    } else {
+      SkikoSafeText(
+        text = tag.removePrefix("opt_").take(3),
+        fontSize = 10.sp,
+        color = Accent
+      )
+    }
+  }
+}
 
 private fun toggleSelection(current: Set<String>, id: String, max: Int): Set<String> = when {
   id in current -> current - id
