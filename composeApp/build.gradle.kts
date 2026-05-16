@@ -57,6 +57,7 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "com.olegkos.virtualnoveltesttwo.MainKt"
+        jvmArgs("-Dfile.encoding=UTF-8")
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

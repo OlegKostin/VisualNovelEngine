@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.GameLoading.DiceRoller
+import com.olegkos.vnengine.engine.cards.CardManager
 import com.olegkos.vnengine.engine.EngineOutput.*
 import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
 import com.olegkos.vnengine.engine.EngineOutput.JumpScenarioOutput
@@ -21,7 +22,8 @@ import com.olegkos.vnengine.scene.SceneNode
 
 class VnEngine(
   val state: GameState,
-  val dice: DiceRoller
+  val dice: DiceRoller,
+  internal val cards: CardManager? = null
 ) {
   companion object {
     /** Включайте только при отладке сценария — синхронный вывод на каждый step сильно тормозит UI. */
@@ -337,6 +339,10 @@ class VnEngine(
 
         is SceneNode.DiceDuel -> {
           return handleDiceDuelNode(node)
+        }
+
+        is SceneNode.CardGame -> {
+          return handleCardGameNode(node)
         }
       }
     }
@@ -681,7 +687,8 @@ class VnEngine(
       is SceneNode.InitGame,
       is SceneNode.DiceRoll,
       is SceneNode.Battle,
-      is SceneNode.DiceDuel -> {
+      is SceneNode.DiceDuel,
+      is SceneNode.CardGame -> {
         return
       }
       else -> Unit
@@ -699,6 +706,7 @@ class VnEngine(
     state.diceResult = null
     state.diceModifiedResult = null
     state.diceDuel = null
+    state.cardGame = null
     state.pendingDiceJumpScene = null
   }
 
@@ -918,7 +926,7 @@ class VnEngine(
     }
   }
 
-  private fun resolveTextVariables(rawText: String): String {
+  internal fun resolveTextVariables(rawText: String): String {
     val regex = "\\{([a-zA-Z0-9_]+)\\}".toRegex()
     return regex.replace(rawText) {
       variables.getString(it.groupValues[1])

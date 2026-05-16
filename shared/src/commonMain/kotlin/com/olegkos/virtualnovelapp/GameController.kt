@@ -6,14 +6,23 @@ import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.GameLoading.DiceRoller
 import com.olegkos.vnengine.GameLoading.ScenarioParser
 import com.olegkos.vnengine.engine.BattlePhase
+import com.olegkos.vnengine.engine.CardGameFinishResult
 import com.olegkos.vnengine.engine.DiceDuelPhase
 import com.olegkos.vnengine.engine.EngineOutput
+import com.olegkos.vnengine.engine.cardgame.CardGamePhase
+import com.olegkos.vnengine.engine.cardgame.HandCard
 import com.olegkos.vnengine.engine.GameState
 import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.UiCard
 import com.olegkos.vnengine.engine.VisibleCharacter
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.engine.cardGameBattleContinue
+import com.olegkos.vnengine.engine.cardGameBreakdownNext
+import com.olegkos.vnengine.engine.cardGameConfirmClash
+import com.olegkos.vnengine.engine.cardGameConfirmDraft
+import com.olegkos.vnengine.engine.cardGameFinish
+import com.olegkos.vnengine.engine.cardGameVnNext
 import com.olegkos.vnengine.engine.cards.CardConfig
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
@@ -138,7 +147,7 @@ class GameController(
 
     cardManager.setCards(cardsList)
 
-    engine = VnEngine(state, dice).apply {
+    engine = VnEngine(state, dice, cardManager).apply {
       addScenes(game.scenario.scenes)
     }
 
@@ -173,6 +182,8 @@ class GameController(
         val cards = getPlayerCards()
         output.copy(cards = cards) to engine.currentNode()
       }
+
+      is EngineOutput.ShowCardGame -> enrichCardGameOutput(output) to engine.currentNode()
 
       is EngineOutput.DrawCardRequest -> {
         val card = resolveCardPick(
@@ -427,7 +438,7 @@ class GameController(
 
     val scenario = loadScenario(loaded.scenario)
 
-    engine = VnEngine(loaded.state, dice).apply {
+    engine = VnEngine(loaded.state, dice, cardManager).apply {
       addScenes(scenario.scenes)
     }
 
@@ -457,6 +468,8 @@ class GameController(
         val cards = getPlayerCards()
         output.copy(cards = cards) to engine.currentNode()
       }
+
+      is EngineOutput.ShowCardGame -> enrichCardGameOutput(output) to engine.currentNode()
 
       is EngineOutput.ShowDice -> {
         val cards = getPlayerCards()
@@ -502,6 +515,74 @@ class GameController(
     val engine = engine ?: return EngineOutput.Loading to null
     engine.diceDuelContinue()
     return step()
+  }
+
+  fun cardGameConfirmDraft(
+    metaSelectedIds: List<String>,
+    poolSelectedIds: List<String>
+  ): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.cardGameConfirmDraft(metaSelectedIds, poolSelectedIds, getMetaHandCards())
+    return step()
+  }
+
+  fun cardGameConfirmClash(selectedIds: List<String>): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.cardGameConfirmClash(selectedIds)
+    return step()
+  }
+
+  fun cardGameBattleContinue(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.cardGameBattleContinue()
+    return step()
+  }
+
+  fun cardGameBreakdownNext(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.cardGameBreakdownNext()
+    return step()
+  }
+
+  fun cardGameVnNext(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.cardGameVnNext()
+    return step()
+  }
+
+  fun cardGameFinish(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    val result: CardGameFinishResult? = engine.cardGameFinish()
+    if (result != null && result.discardForReward.isNotEmpty()) {
+      val reward = result.discardForReward.random()
+      metaManager.addCard(
+        CardData(
+          value = reward.value,
+          image = reward.image,
+          weight = 1,
+          tag = reward.tag
+        )
+      )
+    }
+    return step()
+  }
+
+  private fun getMetaHandCards(): List<HandCard> =
+    metaManager.getCards()
+      .filter { it.tag.isNotBlank() }
+      .map { HandCard.fromMeta(it.id, it.value, it.image, it.tag) }
+
+  private fun enrichCardGameOutput(output: EngineOutput.ShowCardGame): EngineOutput.ShowCardGame {
+    if (output.phase != CardGamePhase.DRAFT) return output
+    val metaUi = getMetaHandCards().map {
+      EngineOutput.CardGameUiCard(
+        id = it.instanceId,
+        value = it.value,
+        image = it.image,
+        tag = it.tag
+      )
+    }
+    return output.copy(metaCards = metaUi)
   }
 
   fun listSaves(): List<String> =

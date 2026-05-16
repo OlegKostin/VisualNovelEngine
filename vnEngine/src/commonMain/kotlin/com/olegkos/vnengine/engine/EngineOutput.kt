@@ -1,5 +1,8 @@
 package com.olegkos.vnengine.engine
 
+import com.olegkos.vnengine.engine.cardgame.CardGameOutcome
+import com.olegkos.vnengine.engine.cardgame.CardGamePhase
+import com.olegkos.vnengine.engine.cardgame.ClashResolution
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
@@ -89,6 +92,45 @@ sealed interface EngineOutput {
     val cards: List<UiCard> = emptyList(),
     val resultText: String? = null
   ) : EngineOutput
+
+  data class ShowCardGame(
+    val gameId: String,
+    val title: String,
+    val speaker: String?,
+    val playerName: String?,
+    val opponentName: String,
+    val opponentImage: String,
+    val phase: CardGamePhase,
+    val battleTone: String,
+    val draftMetaMax: Int,
+    val draftPickCount: Int,
+    val metaCards: List<CardGameUiCard> = emptyList(),
+    val metaSelectedIds: Set<String> = emptySet(),
+    val offerCards: List<CardGameUiCard> = emptyList(),
+    val offerSelectedIds: Set<String> = emptySet(),
+    val hand: List<CardGameUiCard> = emptyList(),
+    val clashSelectedIds: Set<String> = emptySet(),
+    val playerPlayed: List<CardGameUiCard> = emptyList(),
+    val enemyPlayed: List<CardGameUiCard> = emptyList(),
+    val cardsRevealed: Boolean = false,
+    val clashResolution: ClashResolution? = null,
+    val breakdownSide: String? = null,
+    val breakdownStepIndex: Int = 0,
+    val vnSpeaker: String? = null,
+    val vnText: String? = null,
+    val outcome: CardGameOutcome? = null,
+    val resultText: String? = null
+  ) : EngineOutput
+
+  data class CardGameUiCard(
+    val id: String,
+    val value: Int,
+    val image: String,
+    val tag: String,
+    val effectiveValue: Int? = null,
+    val countered: Boolean = false,
+    val faceDown: Boolean = false
+  )
 
   data class ShowBattle(
     val battleId: String,

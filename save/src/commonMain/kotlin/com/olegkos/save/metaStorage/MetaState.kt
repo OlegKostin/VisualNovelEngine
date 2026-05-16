@@ -12,7 +12,8 @@ data class MetaState(
 data class CardInstance(
   val value: Int,
   val image: String,
-  val id: String
+  val id: String,
+  val tag: String
 )
 
 @Serializable

@@ -15,7 +15,8 @@ class MetaManager(
     val newCard = CardInstance(
       value = card.value,
       image = card.image,
-      id = UUID.randomUUID().toString()
+      id = UUID.randomUUID().toString(),
+      tag = card.tag
     )
 
     state = state.copy(cards = state.cards + newCard)

@@ -213,6 +213,42 @@
       currentNode = node
     }
 
+    fun cardGameConfirmDraft(metaSelectedIds: List<String>, poolSelectedIds: List<String>) {
+      val (output, node) = controller.cardGameConfirmDraft(metaSelectedIds, poolSelectedIds)
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun cardGameConfirmClash(selectedIds: List<String>) {
+      val (output, node) = controller.cardGameConfirmClash(selectedIds)
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun cardGameBattleContinue() {
+      val (output, node) = controller.cardGameBattleContinue()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun cardGameBreakdownNext() {
+      val (output, node) = controller.cardGameBreakdownNext()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun cardGameVnNext() {
+      val (output, node) = controller.cardGameVnNext()
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun cardGameFinish() {
+      val (output, node) = controller.cardGameFinish()
+      currentOutput = output
+      currentNode = node
+    }
+
     fun useCards(cardIds: List<String>) {
       cardIds.forEach { controller.consumeCard(it) }
     }

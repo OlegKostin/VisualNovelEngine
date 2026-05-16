@@ -1,5 +1,6 @@
 package com.olegkos.vnengine.engine
 
+import com.olegkos.vnengine.engine.cardgame.CardGameState
 import com.olegkos.vnengine.scene.SceneNode.BattleVnLine
 import com.olegkos.vnengine.engine.variables.GameValue
 import kotlinx.serialization.Serializable
@@ -25,6 +26,7 @@ data class GameState(
   var isGameInitialized: Boolean = false,
   var diceDuel: DiceDuelState? = null,
   var battle: BattleState? = null,
+  var cardGame: CardGameState? = null,
   /** Макс. целые значения для переменных после InitGame (сейчас: health, mental_health). */
   var statCapsInt: Map<String, Int> = emptyMap(),
   /** Персонажи на экране (ShowCharacter без HideCharacter); участвует в save/load. */

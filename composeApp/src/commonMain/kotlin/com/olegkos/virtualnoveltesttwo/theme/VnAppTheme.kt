@@ -1,9 +1,11 @@
 package com.olegkos.virtualnoveltesttwo.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 
 private val ink = Color(0xFF121820)
 private val inkMuted = Color(0xFF2A3344)
@@ -32,10 +34,38 @@ private val VnColorScheme = lightColorScheme(
   onError = Color.White
 )
 
+/** Material3 по умолчанию задаёт lineHeightStyle → на Skiko Desktop падает setBaselineShift. */
+private fun TextStyle.skikoSafe(): TextStyle =
+  copy(lineHeightStyle = null)
+
+private fun Typography.skikoSafe(): Typography {
+  val base = Typography()
+  return Typography(
+    displayLarge = base.displayLarge.skikoSafe(),
+    displayMedium = base.displayMedium.skikoSafe(),
+    displaySmall = base.displaySmall.skikoSafe(),
+    headlineLarge = base.headlineLarge.skikoSafe(),
+    headlineMedium = base.headlineMedium.skikoSafe(),
+    headlineSmall = base.headlineSmall.skikoSafe(),
+    titleLarge = base.titleLarge.skikoSafe(),
+    titleMedium = base.titleMedium.skikoSafe(),
+    titleSmall = base.titleSmall.skikoSafe(),
+    bodyLarge = base.bodyLarge.skikoSafe(),
+    bodyMedium = base.bodyMedium.skikoSafe(),
+    bodySmall = base.bodySmall.skikoSafe(),
+    labelLarge = base.labelLarge.skikoSafe(),
+    labelMedium = base.labelMedium.skikoSafe(),
+    labelSmall = base.labelSmall.skikoSafe()
+  )
+}
+
+private val VnTypography = Typography().skikoSafe()
+
 @Composable
 fun VnAppTheme(content: @Composable () -> Unit) {
   MaterialTheme(
     colorScheme = VnColorScheme,
+    typography = VnTypography,
     content = content
   )
 }

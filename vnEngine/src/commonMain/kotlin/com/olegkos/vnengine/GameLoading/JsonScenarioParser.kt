@@ -15,6 +15,10 @@ import com.olegkos.vnengine.scene.SceneNode.CombatPhase
 import com.olegkos.vnengine.scene.SceneNode.DiceDuel
 import com.olegkos.vnengine.scene.SceneNode.DiceDuelCards
 import com.olegkos.vnengine.scene.SceneNode.DiceDuelOpponent
+import com.olegkos.vnengine.scene.SceneNode.CardGame
+import com.olegkos.vnengine.scene.SceneNode.CardGameDraftConfig
+import com.olegkos.vnengine.scene.SceneNode.CardGameOpponent
+import com.olegkos.vnengine.scene.SceneNode.CardGameTransitions
 import com.olegkos.vnengine.scene.SceneNode.DiceDuelTransitions
 import com.olegkos.vnengine.scene.SceneNode.DiceRoll
 import com.olegkos.vnengine.scene.SceneNode.DrawCard
@@ -269,6 +273,29 @@ class JsonScenarioParser : ScenarioParser {
                   allowCards = nodeJson.cards.allowCards
                 ),
                 transitions = DiceDuelTransitions(
+                  winScene = nodeJson.transitions.winScene,
+                  loseScene = nodeJson.transitions.loseScene,
+                  drawScene = nodeJson.transitions.drawScene
+                )
+              )
+
+              is CardGameNode -> CardGame(
+                id = nodeJson.id,
+                title = nodeJson.title,
+                speaker = nodeJson.speaker,
+                opponent = CardGameOpponent(
+                  name = nodeJson.opponent.name,
+                  image = nodeJson.opponent.image
+                ),
+                draft = CardGameDraftConfig(
+                  metaMax = nodeJson.draft.metaMax,
+                  offerCount = nodeJson.draft.offerCount,
+                  pickCount = nodeJson.draft.pickCount
+                ),
+                vnAfterClash = nodeJson.vnAfterClash.map {
+                  BattleVnLine(text = it.text, speaker = it.speaker)
+                },
+                transitions = CardGameTransitions(
                   winScene = nodeJson.transitions.winScene,
                   loseScene = nodeJson.transitions.loseScene,
                   drawScene = nodeJson.transitions.drawScene
@@ -630,6 +657,38 @@ data class HotspotJson(
 data class CharacterHideNode(
   val id: String
 ) : SceneNodeJson()
+@Serializable
+@SerialName("cardGame")
+data class CardGameNode(
+  val id: String,
+  val title: String,
+  val speaker: String? = null,
+  val opponent: CardGameOpponentJson,
+  val draft: CardGameDraftJson = CardGameDraftJson(),
+  val vnAfterClash: List<BattleVnLineJson> = emptyList(),
+  val transitions: CardGameTransitionsJson
+) : SceneNodeJson()
+
+@Serializable
+data class CardGameOpponentJson(
+  val name: String,
+  val image: String
+)
+
+@Serializable
+data class CardGameDraftJson(
+  val metaMax: Int = 2,
+  val offerCount: Int = 8,
+  val pickCount: Int = 4
+)
+
+@Serializable
+data class CardGameTransitionsJson(
+  val winScene: String,
+  val loseScene: String,
+  val drawScene: String
+)
+
 @Serializable
 @SerialName("diceDuel")
 data class DiceDuelNode(

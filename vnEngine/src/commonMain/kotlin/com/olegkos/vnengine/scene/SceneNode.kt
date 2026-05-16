@@ -234,4 +234,31 @@ sealed interface SceneNode {
     val drawScene: String? = null
   )
 
+  data class CardGame(
+    val id: String,
+    val title: String,
+    val speaker: String? = null,
+    val opponent: CardGameOpponent,
+    val draft: CardGameDraftConfig = CardGameDraftConfig(),
+    val vnAfterClash: List<BattleVnLine> = emptyList(),
+    val transitions: CardGameTransitions
+  ) : SceneNode
+
+  data class CardGameOpponent(
+    val name: String,
+    val image: String
+  )
+
+  data class CardGameDraftConfig(
+    val metaMax: Int = 2,
+    val offerCount: Int = 8,
+    val pickCount: Int = 4
+  )
+
+  data class CardGameTransitions(
+    val winScene: String,
+    val loseScene: String,
+    val drawScene: String
+  )
+
 }

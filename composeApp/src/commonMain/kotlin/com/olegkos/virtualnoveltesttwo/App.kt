@@ -32,6 +32,7 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.composable.GameMenuHub
 import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
@@ -375,6 +376,16 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             },
             onApplyCard = { value, usedCards ->
               viewModel.applyDiceModifier(value, usedCards)
+            }
+          )
+        }
+
+        is EngineOutput.ShowCardGame -> {
+          CardGameScreen(
+            output = o,
+            viewModel = viewModel,
+            cardPainter = { path ->
+              rememberPainter(viewModel.assets.card(path), viewModel.reader)
             }
           )
         }

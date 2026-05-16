@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,10 +21,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -33,7 +30,6 @@ import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.variables.forStatPreview
 import com.olegkos.vnengine.scene.SubClass
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import java.awt.Cursor
 
@@ -223,7 +219,6 @@ private fun ClassStartingCardsRow(
     val gap = 8.dp
     val slotsVisible = 3
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
 
     BoxWithConstraints(
       Modifier
@@ -238,28 +233,7 @@ private fun ClassStartingCardsRow(
       Row(
         modifier = Modifier
           .height(rowHeight)
-          .pointerInput(scrollState) {
-            awaitPointerEventScope {
-              while (true) {
-                val event = awaitPointerEvent(PointerEventPass.Main)
-                var wheel = 0f
-                event.changes.forEach { change ->
-                  val d = change.scrollDelta
-                  if (d != Offset.Zero) {
-                    wheel += d.y + d.x
-                    change.consume()
-                  }
-                }
-                if (wheel != 0f) {
-                  scope.launch {
-                    scrollState.scroll {
-                      scrollBy(-wheel * 8f)
-                    }
-                  }
-                }
-              }
-            }
-          }
+          .horizontalWheelScroll(scrollState, factor = 8f)
           .horizontalScroll(scrollState),
         horizontalArrangement = Arrangement.spacedBy(gap),
         verticalAlignment = Alignment.CenterVertically
