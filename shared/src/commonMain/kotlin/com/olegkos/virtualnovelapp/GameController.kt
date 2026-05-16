@@ -18,6 +18,7 @@ import com.olegkos.vnengine.engine.cards.CardConfig
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
 import com.olegkos.vnengine.engine.variables.GameValue
+import com.olegkos.vnengine.engine.variables.forStatPreview
 import com.olegkos.vnengine.game.GameLoader
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
@@ -505,4 +506,35 @@ class GameController(
 
   fun listSaves(): List<String> =
     saveManager.listSaves()
+
+  fun buildPlayerStatsUi(): PlayerStatsUi {
+    val engine = engine ?: return PlayerStatsUi.empty()
+    fun display(key: String): String =
+      engine.state.variables[key]?.forStatPreview() ?: "0"
+
+    fun intStat(key: String): Int =
+      engine.variables.getModifier(key).toInt()
+
+    val extras = engine.state.variables.entries
+      .filter { (key, value) ->
+        key.startsWith("opt_var_") && value !is GameValue.RandomInt && value !is GameValue.RandomFloat
+      }
+      .map { (key, value) ->
+        optVarDisplayLabel(key) to value.forStatPreview()
+      }
+      .sortedBy { it.first }
+
+    return PlayerStatsUi(
+      health = intStat("health"),
+      mentalHealth = intStat("mental_health"),
+      optStr = display("opt_str"),
+      optWisdom = display("opt_wisdom"),
+      optWill = display("opt_will"),
+      optLuck = display("opt_luck"),
+      extraOptVars = extras
+    )
+  }
+
+  private fun optVarDisplayLabel(varKey: String): String =
+    varKey.removePrefix("opt_var_").replace('_', ' ').trim().ifEmpty { varKey }
 }

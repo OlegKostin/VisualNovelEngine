@@ -33,7 +33,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.olegkos.virtualnovelapp.GameViewModel
+import com.olegkos.virtualnoveltesttwo.composable.GameMenuHub
 import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
+import com.olegkos.virtualnoveltesttwo.composable.PlayerStatsScreen
 import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
@@ -49,17 +51,17 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
 
   val output = viewModel.currentOutput
 
-  var showMenu by remember { mutableStateOf(false) }
+  var gameMenu by remember { mutableStateOf(GameMenu.None) }
   var pendingScreenshotSaveSlot by remember { mutableStateOf<String?>(null) }
 
   LaunchedEffect(pendingScreenshotSaveSlot) {
     val slot = pendingScreenshotSaveSlot ?: return@LaunchedEffect
-    showMenu = false
+    gameMenu = GameMenu.None
     delay(150)
     val png = captureScreenshotPngBytes()
     viewModel.saveGame(slot, png)
     pendingScreenshotSaveSlot = null
-    showMenu = true
+    gameMenu = GameMenu.SaveLoad
   }
 
   var background by remember { mutableStateOf<String?>(null) }
@@ -434,19 +436,46 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         .padding(16.dp),
       contentAlignment = Alignment.TopEnd
     ) {
-      VnOutlinedButton(onClick = { showMenu = true }) {
+      VnOutlinedButton(onClick = { gameMenu = GameMenu.Hub }) {
         Text("⚙")
       }
     }
 
-    if (showMenu) {
-      SaveSlotsMenu(
-        viewModel = viewModel,
-        onRequestSaveWithScreenshot = { slot -> pendingScreenshotSaveSlot = slot },
-        onDismiss = { showMenu = false }
-      )
+    when (gameMenu) {
+      GameMenu.Hub -> {
+        GameMenuHub(
+          onSaveLoad = { gameMenu = GameMenu.SaveLoad },
+          onPlayerStats = { gameMenu = GameMenu.Stats },
+          onDismiss = { gameMenu = GameMenu.None }
+        )
+      }
+
+      GameMenu.SaveLoad -> {
+        SaveSlotsMenu(
+          viewModel = viewModel,
+          onRequestSaveWithScreenshot = { slot -> pendingScreenshotSaveSlot = slot },
+          onDismiss = { gameMenu = GameMenu.None }
+        )
+      }
+
+      GameMenu.Stats -> {
+        PlayerStatsScreen(
+          viewModel = viewModel,
+          refreshKey = viewModel.currentOutput,
+          onDismiss = { gameMenu = GameMenu.None }
+        )
+      }
+
+      GameMenu.None -> Unit
     }
   }
+}
+
+private enum class GameMenu {
+  None,
+  Hub,
+  SaveLoad,
+  Stats
 }
 
 @Composable

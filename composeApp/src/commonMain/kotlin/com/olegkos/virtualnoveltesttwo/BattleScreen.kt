@@ -455,6 +455,13 @@ fun BattleScreen(
   }
 }
 
+enum class IconStatLayout {
+  /** Ровный ряд с лёгким джиттером — бой, модификаторы. */
+  Linear,
+  /** Здоровье / рассудок: мало иконок — к центру, больше — шире по области. */
+  CenterCluster
+}
+
 private data class ScatterToken(
   val nx: Float,
   val ny: Float,
@@ -479,7 +486,19 @@ private fun scatterForSlot(stat: StatType, slotIndex: Int): ScatterToken {
   return ScatterToken(nx, ny, rot)
 }
 
-private fun computeSlotOffset(
+/** Чем меньше иконок, тем ближе к центру области. */
+private fun horizontalSpreadFactor(tokenCount: Int): Float = when (tokenCount.coerceIn(1, 8)) {
+  1 -> 0f
+  2 -> 0.22f
+  3 -> 0.34f
+  4 -> 0.46f
+  5 -> 0.58f
+  6 -> 0.70f
+  7 -> 0.84f
+  else -> 1f
+}
+
+private fun computeLinearOffset(
   slotIndex: Int,
   tokenCount: Int,
   widthPx: Dp,
@@ -508,11 +527,61 @@ private fun computeSlotOffset(
   return Triple(baseX + dx, baselineY + dy, scatter.rotationDeg)
 }
 
+private fun computeCenterClusterOffset(
+  slotIndex: Int,
+  tokenCount: Int,
+  widthPx: Dp,
+  tokenSize: Dp,
+  scatter: ScatterToken
+): Triple<Dp, Dp, Float> {
+  val capped = tokenCount.coerceIn(1, 8)
+  val sidePad = 2.dp
+  val center = widthPx / 2
+  val rowH = tokenSize * 1.85f
+  val baselineY = rowH - tokenSize - 4.dp
+
+  val spread = horizontalSpreadFactor(capped)
+  val maxHalfSpan = ((widthPx - tokenSize - sidePad * 2) / 2) * spread
+
+  val along = if (capped == 1) {
+    0f
+  } else {
+    (slotIndex / (capped - 1f) - 0.5f) * 2f
+  }
+
+  val iconCenterX = center + maxHalfSpan * along
+  val baseX = iconCenterX - tokenSize / 2
+
+  val jitterXMax = (6.dp + maxHalfSpan * 0.28f).coerceAtMost(16.dp)
+  val jitterYMax = (5.dp + tokenSize * 0.10f * (0.35f + spread * 0.65f)).coerceAtMost(20.dp)
+  val dx = jitterXMax * scatter.nx
+  val dy = jitterYMax * scatter.ny
+
+  return Triple(baseX + dx, baselineY + dy, scatter.rotationDeg)
+}
+
+private fun computeIconOffset(
+  layout: IconStatLayout,
+  slotIndex: Int,
+  tokenCount: Int,
+  widthPx: Dp,
+  tokenSize: Dp,
+  stat: StatType
+): Triple<Dp, Dp, Float> {
+  val scatter = scatterForSlot(stat, slotIndex)
+  return when (layout) {
+    IconStatLayout.Linear -> computeLinearOffset(slotIndex, tokenCount, widthPx, tokenSize, scatter)
+    IconStatLayout.CenterCluster ->
+      computeCenterClusterOffset(slotIndex, tokenCount, widthPx, tokenSize, scatter)
+  }
+}
+
 @Composable
-private fun IconStatRow(
+internal fun IconStatRow(
   stat: StatType?,
   count: Int,
-  fontSize: TextUnit
+  fontSize: TextUnit,
+  layout: IconStatLayout = IconStatLayout.Linear
 ) {
   val capped = count.coerceIn(0, 8)
 
@@ -563,38 +632,24 @@ private fun IconStatRow(
     val tokenSize = (widthPx * 0.38f).coerceIn(42.dp, 92.dp)
     val rowH = tokenSize * 1.75f
 
-    val sidePad = 2.dp
-    val center = widthPx / 2
-    val preferredStep = tokenSize * 0.68f
-    val maxStep = if (capped <= 1) {
-      0.dp
-    } else {
-      (widthPx - tokenSize - sidePad * 2) / (capped - 1)
-    }
-    val step = if (capped <= 1) 0.dp else minOf(preferredStep, maxStep)
-
-    val jitterXMax = kotlin.math.min(14f, step.value * 0.40f).coerceAtLeast(2f).dp
-    val jitterYMax = kotlin.math.min(24f, tokenSize.value * 0.42f).dp
-
     Box(
       modifier = Modifier
         .fillMaxWidth()
         .height(rowH)
     ) {
-      val baselineY = rowH - tokenSize - 4.dp
-
       repeat(capped) { idx ->
-        val scatter = scatterForSlot(rowStat, idx)
-        val offsetFromCenter = (idx - (capped - 1) / 2f) * step
-        val iconCenterX = center + offsetFromCenter
-        val baseX = iconCenterX - tokenSize / 2
-        val dx = jitterXMax * scatter.nx
-        val dy = jitterYMax * scatter.ny
-        val rot = scatter.rotationDeg
+        val (baseX, baseY, rot) = computeIconOffset(
+          layout = layout,
+          slotIndex = idx,
+          tokenCount = capped,
+          widthPx = widthPx,
+          tokenSize = tokenSize,
+          stat = rowStat
+        )
 
         Box(
           modifier = Modifier
-            .offset(x = baseX + dx, y = baselineY + dy)
+            .offset(x = baseX, y = baseY)
             .graphicsLayer {
               rotationZ = rot
               transformOrigin = TransformOrigin(0.5f, 0.92f)
@@ -615,6 +670,7 @@ private fun IconStatRow(
             stat = rowStat,
             chipPainter = chipPainter,
             entry = entry,
+            layout = layout,
             widthPx = widthPx,
             tokenSize = tokenSize,
             onFinished = { falling.removeAll { it.id == entry.id } }
@@ -630,13 +686,13 @@ private fun FallingStatChip(
   stat: StatType,
   chipPainter: Painter,
   entry: FallingEntry,
+  layout: IconStatLayout,
   widthPx: Dp,
   tokenSize: Dp,
   onFinished: () -> Unit
 ) {
-  val scatter = scatterForSlot(stat, entry.slotIndex)
-  val (baseX, baseY, baseRot) = remember(entry.id, entry.fromCount, entry.slotIndex, widthPx, tokenSize) {
-    computeSlotOffset(entry.slotIndex, entry.fromCount, widthPx, tokenSize, scatter)
+  val (baseX, baseY, baseRot) = remember(entry.id, entry.fromCount, entry.slotIndex, widthPx, tokenSize, layout) {
+    computeIconOffset(layout, entry.slotIndex, entry.fromCount, widthPx, tokenSize, stat)
   }
   val progress = remember(entry.id) { Animatable(0f) }
   LaunchedEffect(entry.id) {

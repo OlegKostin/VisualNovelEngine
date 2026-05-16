@@ -222,4 +222,7 @@
     }
     fun listSaves(): List<String> =
       saveManager.listSaves()
+
+    fun playerStatsUi(): PlayerStatsUi =
+      controller.buildPlayerStatsUi()
   }
