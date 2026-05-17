@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,10 +69,16 @@ fun VNTextBox(
   BoxWithConstraints(
     modifier = Modifier.fillMaxSize()
   ) {
-    val fontSize = (maxHeight.value * 0.045f).sp
-    val lineHeight = (fontSize.value * 1.4f).sp
-    val boxHeight = maxHeight * 0.25f
-    val arrowSize = (maxHeight.value * 0.06f).sp
+    val maxLines = 2
+    val fontSize = (maxHeight.value * 0.038f).sp
+    val lineHeight = (fontSize.value * 1.35f).sp
+    val density = LocalDensity.current
+    val boxHeight = with(density) {
+      (lineHeight.toPx() * maxLines + 24.dp.toPx()).toDp()
+    }
+    val arrowSize = (maxHeight.value * 0.05f).sp
+    val textBoxBg = Color(0x55BBDEFB)
+    val speakerBg = Color(0x88BBDDFF)
 
     val visibleText = text.take(visibleCount)
 
@@ -86,9 +93,9 @@ fun VNTextBox(
         Box(
           modifier = Modifier
             .wrapContentWidth()
-            .background(   Color(0xCCBBDDFF), RoundedCornerShape(8.dp))
+            .background(speakerBg, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 4.dp)
-            .padding(bottom = 8.dp)
+            .padding(bottom = 6.dp)
         ) {
           Text(
             text = it,
@@ -113,10 +120,10 @@ fun VNTextBox(
           )
           .border(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.2f),
+            color = Color.White.copy(alpha = 0.15f),
             shape = RoundedCornerShape(16.dp)
           )
-          .background(Color(0x99BBDEFB))
+          .background(textBoxBg)
           .clickable(
             indication = null,
             interactionSource = remember { MutableInteractionSource() }
@@ -130,15 +137,15 @@ fun VNTextBox(
               }
             }
           }
-          .padding(16.dp)
+          .padding(horizontal = 12.dp, vertical = 10.dp)
       ) {
         Text(
           text = visibleText,
           fontSize = fontSize,
           lineHeight = lineHeight,
           color = Color(0xFF111111),
-          maxLines = 4,
-          overflow = TextOverflow.Clip,
+          maxLines = maxLines,
+          overflow = TextOverflow.Ellipsis,
           modifier = Modifier
             .fillMaxWidth()
             .padding(end = arrowSize.value.dp + 8.dp)
