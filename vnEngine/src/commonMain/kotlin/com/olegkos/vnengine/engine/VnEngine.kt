@@ -186,7 +186,6 @@ class VnEngine(
         }
 
         is SceneNode.ShowCharacter -> {
-
           val finalImage = when {
             node.flagVar != null -> {
               val value = state.variables[node.flagVar]
@@ -209,18 +208,14 @@ class VnEngine(
                 position = node.position,
                 scale = node.scale
               )
-
-          return ShowCharacter(
-            id = node.id,
-            image = imagePath,
-            position = node.position,
-            scale = node.scale,
-          )
+          advance()
+          continue
         }
 
         is SceneNode.HideCharacter -> {
           state.visibleCharacters = state.visibleCharacters.filter { it.id != node.id }
-          return HideCharacter(node.id)
+          advance()
+          continue
         }
 
         is SceneNode.DiceRoll -> {

@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -104,16 +105,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         viewModel.next()
       }
 
-      is EngineOutput.ShowCharacter -> {
-        viewModel.next()
-      }
-
       is EngineOutput.HideImage -> {
         image = null
-        viewModel.next()
-      }
-
-      is EngineOutput.HideCharacter -> {
         viewModel.next()
       }
 
@@ -175,25 +168,29 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
-    val visibleCharacters = viewModel.visibleCharacters
-
-    visibleCharacters.forEach { char ->
-      val painter = rememberPainter(viewModel.assets.character(char.image), viewModel.reader)
-      painter?.let {
-        val xOffset = positionOffsetFromString(char.position, boxWidth)
-        Image(
-          painter = it,
-          contentDescription = null,
-          modifier = Modifier
-            .align(Alignment.BottomStart)
-            .offset(x = xOffset)
-            .graphicsLayer(
-              scaleX = char.scale,
-              scaleY = char.scale,
-              transformOrigin = TransformOrigin(0.5f, 1f)
-            ),
-          contentScale = ContentScale.Fit
-        )
+    if (viewModel.isReady) {
+      val reader = viewModel.reader
+      val assets = viewModel.assets
+      viewModel.visibleCharacters.forEach { char ->
+        key(char.id) {
+          val painter = rememberPainter(assets.character(char.image), reader)
+          painter?.let {
+            val xOffset = positionOffsetFromString(char.position, boxWidth)
+            Image(
+              painter = it,
+              contentDescription = null,
+              modifier = Modifier
+                .align(Alignment.BottomStart)
+                .offset(x = xOffset)
+                .graphicsLayer(
+                  scaleX = char.scale,
+                  scaleY = char.scale,
+                  transformOrigin = TransformOrigin(0.5f, 1f)
+                ),
+              contentScale = ContentScale.Fit
+            )
+          }
+        }
       }
     }
 
@@ -563,9 +560,9 @@ private fun defaultNavGlyph(alignment: Alignment): String = when (alignment) {
 @Composable
 fun rememberPainter(
   path: String,
-  reader: AssetReader
+  reader: AssetReader,
 ): BitmapPainter? {
-  var painter by remember { mutableStateOf<BitmapPainter?>(null) }
+  var painter by remember(path) { mutableStateOf<BitmapPainter?>(null) }
 
   LaunchedEffect(path) {
     val bytes = reader.readBytes(path)

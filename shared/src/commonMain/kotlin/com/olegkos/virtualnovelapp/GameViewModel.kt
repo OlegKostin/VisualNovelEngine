@@ -28,6 +28,9 @@
     val reader: AssetReader
       get() = controller.reader
 
+    val isReady: Boolean
+      get() = controller.isReady
+
     var currentOutput by mutableStateOf<EngineOutput>(EngineOutput.Loading)
       private set
 

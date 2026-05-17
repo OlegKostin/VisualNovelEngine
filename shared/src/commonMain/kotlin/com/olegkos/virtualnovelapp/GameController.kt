@@ -89,6 +89,9 @@ class GameController(
   lateinit var reader: AssetReader
     private set
 
+  val isReady: Boolean
+    get() = ::assets.isInitialized && ::reader.isInitialized
+
   suspend fun init(): Pair<EngineOutput, SceneNode?> {
     println("ENGINE INSTANCE: ${System.identityHashCode(engine)}")
 
