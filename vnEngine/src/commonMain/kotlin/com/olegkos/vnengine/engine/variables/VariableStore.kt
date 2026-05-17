@@ -6,6 +6,10 @@ class VariableStore(
   private val intCaps: () -> Map<String, Int> = { emptyMap() }
 ) {
 
+  /** Проверки по этим статам получают дополнительно [LUCK_VAR]. */
+  private val luckBoostedCheckStats =
+    setOf("opt_str", "opt_wisdom", "opt_will", "opt_dark", "opt_light")
+
   private fun applyCapIfNeeded(name: String) {
     val cap = intCaps()[name] ?: return
     when (val v = map[name]) {
@@ -73,6 +77,20 @@ class VariableStore(
       is GameValue.FloatVal -> v.value
       else -> 0f
     }
+  }
+
+  /** Модификатор броска: основная характеристика + [opt_luck] для пяти статов проверок. */
+  fun getCheckModifier(statVar: String): Float {
+    val base = getModifier(statVar)
+    return if (statVar in luckBoostedCheckStats) {
+      base + getModifier(LUCK_VAR)
+    } else {
+      base
+    }
+  }
+
+  companion object {
+    const val LUCK_VAR = "opt_luck"
   }
   fun set(name: String, value: GameValue) {
     map[name] = value

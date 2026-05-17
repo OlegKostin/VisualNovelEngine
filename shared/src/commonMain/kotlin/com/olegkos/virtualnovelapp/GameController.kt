@@ -319,7 +319,7 @@ class GameController(
     val currentNode = engine.currentNode() as? SceneNode.DiceRoll
       ?: return next()
 
-    val currentMod = engine.variables.getModifier(currentNode.modifierVar)
+    val currentMod = engine.variables.getCheckModifier(currentNode.modifierVar)
 
     engine.state.diceModifiedResult = engine.state.diceResult!! + currentMod + extra
 
@@ -406,7 +406,7 @@ class GameController(
       else -> null
     } ?: return step()
 
-    val currentMod = engine.variables.getModifier(modifierVar)
+    val currentMod = engine.variables.getCheckModifier(modifierVar)
     engine.state.diceModifiedResult = base + currentMod + extra
 
     usedCards.forEach { cardId ->

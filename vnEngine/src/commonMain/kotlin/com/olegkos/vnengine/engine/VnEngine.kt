@@ -235,7 +235,7 @@ class VnEngine(
           }
 
           val roll = state.diceResult
-          val baseMod = variables.getModifier(node.modifierVar).round2()
+          val baseMod = variables.getCheckModifier(node.modifierVar).round2()
           val modified = state.diceModifiedResult
 
           if (roll == null) {
@@ -478,7 +478,7 @@ class VnEngine(
     canEscape: Boolean
   ): EngineOutput {
     val roll = state.diceResult
-    val baseMod = variables.getModifier(modifierVar).round2()
+    val baseMod = variables.getCheckModifier(modifierVar).round2()
     val modified = state.diceModifiedResult
 
     if (roll == null) {
@@ -727,7 +727,7 @@ class VnEngine(
     val opponentImageResolved = resolveTextVariables(node.opponent.image)
 
     val playerName = variables.getString("my_name")
-    val playerBaseModifier = variables.getModifier(node.playerModifierVar).round2()
+    val playerBaseModifier = variables.getCheckModifier(node.playerModifierVar).round2()
     val opponentBaseModifier = resolveOpponentModifier(node).round2()
 
     when (ds.phase) {
@@ -843,7 +843,7 @@ class VnEngine(
     val roll = ds.playerRoll ?: return
     if (ds.phase != DiceDuelPhase.PLAYER_MODIFY) return
 
-    val base = variables.getModifier(node.playerModifierVar)
+    val base = variables.getCheckModifier(node.playerModifierVar)
     ds.playerModified = (roll + base + extra).round2()
     ds.phase = DiceDuelPhase.RESOLVE
   }
