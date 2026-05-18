@@ -54,6 +54,48 @@ sealed interface EngineOutput {
     val navigation: SceneNode.Navigation?,
     val hotspots: List<SceneNode.Hotspot>
   ) : EngineOutput
+
+  data class ShowAcademyHub(
+    val background: String,
+    val day: Int,
+    val planning: Boolean,
+    val buildingGroups: List<AcademyBuildingGroupUi>,
+    val timeSlots: List<AcademyTimeSlotUi>,
+    val canCommit: Boolean,
+    val commitBlockedReason: String?,
+    val selectedBuildingId: String?,
+    val buildUsedToday: Boolean,
+  ) : EngineOutput
+
+  data class AcademyBuildingGroupUi(
+    val id: String,
+    val label: String,
+    val buildings: List<AcademyBuildingUi>,
+  )
+
+  data class AcademyBuildingUi(
+    val id: String,
+    val label: String,
+    val group: String,
+    val level: Int,
+    val xPercent: Float,
+    val yPercent: Float,
+    val enabled: Boolean,
+    val lockedReason: String?,
+    val selected: Boolean,
+  )
+
+  data class AcademyTimeSlotUi(
+    val phaseId: String,
+    val label: String,
+    val selectedActivityId: String?,
+    val activities: List<AcademyActivityOptionUi>,
+  )
+
+  data class AcademyActivityOptionUi(
+    val id: String,
+    val label: String,
+  )
   data class ShowCard(
     val image: String,
     val id: String

@@ -339,6 +339,10 @@ class VnEngine(
         is SceneNode.CardGame -> {
           return handleCardGameNode(node)
         }
+
+        is SceneNode.AcademyHub -> {
+          return handleAcademyHubNode(node)
+        }
       }
     }
   }
@@ -683,7 +687,8 @@ class VnEngine(
       is SceneNode.DiceRoll,
       is SceneNode.Battle,
       is SceneNode.DiceDuel,
-      is SceneNode.CardGame -> {
+      is SceneNode.CardGame,
+      is SceneNode.AcademyHub -> {
         return
       }
       else -> Unit
@@ -703,9 +708,10 @@ class VnEngine(
     state.diceDuel = null
     state.cardGame = null
     state.pendingDiceJumpScene = null
+    // academy сохраняем между jumpScenario
   }
 
-  private fun advance() {
+  internal fun advance() {
     state.pointer = state.pointer.copy(
       nodeIndex = state.pointer.nodeIndex + 1
     )

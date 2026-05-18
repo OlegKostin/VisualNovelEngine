@@ -387,6 +387,18 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
 
+        is EngineOutput.ShowAcademyHub -> {
+          if (viewModel.isReady) {
+            AcademyHubScreen(
+              output = o,
+              viewModel = viewModel,
+              backgroundPainter = { path ->
+                rememberPainter(viewModel.assets.background(path), viewModel.reader)
+              },
+            )
+          }
+        }
+
         is EngineOutput.ShowBattle -> {
           Box(modifier = Modifier.fillMaxSize()) {
             BattleScreen(

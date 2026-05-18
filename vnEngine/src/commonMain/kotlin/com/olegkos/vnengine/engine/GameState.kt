@@ -1,5 +1,7 @@
 package com.olegkos.vnengine.engine
 
+import com.olegkos.vnengine.engine.academy.AcademyConfig
+import com.olegkos.vnengine.engine.academy.AcademyState
 import com.olegkos.vnengine.engine.cardgame.CardGameState
 import com.olegkos.vnengine.scene.SceneNode.BattleVnLine
 import com.olegkos.vnengine.engine.variables.GameValue
@@ -27,6 +29,8 @@ data class GameState(
   var diceDuel: DiceDuelState? = null,
   var battle: BattleState? = null,
   var cardGame: CardGameState? = null,
+  var academy: AcademyState? = null,
+  var academyConfig: AcademyConfig? = null,
   /** Макс. целые значения для переменных после InitGame (сейчас: health, mental_health). */
   var statCapsInt: Map<String, Int> = emptyMap(),
   /** Персонажи на экране (ShowCharacter без HideCharacter); участвует в save/load. */

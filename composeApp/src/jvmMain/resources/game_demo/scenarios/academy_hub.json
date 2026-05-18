@@ -1,0 +1,13 @@
+{
+  "startSceneId": "hub",
+  "scenes": {
+    "hub": {
+      "nodes": [
+        {
+          "type": "academyHub",
+          "configFile": "game/academy/academy_config.json"
+        }
+      ]
+    }
+  }
+}

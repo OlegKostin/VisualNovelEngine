@@ -264,4 +264,9 @@ sealed interface SceneNode {
     val drawScene: String
   )
 
+  /** Глобальный хаб академии; данные в [configFile]. */
+  data class AcademyHub(
+    val configFile: String,
+  ) : SceneNode
+
 }

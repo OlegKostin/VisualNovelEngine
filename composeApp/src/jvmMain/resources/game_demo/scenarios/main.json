@@ -13,6 +13,10 @@
             {
               "text": "Выйти из комнаты",
               "nextSceneId": "exit_room"
+            },
+            {
+              "text": "Академия (MVP)",
+              "nextSceneId": "go_academy"
             }
           ]
         }
@@ -101,6 +105,14 @@
         {
           "type": "text",
           "text": "Ты споткнулся и упал. Ничего не получилось."
+        }
+      ]
+    },
+    "go_academy": {
+      "nodes": [
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "game/scenarios/academy_hub.json"
         }
       ]
     }

@@ -252,6 +252,43 @@
       currentNode = node
     }
 
+    fun academySelectBuilding(buildingId: String?) {
+      viewModelScope.launch {
+        val (output, node) = controller.academySelectBuilding(buildingId)
+        applyOutput(output, node)
+      }
+    }
+
+    fun academySetActivity(phaseId: String, activityId: String?) {
+      viewModelScope.launch {
+        val (output, node) = controller.academySetActivity(phaseId, activityId)
+        applyOutput(output, node)
+      }
+    }
+
+    fun academyCommitDay() {
+      viewModelScope.launch {
+        val (output, node) = controller.academyCommitDay()
+        applyOutput(output, node)
+      }
+    }
+
+    private fun applyOutput(output: EngineOutput, node: SceneNode?) {
+      when (output) {
+        is EngineOutput.JumpScenarioOutput -> {
+          viewModelScope.launch {
+            val (newOutput, newNode) = controller.switchScenario(output.scenarioFile)
+            currentOutput = newOutput
+            currentNode = newNode
+          }
+        }
+        else -> {
+          currentOutput = output
+          currentNode = node
+        }
+      }
+    }
+
     fun useCards(cardIds: List<String>) {
       cardIds.forEach { controller.consumeCard(it) }
     }

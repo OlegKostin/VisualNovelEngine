@@ -38,6 +38,7 @@ import com.olegkos.vnengine.scene.SceneNode.Navigation
 import com.olegkos.vnengine.scene.SceneNode.PlayerRefs
 import com.olegkos.vnengine.scene.SceneNode.SceneView
 import com.olegkos.vnengine.scene.SceneNode.SetVar
+import com.olegkos.vnengine.scene.SceneNode.AcademyHub
 import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
 import com.olegkos.vnengine.scene.SceneNode.Switch
 import com.olegkos.vnengine.scene.SceneNode.SwitchRange
@@ -318,6 +319,8 @@ class JsonScenarioParser : ScenarioParser {
                 },
                 defaultScene = nodeJson.defaultScene
               )
+
+              is AcademyHubNode -> AcademyHub(configFile = nodeJson.configFile)
             }
           }
         )
@@ -692,6 +695,12 @@ data class CardGameTransitionsJson(
   val loseScene: String,
   val drawScene: String
 )
+
+@Serializable
+@SerialName("academyHub")
+data class AcademyHubNode(
+  val configFile: String,
+) : SceneNodeJson()
 
 @Serializable
 @SerialName("diceDuel")

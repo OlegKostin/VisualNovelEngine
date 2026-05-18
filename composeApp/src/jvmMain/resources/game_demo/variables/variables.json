@@ -1,5 +1,8 @@
 {
   "opt_str": 1.0,
   "opt_wisdom": 0,
-  "opt_luck": 0
+  "opt_luck": 0,
+  "academy_day": 1,
+  "building_library_level": 0,
+  "building_dorm_level": 0
 }

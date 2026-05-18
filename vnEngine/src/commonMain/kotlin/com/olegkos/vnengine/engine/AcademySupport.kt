@@ -1,0 +1,316 @@
+package com.olegkos.vnengine.engine
+
+import com.olegkos.vnengine.engine.EngineOutput.JumpScenarioOutput
+import com.olegkos.vnengine.engine.EngineOutput.ShowAcademyHub
+import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
+import com.olegkos.vnengine.engine.academy.AcademyBuildingConfig
+import com.olegkos.vnengine.engine.academy.AcademyConfig
+import com.olegkos.vnengine.engine.academy.AcademyHubPhase
+import com.olegkos.vnengine.engine.academy.AcademyRandomEventConfig
+import com.olegkos.vnengine.engine.academy.AcademyRequirementJson
+import com.olegkos.vnengine.engine.academy.AcademyState
+import com.olegkos.vnengine.engine.academy.toRequirement
+import com.olegkos.vnengine.engine.variables.GameValue
+import com.olegkos.vnengine.scene.SceneNode
+import kotlin.random.Random
+
+internal fun VnEngine.handleAcademyHubNode(node: SceneNode.AcademyHub): EngineOutput {
+  val gs = state.academy ?: AcademyState(configPath = node.configFile).also { state.academy = it }
+  if (gs.configPath != node.configFile) {
+    state.academy = AcademyState(configPath = node.configFile).also { state.academy = it }
+  }
+  return buildAcademyHubOutput(node, requireNotNull(state.academy))
+}
+
+fun VnEngine.loadAcademyConfig(config: AcademyConfig) {
+  state.academyConfig = config
+}
+
+fun VnEngine.academySelectBuilding(buildingId: String?) {
+  val gs = state.academy ?: return
+  if (gs.hubPhase != AcademyHubPhase.PLANNING || gs.buildUsedToday) return
+  gs.selectedBuildingId = buildingId
+}
+
+fun VnEngine.academySetActivity(phaseId: String, activityId: String?) {
+  val gs = state.academy ?: return
+  if (gs.hubPhase != AcademyHubPhase.PLANNING) return
+  if (activityId == null) {
+    gs.planByPhase.remove(phaseId)
+  } else {
+    gs.planByPhase[phaseId] = activityId
+  }
+}
+
+fun VnEngine.academyCommitDay(returnScenario: String): EngineOutput? {
+  val node = currentAcademyHubNode() ?: return null
+  val gs = state.academy ?: return null
+  val config = state.academyConfig ?: return null
+  if (gs.hubPhase != AcademyHubPhase.PLANNING) return null
+  if (validateAcademyPlan(config, gs) != null) return null
+
+  gs.returnScenario = returnScenario
+  gs.randomEventId = pickAcademyRandomEvent(config)?.id
+  gs.playbackQueue = buildAcademyPlaybackQueue(config, gs)
+  gs.playbackIndex = 0
+  gs.hubPhase = AcademyHubPhase.PLAYBACK
+  gs.returnPointer = state.pointer.copy()
+  gs.buildUsedToday = gs.selectedBuildingId != null
+
+  return academyStartCurrentPlayback()
+}
+
+/** После EndOfScene микро-сценария: следующий jump или null = вернуться в хаб. */
+fun VnEngine.academyAdvanceAfterScenario(): EngineOutput? {
+  val gs = state.academy ?: return null
+  if (gs.hubPhase != AcademyHubPhase.PLAYBACK) return null
+
+  gs.playbackIndex++
+  if (gs.playbackIndex < gs.playbackQueue.size) {
+    return JumpScenarioOutput(gs.playbackQueue[gs.playbackIndex])
+  }
+
+  academyFinishDay()
+  gs.hubPhase = AcademyHubPhase.PLANNING
+  gs.selectedBuildingId = null
+  gs.planByPhase.clear()
+  gs.playbackQueue = emptyList()
+  gs.playbackIndex = 0
+  gs.randomEventId = null
+  gs.buildUsedToday = false
+  return null
+}
+
+fun VnEngine.academyHubReturnPointer(): NodePointer? = state.academy?.returnPointer
+fun VnEngine.academyHubReturnScenario(): String? = state.academy?.returnScenario
+
+private fun VnEngine.academyStartCurrentPlayback(): EngineOutput {
+  val gs = state.academy ?: return EndOfScene
+  val path = gs.playbackQueue.getOrNull(gs.playbackIndex) ?: return EndOfScene
+  state.scenarioStack.addLast(state.pointer.copy())
+  advance()
+  return JumpScenarioOutput(path)
+}
+
+private fun VnEngine.academyFinishDay() {
+  val config = state.academyConfig ?: return
+  val dayVar = config.dayVar
+  val current = when (val v = state.variables[dayVar]) {
+    is GameValue.IntVal -> v.value
+    is GameValue.FloatVal -> v.value.toInt()
+    else -> 0
+  }
+  state.variables[dayVar] = GameValue.IntVal(current + 1)
+}
+
+private fun VnEngine.buildAcademyPlaybackQueue(
+  config: AcademyConfig,
+  gs: AcademyState,
+): List<String> {
+  val queue = mutableListOf<String>()
+
+  gs.selectedBuildingId?.let { buildId ->
+    buildingScenarioFor(config, buildId)?.let(queue::add)
+  }
+
+  val random = gs.randomEventId?.let { id -> config.randomEvents.firstOrNull { it.id == id } }
+
+  for (phase in config.phases) {
+    val activityId = gs.planByPhase[phase.id] ?: continue
+    val activity = config.activities.firstOrNull { it.id == activityId } ?: continue
+    queue.add(activity.scenarioFile)
+    if (random != null && random.afterPhase == phase.id) {
+      queue.add(random.scenarioFile)
+    }
+  }
+
+  return queue
+}
+
+private fun VnEngine.pickAcademyRandomEvent(config: AcademyConfig): AcademyRandomEventConfig? {
+  val eligible = config.randomEvents
+    .filter { event -> meetsRequires(event.requires) }
+    .filter { it.weight > 0 }
+  if (eligible.isEmpty()) return null
+
+  val total = eligible.sumOf { it.weight.coerceAtLeast(1) }
+  var roll = Random.nextInt(total) + 1
+  var picked = eligible.last()
+  for (event in eligible) {
+    roll -= event.weight
+    if (roll <= 0) {
+      picked = event
+      break
+    }
+  }
+  return if (Random.nextDouble() < picked.chance.coerceIn(0.0, 1.0)) picked else null
+}
+
+private fun VnEngine.buildingScenarioFor(
+  config: AcademyConfig,
+  buildingId: String,
+): String? {
+  val building = config.buildings.firstOrNull { it.id == buildingId } ?: return null
+  val currentLevel = buildingLevel(building)
+  val next = building.levels.firstOrNull { it.level == currentLevel + 1 } ?: return null
+  if (!meetsRequires(next.requires)) return null
+  return next.scenarioFile
+}
+
+private fun VnEngine.buildingLevel(building: AcademyBuildingConfig): Int =
+  when (val v = state.variables[building.levelVar]) {
+    is GameValue.IntVal -> v.value
+    is GameValue.FloatVal -> v.value.toInt()
+    else -> 0
+  }
+
+private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState): String? {
+  for (phase in config.phases) {
+    val activityId = gs.planByPhase[phase.id]
+      ?: return "Выберите действие: ${phase.label}"
+    val activity = config.activities.firstOrNull { it.id == activityId }
+      ?: return "Неизвестное действие"
+    if (activity.phases.isNotEmpty() && phase.id !in activity.phases) {
+      return "${activity.label} недоступно в фазе ${phase.label}"
+    }
+    if (!meetsRequires(activity.requires)) {
+      return "${activity.label} пока недоступно"
+    }
+  }
+  gs.selectedBuildingId?.let { id ->
+    if (buildingScenarioFor(config, id) == null) {
+      return "Постройка недоступна"
+    }
+  }
+  return null
+}
+
+private fun VnEngine.meetsRequires(reqs: List<AcademyRequirementJson>): Boolean =
+  reqs.all { matchesRequirement(it.toRequirement()) }
+
+fun VnEngine.matchesRequirement(req: SceneNode.WeightedRandomJump.Requirement): Boolean {
+  val current = state.variables[req.variable] ?: return false
+  val expected = req.value
+
+  fun cmpNumbers(a: Float, b: Float): Boolean = when (req.op) {
+    SceneNode.WeightedRandomJump.Op.EQ -> a == b
+    SceneNode.WeightedRandomJump.Op.NEQ -> a != b
+    SceneNode.WeightedRandomJump.Op.GTE -> a >= b
+    SceneNode.WeightedRandomJump.Op.LTE -> a <= b
+    SceneNode.WeightedRandomJump.Op.GT -> a > b
+    SceneNode.WeightedRandomJump.Op.LT -> a < b
+  }
+
+  return when {
+    current is GameValue.IntVal && expected is GameValue.IntVal ->
+      cmpNumbers(current.value.toFloat(), expected.value.toFloat())
+    current is GameValue.FloatVal && expected is GameValue.FloatVal ->
+      cmpNumbers(current.value, expected.value)
+    current is GameValue.IntVal && expected is GameValue.FloatVal ->
+      cmpNumbers(current.value.toFloat(), expected.value)
+    current is GameValue.FloatVal && expected is GameValue.IntVal ->
+      cmpNumbers(current.value, expected.value.toFloat())
+    current is GameValue.Bool && expected is GameValue.Bool ->
+      current.value == expected.value
+    current is GameValue.StringVal && expected is GameValue.StringVal ->
+      current.value == expected.value
+    else -> false
+  }
+}
+
+fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState): ShowAcademyHub {
+  val config = state.academyConfig
+    ?: error("Academy config not loaded. Call loadAcademyConfig first.")
+
+  val day = when (val v = state.variables[config.dayVar]) {
+    is GameValue.IntVal -> v.value
+    is GameValue.FloatVal -> v.value.toInt()
+    else -> 0
+  }
+
+  val validationError = if (gs.hubPhase == AcademyHubPhase.PLANNING) {
+    validateAcademyPlan(config, gs)
+  } else null
+
+  val groups = config.buildings
+    .groupBy { it.group }
+    .map { (groupId, buildings) ->
+      EngineOutput.AcademyBuildingGroupUi(
+        id = groupId,
+        label = groupLabel(groupId),
+        buildings = buildings.map { b -> buildingToUi(b, gs, config) },
+      )
+    }
+
+  val phases = config.phases.map { phase ->
+    val selectedId = gs.planByPhase[phase.id]
+    EngineOutput.AcademyTimeSlotUi(
+      phaseId = phase.id,
+      label = phase.label,
+      selectedActivityId = selectedId,
+      activities = config.activities
+        .filter { act ->
+          (act.phases.isEmpty() || phase.id in act.phases) &&
+            meetsRequires(act.requires)
+        }
+        .map {
+          EngineOutput.AcademyActivityOptionUi(
+            id = it.id,
+            label = it.label,
+          )
+        },
+    )
+  }
+
+  return ShowAcademyHub(
+    background = config.background,
+    day = day,
+    planning = gs.hubPhase == AcademyHubPhase.PLANNING,
+    buildingGroups = groups,
+    timeSlots = phases,
+    canCommit = validationError == null && gs.hubPhase == AcademyHubPhase.PLANNING,
+    commitBlockedReason = validationError,
+    selectedBuildingId = gs.selectedBuildingId,
+    buildUsedToday = gs.buildUsedToday,
+  )
+}
+
+private fun VnEngine.buildingToUi(
+  building: AcademyBuildingConfig,
+  gs: AcademyState,
+  config: AcademyConfig,
+): EngineOutput.AcademyBuildingUi {
+  val level = buildingLevel(building)
+  val next = building.levels.firstOrNull { it.level == level + 1 }
+  val levelOk = next?.requires?.let { meetsRequires(it) } ?: false
+  val enabled = gs.hubPhase == AcademyHubPhase.PLANNING &&
+    !gs.buildUsedToday &&
+    next != null &&
+    levelOk
+  val lockedReason = when {
+    gs.buildUsedToday -> "Стройка уже выбрана сегодня"
+    next == null -> if (level > 0) "Макс. уровень" else "Недоступно"
+    !levelOk -> "Условия не выполнены"
+    else -> null
+  }
+  return EngineOutput.AcademyBuildingUi(
+    id = building.id,
+    label = building.label,
+    group = building.group,
+    level = level,
+    xPercent = building.xPercent,
+    yPercent = building.yPercent,
+    enabled = enabled,
+    lockedReason = lockedReason,
+    selected = gs.selectedBuildingId == building.id,
+  )
+}
+
+private fun groupLabel(groupId: String): String = when (groupId) {
+  "study" -> "Учёба"
+  "life" -> "Быт"
+  else -> groupId.replaceFirstChar { it.uppercase() }
+}
+
+fun VnEngine.currentAcademyHubNode(): SceneNode.AcademyHub? =
+  currentNode() as? SceneNode.AcademyHub

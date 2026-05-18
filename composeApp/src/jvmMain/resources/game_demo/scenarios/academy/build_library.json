@@ -1,0 +1,18 @@
+{
+  "startSceneId": "build",
+  "scenes": {
+    "build": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Вы закладываете фундамент библиотеки. Пыль, чертежи, запах свежего дерева."
+        },
+        {
+          "type": "setVar",
+          "varName": "building_library_level",
+          "value": { "type": "int", "value": 1 }
+        }
+      ]
+    }
+  }
+}

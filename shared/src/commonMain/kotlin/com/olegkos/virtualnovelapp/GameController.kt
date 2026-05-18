@@ -16,7 +16,18 @@ import com.olegkos.vnengine.engine.NodePointer
 import com.olegkos.vnengine.engine.UiCard
 import com.olegkos.vnengine.engine.VisibleCharacter
 import com.olegkos.vnengine.engine.VnEngine
+import com.olegkos.vnengine.engine.academy.AcademyConfigLoader
+import com.olegkos.vnengine.engine.academy.AcademyHubPhase
+import com.olegkos.vnengine.engine.academy.AcademyState
+import com.olegkos.vnengine.engine.academyAdvanceAfterScenario
+import com.olegkos.vnengine.engine.academyCommitDay
+import com.olegkos.vnengine.engine.academyHubReturnPointer
+import com.olegkos.vnengine.engine.academyHubReturnScenario
+import com.olegkos.vnengine.engine.academySelectBuilding
+import com.olegkos.vnengine.engine.academySetActivity
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
+import com.olegkos.vnengine.engine.buildAcademyHubOutput
+import com.olegkos.vnengine.engine.loadAcademyConfig
 import com.olegkos.vnengine.engine.cardGameBattleContinue
 import com.olegkos.vnengine.engine.cardGameBreakdownNext
 import com.olegkos.vnengine.engine.cardGameConfirmClash
@@ -33,6 +44,7 @@ import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
 import com.olegkos.vnengine.scene.SubClass.ClassStartingCard
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -157,6 +169,14 @@ class GameController(
     return step()
   }
 
+  fun step(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    (engine.currentNode() as? SceneNode.AcademyHub)?.let { hub ->
+      runBlocking { ensureAcademyConfig(hub.configFile) }
+    }
+    return nextInternal()
+  }
+
   fun next(option: Option? = null): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
@@ -165,6 +185,11 @@ class GameController(
     }
 
     engine.advanceExternal(option)
+    return nextInternal()
+  }
+
+  private fun nextInternal(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
 
     val output = engine.step()
     purgeSavesAndMetaIfInitGame(output)
@@ -206,9 +231,84 @@ class GameController(
       }
 
       is EngineOutput.JumpScenarioOutput -> output to null
-      is EngineOutput.EndOfScene -> output to null
+      is EngineOutput.EndOfScene -> {
+        if (engine.state.academy?.hubPhase == AcademyHubPhase.PLAYBACK) {
+          return runBlocking { advanceAcademyPlayback() }
+        }
+        output to null
+      }
+
+      is EngineOutput.ShowAcademyHub -> output to engine.currentNode()
 
       else -> output to engine.currentNode()
+    }
+  }
+
+  suspend fun ensureAcademyConfig(configFile: String) {
+    val engine = engine ?: return
+    if (engine.state.academyConfig != null && engine.state.academy?.configPath == configFile) {
+      return
+    }
+    val raw = withContext(ioDispatcher) {
+      assetReader.readText(assetPath(configFile))
+    }
+    engine.loadAcademyConfig(AcademyConfigLoader.parse(raw))
+    if (engine.state.academy == null) {
+      engine.state.academy = AcademyState(configPath = configFile)
+    }
+  }
+
+  private fun assetPath(relative: String): String =
+    if (relative.startsWith("game/")) relative else basePath + relative
+
+  suspend fun academySelectBuilding(buildingId: String?): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val engine = requireEngine
+    engine.academySelectBuilding(buildingId)
+    return academyHubPair(engine)
+  }
+
+  suspend fun academySetActivity(phaseId: String, activityId: String?): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val engine = requireEngine
+    engine.academySetActivity(phaseId, activityId)
+    return academyHubPair(engine)
+  }
+
+  suspend fun academyCommitDay(): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val out = requireEngine.academyCommitDay(currentScenario)
+      ?: return step()
+    if (out is EngineOutput.JumpScenarioOutput) {
+      return switchScenario(out.scenarioFile)
+    }
+    return out to requireEngine.currentNode()
+  }
+
+  private fun academyHubPair(engine: VnEngine): Pair<EngineOutput, SceneNode?> {
+    val node = engine.currentNode() as? SceneNode.AcademyHub
+      ?: return step()
+    val gs = engine.state.academy ?: return step()
+    return engine.buildAcademyHubOutput(node, gs) to node
+  }
+
+  private suspend fun ensureAcademyConfigForCurrentHub() {
+    val hub = requireEngine.currentNode() as? SceneNode.AcademyHub ?: return
+    ensureAcademyConfig(hub.configFile)
+  }
+
+  private suspend fun advanceAcademyPlayback(): Pair<EngineOutput, SceneNode?> {
+    val engine = requireEngine
+    when (val nextOut = engine.academyAdvanceAfterScenario()) {
+      is EngineOutput.JumpScenarioOutput -> return switchScenario(nextOut.scenarioFile)
+      null -> {
+        val ptr = engine.academyHubReturnPointer() ?: return step()
+        val ret = engine.academyHubReturnScenario() ?: return step()
+        switchScenario(ret)
+        engine.state.pointer = ptr
+        return step()
+      }
+      else -> return nextOut to engine.currentNode()
     }
   }
 
@@ -458,30 +558,6 @@ class GameController(
       val raw = assetReader.readText(path)
       parser.parse(raw)
     }
-
-  private fun step(): Pair<EngineOutput, SceneNode?> {
-    val engine = engine ?: return EngineOutput.Loading to null
-
-    val output = engine.step()
-    purgeSavesAndMetaIfInitGame(output)
-
-    return when (output) {
-
-      is EngineOutput.ShowDiceDuel -> {
-        val cards = getPlayerCards()
-        output.copy(cards = cards) to engine.currentNode()
-      }
-
-      is EngineOutput.ShowCardGame -> enrichCardGameOutput(output) to engine.currentNode()
-
-      is EngineOutput.ShowDice -> {
-        val cards = getPlayerCards()
-        output.copy(cards = cards) to engine.currentNode()
-      }
-
-      else -> output to engine.currentNode()
-    }
-  }
 
   private fun buildDiceId(): String {
     val engine = requireEngine

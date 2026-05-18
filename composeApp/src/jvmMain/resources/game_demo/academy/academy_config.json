@@ -1,0 +1,72 @@
+{
+  "background": "backgrounds/02prev_bath/02holl.png",
+  "dayVar": "academy_day",
+  "buildings": [
+    {
+      "id": "library",
+      "label": "Библиотека",
+      "group": "study",
+      "levelVar": "building_library_level",
+      "xPercent": 18,
+      "yPercent": 55,
+      "levels": [
+        {
+          "level": 1,
+          "scenarioFile": "game/scenarios/academy/build_library.json",
+          "requires": []
+        }
+      ]
+    },
+    {
+      "id": "dorm",
+      "label": "Общежитие",
+      "group": "life",
+      "levelVar": "building_dorm_level",
+      "xPercent": 55,
+      "yPercent": 50,
+      "levels": [
+        {
+          "level": 1,
+          "scenarioFile": "game/scenarios/academy/build_dorm.json",
+          "requires": [
+            {
+              "variable": "academy_day",
+              "op": "GTE",
+              "value": { "type": "int", "value": 0 }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "id": "study",
+      "label": "Учёба",
+      "scenarioFile": "game/scenarios/academy/act_study.json",
+      "phases": ["morning", "day"]
+    },
+    {
+      "id": "rest",
+      "label": "Отдых",
+      "scenarioFile": "game/scenarios/academy/act_rest.json",
+      "phases": ["evening", "night"]
+    },
+    {
+      "id": "walk",
+      "label": "Прогулка",
+      "scenarioFile": "game/scenarios/academy/act_walk.json",
+      "phases": ["day", "evening"]
+    }
+  ],
+  "randomEvents": [
+    {
+      "id": "visitor",
+      "scenarioFile": "game/scenarios/academy/random_visitor.json",
+      "chance": 0.35,
+      "afterPhase": "day",
+      "weight": 1,
+      "requires": []
+    }
+  ]
+}
