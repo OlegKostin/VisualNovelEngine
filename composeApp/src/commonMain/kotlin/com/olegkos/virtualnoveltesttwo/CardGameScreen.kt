@@ -79,18 +79,11 @@ fun CardGameScreen(
       CardGamePhase.SELECT_CLASH -> selectedClash = emptySet()
       CardGamePhase.BATTLE_REVEAL,
       CardGamePhase.SCORE_BREAKDOWN,
-      CardGamePhase.VN_AFTER_CLASH,
       CardGamePhase.RESULT -> Unit
     }
   }
 
   when (output.phase) {
-    CardGamePhase.VN_AFTER_CLASH -> CardGameVnOverlay(
-      speaker = output.vnSpeaker,
-      text = output.vnText.orEmpty(),
-      onNext = { viewModel.cardGameVnNext() }
-    )
-
     CardGamePhase.RESULT -> Box(
       Modifier.fillMaxSize().background(Bg).padding(24.dp),
       contentAlignment = Alignment.Center
@@ -141,7 +134,8 @@ fun CardGameScreen(
       onClashChange = { selectedClash = it },
       onConfirmClash = { viewModel.cardGameConfirmClash(selectedClash.toList()) },
       onBattleContinue = { viewModel.cardGameBattleContinue() },
-      onBreakdownNext = { viewModel.cardGameBreakdownNext() }
+      onBreakdownNext = { viewModel.cardGameBreakdownNext() },
+      onVnNext = { viewModel.cardGameVnNext() },
     )
   }
 }
@@ -155,7 +149,8 @@ private fun CardGameMainRow(
   onClashChange: (Set<String>) -> Unit,
   onConfirmClash: () -> Unit,
   onBattleContinue: () -> Unit,
-  onBreakdownNext: () -> Unit
+  onBreakdownNext: () -> Unit,
+  onVnNext: () -> Unit,
 ) {
   var expandedCard by remember(output.gameId) { mutableStateOf<EngineOutput.CardGameUiCard?>(null) }
 
@@ -214,6 +209,18 @@ private fun CardGameMainRow(
         .padding(end = 12.dp, top = 12.dp, bottom = 12.dp)
     )
   }
+
+    if (
+      output.phase == CardGamePhase.BATTLE_REVEAL &&
+      !output.vnPlaybackComplete &&
+      output.vnText != null
+    ) {
+      CardGameVnOverlay(
+        speaker = output.vnSpeaker,
+        text = output.vnText!!,
+        onNext = onVnNext,
+      )
+    }
 
     if (isBattleArena) {
       expandedCard?.let { card ->
@@ -339,7 +346,7 @@ private fun BattleArenaScreen(
   Spacer(Modifier.height(12.dp))
   LabeledCardRow("Карты противника", output.enemyPlayed, cardW, cardH, cardPainter, showEffective, onCardClick)
 
-  if (output.phase == CardGamePhase.BATTLE_REVEAL) {
+  if (output.phase == CardGamePhase.BATTLE_REVEAL && output.vnPlaybackComplete) {
     Spacer(Modifier.height(16.dp))
     CardGameAction("Разбор боя", onClick = onBattleContinue)
   } else if (output.phase == CardGamePhase.SCORE_BREAKDOWN) {
@@ -572,7 +579,7 @@ private fun ScoreBreakdownBlock(
     )
   }
   CardGameAction(
-    text = if (side == "COMPARE") "Далее — текст после боя" else "Далее",
+    text = if (side == "COMPARE") "К результату" else "Далее",
     onClick = onNext
   )
 }
@@ -580,7 +587,11 @@ private fun ScoreBreakdownBlock(
 @Composable
 private fun CardGameVnOverlay(speaker: String?, text: String, onNext: () -> Unit) {
   Box(
-    Modifier.fillMaxSize().background(Bg).clickable(onClick = onNext).padding(20.dp),
+    Modifier
+      .fillMaxSize()
+      .background(Color(0x99000000))
+      .clickable(onClick = onNext)
+      .padding(20.dp),
     contentAlignment = Alignment.BottomStart
   ) {
     Column(

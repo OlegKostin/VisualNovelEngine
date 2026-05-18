@@ -32,7 +32,6 @@ internal fun VnEngine.handleCardGameNode(node: SceneNode.CardGame): EngineOutput
     CardGamePhase.SELECT_CLASH -> buildCardGameOutput(node, gs)
     CardGamePhase.BATTLE_REVEAL -> buildCardGameOutput(node, gs)
     CardGamePhase.SCORE_BREAKDOWN -> buildCardGameOutput(node, gs)
-    CardGamePhase.VN_AFTER_CLASH -> buildCardGameOutput(node, gs)
     CardGamePhase.RESULT -> buildCardGameOutput(node, gs)
   }
 }
@@ -84,12 +83,15 @@ private fun VnEngine.resolveClashAndShowBattle(gs: CardGameState) {
   val playerTags = gs.playerClash.map { it.toTagValue() }
   val enemyTags = gs.enemyClash.map { it.toTagValue() }
   gs.clashResolution = CardGameLogic.resolveClash(playerTags, enemyTags, gs.battleTone)
+  gs.vnIndex = 0
   gs.phase = CardGamePhase.BATTLE_REVEAL
 }
 
 fun VnEngine.cardGameBattleContinue() {
+  val node = currentCardGameNode() ?: return
   val gs = state.cardGame ?: return
   if (gs.phase != CardGamePhase.BATTLE_REVEAL) return
+  if (!cardGameVnPlaybackComplete(node, gs)) return
   gs.breakdownSide = BreakdownSide.PLAYER
   gs.breakdownStepIndex = 0
   gs.phase = CardGamePhase.SCORE_BREAKDOWN
@@ -126,8 +128,7 @@ fun VnEngine.cardGameBreakdownNext() {
         resolution.playerTotal < resolution.enemyTotal -> CardGameOutcome.LOSE
         else -> CardGameOutcome.DRAW
       }
-      gs.vnIndex = 0
-      gs.phase = CardGamePhase.VN_AFTER_CLASH
+      gs.phase = CardGamePhase.RESULT
     }
   }
 }
@@ -135,18 +136,14 @@ fun VnEngine.cardGameBreakdownNext() {
 fun VnEngine.cardGameVnNext() {
   val node = currentCardGameNode() ?: return
   val gs = state.cardGame ?: return
-  if (gs.phase != CardGamePhase.VN_AFTER_CLASH) return
-
-  if (node.vnAfterClash.isEmpty()) {
-    gs.phase = CardGamePhase.RESULT
-    return
-  }
-
+  if (gs.phase != CardGamePhase.BATTLE_REVEAL) return
+  if (node.vnAfterClash.isEmpty()) return
+  if (gs.vnIndex >= node.vnAfterClash.size) return
   gs.vnIndex++
-  if (gs.vnIndex >= node.vnAfterClash.size) {
-    gs.phase = CardGamePhase.RESULT
-  }
 }
+
+private fun cardGameVnPlaybackComplete(node: SceneNode.CardGame, gs: CardGameState): Boolean =
+  node.vnAfterClash.isEmpty() || gs.vnIndex >= node.vnAfterClash.size
 
 fun VnEngine.cardGameFinish(): CardGameFinishResult? {
   val node = currentCardGameNode() ?: return null
@@ -206,9 +203,14 @@ fun VnEngine.buildCardGameOutput(node: SceneNode.CardGame, gs: CardGameState): S
     )
   }
 
-  val vnLine = if (gs.phase == CardGamePhase.VN_AFTER_CLASH) {
-    node.vnAfterClash.getOrNull(gs.vnIndex)
-  } else null
+  val vnLine = if (
+    gs.phase == CardGamePhase.BATTLE_REVEAL &&
+    gs.vnIndex < node.vnAfterClash.size
+  ) {
+    node.vnAfterClash[gs.vnIndex]
+  } else {
+    null
+  }
 
   val defaultSpeaker = node.speaker?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables)
 
@@ -244,6 +246,7 @@ fun VnEngine.buildCardGameOutput(node: SceneNode.CardGame, gs: CardGameState): S
     vnSpeaker = vnLine?.speaker?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables)
       ?: defaultSpeaker,
     vnText = vnLine?.let { resolveTextVariables(it.text) },
+    vnPlaybackComplete = cardGameVnPlaybackComplete(node, gs),
     outcome = gs.outcome,
     resultText = resultText
   )

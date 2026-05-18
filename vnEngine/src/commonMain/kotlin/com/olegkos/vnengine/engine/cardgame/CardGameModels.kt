@@ -38,10 +38,9 @@ enum class CardGamePhase {
   /** Meta (сверху) + колода 8→4 (снизу) на одном экране. */
   DRAFT,
   SELECT_CLASH,
-  /** Карты игрока и врага открыты после clash. */
+  /** Карты открыты; здесь же проигрывается vnAfterClash. */
   BATTLE_REVEAL,
   SCORE_BREAKDOWN,
-  VN_AFTER_CLASH,
   RESULT
 }
 
