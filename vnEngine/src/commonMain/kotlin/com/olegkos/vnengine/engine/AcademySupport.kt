@@ -8,6 +8,7 @@ import com.olegkos.vnengine.engine.academy.AcademyConfig
 import com.olegkos.vnengine.engine.academy.AcademyHubPhase
 import com.olegkos.vnengine.engine.academy.AcademyRandomEventConfig
 import com.olegkos.vnengine.engine.academy.AcademyRequirementJson
+import com.olegkos.vnengine.engine.academy.AcademyPlaybackStep
 import com.olegkos.vnengine.engine.academy.AcademyState
 import com.olegkos.vnengine.engine.academy.toRequirement
 import com.olegkos.vnengine.engine.variables.GameValue
@@ -67,7 +68,7 @@ fun VnEngine.academyAdvanceAfterScenario(): EngineOutput? {
 
   gs.playbackIndex++
   if (gs.playbackIndex < gs.playbackQueue.size) {
-    return JumpScenarioOutput(gs.playbackQueue[gs.playbackIndex])
+    return beginAcademyPlaybackStep(gs.playbackQueue[gs.playbackIndex])
   }
 
   academyFinishDay()
@@ -86,10 +87,35 @@ fun VnEngine.academyHubReturnScenario(): String? = state.academy?.returnScenario
 
 private fun VnEngine.academyStartCurrentPlayback(): EngineOutput {
   val gs = state.academy ?: return EndOfScene
-  val path = gs.playbackQueue.getOrNull(gs.playbackIndex) ?: return EndOfScene
+  val step = gs.playbackQueue.getOrNull(gs.playbackIndex) ?: return EndOfScene
   state.scenarioStack.addLast(state.pointer.copy())
   advance()
-  return JumpScenarioOutput(path)
+  return beginAcademyPlaybackStep(step)
+}
+
+private fun VnEngine.beginAcademyPlaybackStep(step: AcademyPlaybackStep): EngineOutput {
+  if (step.phaseId.isNotEmpty()) {
+    state.variables["academy_phase_id"] = GameValue.StringVal(step.phaseId)
+    state.variables["academy_phase_label"] = GameValue.StringVal(step.phaseLabel)
+  } else {
+    state.variables.remove("academy_phase_id")
+    state.variables.remove("academy_phase_label")
+  }
+  if (step.activityLabel.isNotEmpty()) {
+    state.variables["academy_activity_label"] = GameValue.StringVal(step.activityLabel)
+  } else {
+    state.variables.remove("academy_activity_label")
+  }
+  return JumpScenarioOutput(step.scenarioFile)
+}
+
+fun VnEngine.resetScenarioEntry(startSceneId: String) {
+  state.pointer = NodePointer(startSceneId, 0)
+  state.diceResult = null
+  state.diceModifiedResult = null
+  state.pendingDiceJumpScene = null
+  state.pendingOutput = null
+  state.waitingForUi = false
 }
 
 private fun VnEngine.academyFinishDay() {
@@ -106,11 +132,19 @@ private fun VnEngine.academyFinishDay() {
 private fun VnEngine.buildAcademyPlaybackQueue(
   config: AcademyConfig,
   gs: AcademyState,
-): List<String> {
-  val queue = mutableListOf<String>()
+): List<AcademyPlaybackStep> {
+  val queue = mutableListOf<AcademyPlaybackStep>()
 
   gs.selectedBuildingId?.let { buildId ->
-    buildingScenarioFor(config, buildId)?.let(queue::add)
+    val building = config.buildings.firstOrNull { it.id == buildId }
+    buildingScenarioFor(config, buildId)?.let { path ->
+      queue.add(
+        AcademyPlaybackStep(
+          scenarioFile = path,
+          activityLabel = building?.label ?: "Стройка",
+        )
+      )
+    }
   }
 
   val random = gs.randomEventId?.let { id -> config.randomEvents.firstOrNull { it.id == id } }
@@ -118,9 +152,22 @@ private fun VnEngine.buildAcademyPlaybackQueue(
   for (phase in config.phases) {
     val activityId = gs.planByPhase[phase.id] ?: continue
     val activity = config.activities.firstOrNull { it.id == activityId } ?: continue
-    queue.add(activity.scenarioFile)
+    queue.add(
+      AcademyPlaybackStep(
+        scenarioFile = activity.scenarioFile,
+        phaseId = phase.id,
+        phaseLabel = phase.label,
+        activityLabel = activity.label,
+      )
+    )
     if (random != null && random.afterPhase == phase.id) {
-      queue.add(random.scenarioFile)
+      queue.add(
+        AcademyPlaybackStep(
+          scenarioFile = random.scenarioFile,
+          phaseLabel = "Случайное событие",
+          activityLabel = random.id,
+        )
+      )
     }
   }
 

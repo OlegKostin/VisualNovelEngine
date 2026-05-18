@@ -28,6 +28,7 @@ import com.olegkos.vnengine.engine.academySetActivity
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.buildAcademyHubOutput
 import com.olegkos.vnengine.engine.loadAcademyConfig
+import com.olegkos.vnengine.engine.resetScenarioEntry
 import com.olegkos.vnengine.engine.cardGameBattleContinue
 import com.olegkos.vnengine.engine.cardGameBreakdownNext
 import com.olegkos.vnengine.engine.cardGameConfirmClash
@@ -314,9 +315,10 @@ class GameController(
 
   suspend fun switchScenario(path: String): Pair<EngineOutput, SceneNode?> {
     val scenario = loadScenario(path)
+    val engine = engine ?: return EngineOutput.Loading to null
 
-    engine?.addScenes(scenario.scenes)
-    engine?.state?.pointer = NodePointer(scenario.startSceneId, 0)
+    engine.addScenes(scenario.scenes)
+    engine.resetScenarioEntry(scenario.startSceneId)
 
     currentScenario = path
 

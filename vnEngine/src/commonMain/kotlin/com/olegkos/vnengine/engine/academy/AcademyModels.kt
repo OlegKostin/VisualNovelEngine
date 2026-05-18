@@ -123,12 +123,20 @@ enum class AcademyHubPhase {
   PLAYBACK,
 }
 
+/** Один шаг проигрывания дня; отдельный шаг даже при том же scenarioFile. */
+data class AcademyPlaybackStep(
+  val scenarioFile: String,
+  val phaseId: String = "",
+  val phaseLabel: String = "",
+  val activityLabel: String = "",
+)
+
 data class AcademyState(
   val configPath: String,
   var hubPhase: AcademyHubPhase = AcademyHubPhase.PLANNING,
   var selectedBuildingId: String? = null,
   val planByPhase: MutableMap<String, String> = mutableMapOf(),
-  var playbackQueue: List<String> = emptyList(),
+  var playbackQueue: List<AcademyPlaybackStep> = emptyList(),
   var playbackIndex: Int = 0,
   /** Сценарий с узлом academyHub (куда вернуться после дня). */
   var returnScenario: String? = null,
