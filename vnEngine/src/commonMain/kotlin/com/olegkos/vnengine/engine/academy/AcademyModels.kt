@@ -45,6 +45,8 @@ data class AcademyBuildingLevelConfig(
   val level: Int,
   val scenarioFile: String,
   val requires: List<AcademyRequirementJson> = emptyList(),
+  /** Действия в колонках фаз дня после достижения этого уровня постройки. */
+  val activities: List<AcademyActivityConfig> = emptyList(),
 )
 
 @Serializable
@@ -129,6 +131,9 @@ data class AcademyPlaybackStep(
   val phaseId: String = "",
   val phaseLabel: String = "",
   val activityLabel: String = "",
+  /** После сценария стройки — id здания и целевой уровень. */
+  val buildingId: String? = null,
+  val upgradeToLevel: Int? = null,
 )
 
 data class AcademyState(

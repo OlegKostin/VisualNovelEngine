@@ -105,16 +105,28 @@ private fun PhaseColumn(
     } else {
       slot.activities.forEach { act ->
         val selected = act.id == slot.selectedActivityId
+        val buildingAct = act.fromBuilding
         VnOutlinedButton(
           onClick = { onSelectActivity(act.id) },
           modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp),
+            .padding(vertical = 3.dp)
+            .then(
+              if (buildingAct) {
+                Modifier.border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
+              } else {
+                Modifier
+              }
+            ),
         ) {
           Text(
             text = act.label,
             fontSize = 12.sp,
-            color = if (selected) Accent else Color.White,
+            color = when {
+              selected -> Accent
+              buildingAct -> Color(0xFFC8E6C9)
+              else -> Color.White
+            },
           )
         }
       }
@@ -157,26 +169,21 @@ private fun StatsAndBuildingsColumn(
         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
       )
       group.buildings.forEach { building ->
-        VnOutlinedButton(
-          onClick = {
-            if (building.enabled) {
-              onSelectBuilding(building.id, building.selected)
-            }
-          },
-          enabled = building.enabled,
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        ) {
-          Column(Modifier.fillMaxWidth()) {
-            Text(
-              text = "${building.label} (ур. ${building.level})",
-              fontSize = 11.sp,
-              color = if (building.selected) Accent else Color.White,
-            )
-            building.lockedReason?.let {
-              Text(it, fontSize = 9.sp, color = Color(0x99FFFFFF))
-            }
+        if (building.isBuilt && !building.enabled) {
+          BuiltBuildingRow(building)
+        } else {
+          VnOutlinedButton(
+            onClick = {
+              if (building.enabled) {
+                onSelectBuilding(building.id, building.selected)
+              }
+            },
+            enabled = building.enabled,
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(vertical = 2.dp),
+          ) {
+            BuildingRowContent(building)
           }
         }
       }
@@ -194,6 +201,46 @@ private fun StatsAndBuildingsColumn(
         .padding(top = 12.dp),
     ) {
       Text("Подтвердить день", fontSize = 13.sp)
+    }
+  }
+}
+
+@Composable
+private fun BuiltBuildingRow(building: EngineOutput.AcademyBuildingUi) {
+  Column(
+    Modifier
+      .fillMaxWidth()
+      .padding(vertical = 2.dp)
+      .background(Color(0xFF2E4A3A), RoundedCornerShape(8.dp))
+      .border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
+      .padding(horizontal = 10.dp, vertical = 8.dp),
+  ) {
+    BuildingRowContent(building, builtHighlight = true)
+  }
+}
+
+@Composable
+private fun BuildingRowContent(
+  building: EngineOutput.AcademyBuildingUi,
+  builtHighlight: Boolean = false,
+) {
+  Column(Modifier.fillMaxWidth()) {
+    Text(
+      text = building.label,
+      fontSize = 12.sp,
+      color = when {
+        building.selected -> Accent
+        builtHighlight || building.isBuilt -> Color(0xFFC8E6C9)
+        else -> Color.White
+      },
+    )
+    Text(
+      text = building.statusLabel,
+      fontSize = 10.sp,
+      color = Color(0xBBFFFFFF),
+    )
+    building.lockedReason?.let {
+      Text(it, fontSize = 9.sp, color = Color(0x99FFFFFF))
     }
   }
 }

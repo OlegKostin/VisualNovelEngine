@@ -66,6 +66,10 @@ fun VnEngine.academyAdvanceAfterScenario(): EngineOutput? {
   val gs = state.academy ?: return null
   if (gs.hubPhase != AcademyHubPhase.PLAYBACK) return null
 
+  gs.playbackQueue.getOrNull(gs.playbackIndex)?.let { completed ->
+    applyBuildingUpgrade(completed)
+  }
+
   gs.playbackIndex++
   if (gs.playbackIndex < gs.playbackQueue.size) {
     return beginAcademyPlaybackStep(gs.playbackQueue[gs.playbackIndex])
@@ -137,11 +141,17 @@ private fun VnEngine.buildAcademyPlaybackQueue(
 
   gs.selectedBuildingId?.let { buildId ->
     val building = config.buildings.firstOrNull { it.id == buildId }
+    val nextTier = building?.let { b ->
+      val current = buildingLevel(b)
+      b.levels.filter { it.level > current }.minByOrNull { it.level }
+    }
     buildingScenarioFor(config, buildId)?.let { path ->
       queue.add(
         AcademyPlaybackStep(
           scenarioFile = path,
           activityLabel = building?.label ?: "Стройка",
+          buildingId = buildId,
+          upgradeToLevel = nextTier?.level,
         )
       )
     }
@@ -151,7 +161,7 @@ private fun VnEngine.buildAcademyPlaybackQueue(
 
   for (phase in config.phases) {
     val activityId = gs.planByPhase[phase.id] ?: continue
-    val activity = config.activities.firstOrNull { it.id == activityId } ?: continue
+    val activity = resolveAcademyActivity(config, activityId) ?: continue
     queue.add(
       AcademyPlaybackStep(
         scenarioFile = activity.scenarioFile,
@@ -199,7 +209,7 @@ private fun VnEngine.buildingScenarioFor(
 ): String? {
   val building = config.buildings.firstOrNull { it.id == buildingId } ?: return null
   val currentLevel = buildingLevel(building)
-  val next = building.levels.firstOrNull { it.level == currentLevel + 1 } ?: return null
+  val next = building.levels.filter { it.level > currentLevel }.minByOrNull { it.level } ?: return null
   if (!meetsRequires(next.requires)) return null
   return next.scenarioFile
 }
@@ -211,11 +221,66 @@ private fun VnEngine.buildingLevel(building: AcademyBuildingConfig): Int =
     else -> 0
   }
 
+private fun VnEngine.applyBuildingUpgrade(step: AcademyPlaybackStep) {
+  val buildingId = step.buildingId ?: return
+  val targetLevel = step.upgradeToLevel ?: return
+  val building = state.academyConfig?.buildings?.firstOrNull { it.id == buildingId } ?: return
+  state.variables[building.levelVar] = GameValue.IntVal(targetLevel)
+}
+
+internal data class ResolvedAcademyActivity(
+  val id: String,
+  val label: String,
+  val scenarioFile: String,
+  val phases: List<String>,
+  val requires: List<AcademyRequirementJson>,
+  val fromBuildingId: String? = null,
+)
+
+private fun VnEngine.collectAcademyActivities(config: AcademyConfig): List<ResolvedAcademyActivity> {
+  val list = mutableListOf<ResolvedAcademyActivity>()
+  for (act in config.activities) {
+    list.add(
+      ResolvedAcademyActivity(
+        id = act.id,
+        label = act.label,
+        scenarioFile = act.scenarioFile,
+        phases = act.phases,
+        requires = act.requires,
+      )
+    )
+  }
+  for (building in config.buildings) {
+    val builtLevel = buildingLevel(building)
+    for (levelCfg in building.levels.filter { it.level <= builtLevel }) {
+      for (act in levelCfg.activities) {
+        list.add(
+          ResolvedAcademyActivity(
+            id = "${building.id}:${act.id}",
+            label = act.label,
+            scenarioFile = act.scenarioFile,
+            phases = act.phases,
+            requires = act.requires,
+            fromBuildingId = building.id,
+          )
+        )
+      }
+    }
+  }
+  return list
+}
+
+private fun VnEngine.resolveAcademyActivity(
+  config: AcademyConfig,
+  activityId: String,
+): ResolvedAcademyActivity? =
+  collectAcademyActivities(config).firstOrNull { it.id == activityId }
+
 private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState): String? {
   for (phase in config.phases) {
     val activityId = gs.planByPhase[phase.id]
       ?: return "Выберите действие: ${phase.label}"
-    val activity = config.activities.firstOrNull { it.id == activityId }
+    val activity = resolveAcademyActivity(config, activityId)
       ?: return "Неизвестное действие"
     if (activity.phases.isNotEmpty() && phase.id !in activity.phases) {
       return "${activity.label} недоступно в фазе ${phase.label}"
@@ -269,6 +334,10 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
   val config = state.academyConfig
     ?: error("Academy config not loaded. Call loadAcademyConfig first.")
 
+  if (gs.hubPhase == AcademyHubPhase.PLANNING && gs.playbackQueue.isEmpty()) {
+    gs.buildUsedToday = false
+  }
+
   val day = when (val v = state.variables[config.dayVar]) {
     is GameValue.IntVal -> v.value
     is GameValue.FloatVal -> v.value.toInt()
@@ -285,7 +354,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
       EngineOutput.AcademyBuildingGroupUi(
         id = groupId,
         label = groupLabel(groupId),
-        buildings = buildings.map { b -> buildingToUi(b, gs, config) },
+        buildings = buildings.map { b -> buildingToUi(b, gs) },
       )
     }
 
@@ -295,7 +364,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
       phaseId = phase.id,
       label = phase.label,
       selectedActivityId = selectedId,
-      activities = config.activities
+      activities = collectAcademyActivities(config)
         .filter { act ->
           (act.phases.isEmpty() || phase.id in act.phases) &&
             meetsRequires(act.requires)
@@ -304,6 +373,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
           EngineOutput.AcademyActivityOptionUi(
             id = it.id,
             label = it.label,
+            fromBuilding = it.fromBuildingId != null,
           )
         },
     )
@@ -325,19 +395,26 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
 private fun VnEngine.buildingToUi(
   building: AcademyBuildingConfig,
   gs: AcademyState,
-  config: AcademyConfig,
 ): EngineOutput.AcademyBuildingUi {
   val level = buildingLevel(building)
-  val next = building.levels.firstOrNull { it.level == level + 1 }
-  val levelOk = next?.requires?.let { meetsRequires(it) } ?: false
-  val enabled = gs.hubPhase == AcademyHubPhase.PLANNING &&
+  val next = building.levels.filter { it.level > level }.minByOrNull { it.level }
+  val levelOk = next == null || meetsRequires(next.requires)
+  val canBuildToday = gs.hubPhase == AcademyHubPhase.PLANNING &&
     !gs.buildUsedToday &&
     next != null &&
     levelOk
+  val statusLabel = when {
+    level == 0 && next == null -> "Нет улучшений"
+    level == 0 -> "Можно построить"
+    next != null && levelOk -> "Ур. $level · улучшить до ${next.level}"
+    next != null && !levelOk -> "Ур. $level · условия не выполнены"
+    else -> "Построено (ур. $level)"
+  }
   val lockedReason = when {
-    gs.buildUsedToday -> "Стройка уже выбрана сегодня"
-    next == null -> if (level > 0) "Макс. уровень" else "Недоступно"
-    !levelOk -> "Условия не выполнены"
+    !canBuildToday && gs.buildUsedToday -> "Сегодня стройка уже запланирована"
+    !canBuildToday && next == null && level > 0 -> null
+    !canBuildToday && next == null -> "Недоступно"
+    !canBuildToday && !levelOk -> "Условия не выполнены"
     else -> null
   }
   return EngineOutput.AcademyBuildingUi(
@@ -347,9 +424,11 @@ private fun VnEngine.buildingToUi(
     level = level,
     xPercent = building.xPercent,
     yPercent = building.yPercent,
-    enabled = enabled,
+    enabled = canBuildToday,
     lockedReason = lockedReason,
     selected = gs.selectedBuildingId == building.id,
+    statusLabel = statusLabel,
+    isBuilt = level > 0,
   )
 }
 

@@ -72,7 +72,7 @@ class GameController(
     private const val TRACE_ENGINE_STEPS = false
   }
 
-  private val basePath = "game/"
+  private val basePath = "game_demo/"
   private val gameConfigPath = basePath + "game.json"
 
   private var engine: VnEngine? = null
@@ -247,9 +247,6 @@ class GameController(
 
   suspend fun ensureAcademyConfig(configFile: String) {
     val engine = engine ?: return
-    if (engine.state.academyConfig != null && engine.state.academy?.configPath == configFile) {
-      return
-    }
     val raw = withContext(ioDispatcher) {
       assetReader.readText(assetPath(configFile))
     }
@@ -259,8 +256,17 @@ class GameController(
     }
   }
 
-  private fun assetPath(relative: String): String =
-    if (relative.startsWith("game/")) relative else basePath + relative
+  /**
+   * Путь относительно корня пакета ([basePath]: `game_demo/` или `game/`).
+   * В JSON указывайте `scenarios/foo.json`, `academy/bar.json` — без префикса game_demo/game.
+   */
+  private fun assetPath(relative: String): String {
+    val path = relative.replace('\\', '/').trimStart('/')
+    if (path.startsWith(basePath)) return path
+    val root = basePath.removeSuffix("/")
+    if (path == root || path.startsWith("$root/")) return path
+    return basePath + path
+  }
 
   suspend fun academySelectBuilding(buildingId: String?): Pair<EngineOutput, SceneNode?> {
     ensureAcademyConfigForCurrentHub()
@@ -557,7 +563,7 @@ class GameController(
 
   private suspend fun loadScenario(path: String) =
     withContext(ioDispatcher) {
-      val raw = assetReader.readText(path)
+      val raw = assetReader.readText(assetPath(path))
       parser.parse(raw)
     }
 

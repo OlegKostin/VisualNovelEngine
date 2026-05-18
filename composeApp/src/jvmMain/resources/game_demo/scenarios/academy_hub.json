@@ -5,7 +5,7 @@
       "nodes": [
         {
           "type": "academyHub",
-          "configFile": "game/academy/academy_config.json"
+          "configFile": "academy/academy_config.json"
         }
       ]
     }

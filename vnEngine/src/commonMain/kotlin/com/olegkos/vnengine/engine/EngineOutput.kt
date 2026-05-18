@@ -83,6 +83,8 @@ sealed interface EngineOutput {
     val enabled: Boolean,
     val lockedReason: String?,
     val selected: Boolean,
+    val statusLabel: String = "",
+    val isBuilt: Boolean = false,
   )
 
   data class AcademyTimeSlotUi(
@@ -95,6 +97,7 @@ sealed interface EngineOutput {
   data class AcademyActivityOptionUi(
     val id: String,
     val label: String,
+    val fromBuilding: Boolean = false,
   )
   data class ShowCard(
     val image: String,

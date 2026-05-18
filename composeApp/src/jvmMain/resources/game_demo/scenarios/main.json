@@ -8,11 +8,11 @@
           "options": [
             {
               "text": "Осмотреться",
-              "nextSceneId": "look_around"
+              "nextSceneId": "go_academy"
             },
             {
               "text": "Выйти из комнаты",
-              "nextSceneId": "exit_room"
+              "nextSceneId": "go_academy"
             },
             {
               "text": "Академия (MVP)",
@@ -22,97 +22,16 @@
         }
       ]
     },
-    "look_around": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "Ты внимательно осматриваешь комнату и находишь странный предмет."
-        },
-        {
-          "type": "modifyVar",
-          "varName": "opt_str",
-          "value": {
-            "type": "randomFloat",
-            "min": 1.0,
-            "max": 6.0
-          }
-        },
-        {
-          "type": "dice",
-          "name": "Проверка внимательности",
-          "sides": 20,
-          "modifierVar": "opt_str",
-          "difficulty": 12,
-          "successScene": "check_loop",
-          "failScene": "check_loop",
-          "critSuccessScene": "check_loop",
-          "critFailScene": "check_loop"
-        }
-      ]
-    },
-    "check_loop": {
-      "nodes": [
-        {
-          "type": "if",
-          "variable": "opt_str",
-          "equals": {
-            "type": "float",
-            "value": 1.0
-          },
-          "successScene": "found_item",
-          "failScene": "look_around"
-        }
-      ]
-    },
-    "exit_room": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "Ты выходишь из комнаты и оказываешься в коридоре."
-        },
-        {
-          "type": "jumpScenario",
-          "scenarioFile": "game/scenarios/second.json"
-        }
-      ]
-    },
-    "found_item": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "Ты нашёл обычный предмет."
-        }
-      ]
-    },
-    "nothing_found": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "Ты ничего не нашёл."
-        }
-      ]
-    },
-    "found_rare_item": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "Ух ты! Редкий предмет найден!"
-        }
-      ]
-    },
-    "trip_and_fail": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "Ты споткнулся и упал. Ничего не получилось."
-        }
-      ]
-    },
+
+
+
+
+
     "go_academy": {
       "nodes": [
         {
           "type": "jumpScenario",
-          "scenarioFile": "game/scenarios/academy_hub.json"
+          "scenarioFile": "scenarios/academy_hub.json"
         }
       ]
     }

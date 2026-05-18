@@ -1,0 +1,13 @@
+{
+  "startSceneId": "main",
+  "scenes": {
+    "main": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: в библиотеке вы ищете нужный том среди новых полок."
+        }
+      ]
+    }
+  }
+}

@@ -12,8 +12,16 @@
       "levels": [
         {
           "level": 1,
-          "scenarioFile": "game/scenarios/academy/build_library.json",
-          "requires": []
+          "scenarioFile": "scenarios/academy/build_library.json",
+          "requires": [],
+          "activities": [
+            {
+              "id": "visit",
+              "label": "Библиотека",
+              "scenarioFile": "scenarios/academy/act_library.json",
+              "phases": ["day", "evening"]
+            }
+          ]
         }
       ]
     },
@@ -27,12 +35,20 @@
       "levels": [
         {
           "level": 1,
-          "scenarioFile": "game/scenarios/academy/build_dorm.json",
+          "scenarioFile": "scenarios/academy/build_dorm.json",
           "requires": [
             {
               "variable": "academy_day",
               "op": "GTE",
               "value": { "type": "int", "value": 0 }
+            }
+          ],
+          "activities": [
+            {
+              "id": "rest",
+              "label": "Общежитие",
+              "scenarioFile": "scenarios/academy/act_dorm.json",
+              "phases": ["evening", "night"]
             }
           ]
         }
@@ -43,26 +59,26 @@
     {
       "id": "study",
       "label": "Учёба",
-      "scenarioFile": "game/scenarios/academy/act_study.json",
+      "scenarioFile": "scenarios/academy/act_study.json",
       "phases": ["morning", "day"]
     },
     {
       "id": "rest",
       "label": "Отдых",
-      "scenarioFile": "game/scenarios/academy/act_rest.json",
+      "scenarioFile": "scenarios/academy/act_rest.json",
       "phases": ["evening", "night"]
     },
     {
       "id": "walk",
       "label": "Прогулка",
-      "scenarioFile": "game/scenarios/academy/act_walk.json",
+      "scenarioFile": "scenarios/academy/act_walk.json",
       "phases": ["day", "evening"]
     }
   ],
   "randomEvents": [
     {
       "id": "visitor",
-      "scenarioFile": "game/scenarios/academy/random_visitor.json",
+      "scenarioFile": "scenarios/academy/random_visitor.json",
       "chance": 0.35,
       "afterPhase": "day",
       "weight": 1,

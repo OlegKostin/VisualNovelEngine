@@ -1,6 +1,5 @@
 {
   "startScenario": "scenarios/main.json",
   "assetsRoot": "game_demo/assets",
-  "variables": "variables/variables.json",
-  "cards": "cards/cards.json"
+  "variables": "variables/variables.json"
 }
