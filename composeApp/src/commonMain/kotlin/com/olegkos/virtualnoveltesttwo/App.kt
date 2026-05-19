@@ -345,14 +345,21 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowChoices -> {
-          o.options.forEach { option ->
-            VnOutlinedButton(
-              onClick = { viewModel.next(option) },
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-            ) {
-              Text(option.text)
+          Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+          ) {
+            Column(modifier = Modifier.fillMaxWidth(0.4f)) {
+              o.options.forEach { option ->
+                VnOutlinedButton(
+                  onClick = { viewModel.next(option) },
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                ) {
+                  Text(option.text)
+                }
+              }
             }
           }
         }
