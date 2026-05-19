@@ -1,0 +1,13 @@
+{
+  "startSceneId": "main",
+  "scenes": {
+    "main": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: ночная тренировка — вы отрабатываете приёмы в пустом зале."
+        }
+      ]
+    }
+  }
+}

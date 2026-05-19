@@ -2,7 +2,10 @@ package com.olegkos.virtualnoveltesttwo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,12 +37,17 @@ private val Accent = Color(0xFFBBDEFB)
 private val BaseBg = Color(0xFF10141C)
 private val Divider = Color(0x33FFFFFF)
 
+private val UnlockAccent = Color(0xFFE1BEE7)
+
 @Composable
 fun AcademyHubScreen(
   output: EngineOutput.ShowAcademyHub,
   viewModel: GameViewModel,
 ) {
-  Column(Modifier.fillMaxSize().background(BaseBg)) {
+  var buildMenuOpen by remember { mutableStateOf(false) }
+
+  Box(Modifier.fillMaxSize().background(BaseBg)) {
+  Column(Modifier.fillMaxSize()) {
     SkikoSafeText(
       text = "День ${output.day}",
       fontSize = 18.sp,
@@ -65,11 +73,21 @@ fun AcademyHubScreen(
       ResourcesAndBuildColumn(
         modifier = Modifier.weight(1f),
         output = output,
+        onOpenBuildMenu = { buildMenuOpen = true },
+        onCommitDay = { viewModel.academyCommitDay() },
+      )
+    }
+  }
+
+    if (buildMenuOpen) {
+      AcademyBuildMenuOverlay(
+        output = output,
+        onDismiss = { buildMenuOpen = false },
         onSelectBuilding = { id, selected ->
           if (selected) viewModel.academySelectBuilding(null)
           else viewModel.academySelectBuilding(id)
         },
-        onCommitDay = { viewModel.academyCommitDay() },
+        onQueueUnlock = { viewModel.academyQueueUnlock(it) },
       )
     }
   }
@@ -180,16 +198,17 @@ private fun PhaseActivityButton(
   isBuildingSection: Boolean,
   onClick: () -> Unit,
 ) {
+  val isUnlock = act.fromUnlockable
   VnOutlinedButton(
     onClick = onClick,
     modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 3.dp)
       .then(
-        if (isBuildingSection) {
-          Modifier.border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
-        } else {
-          Modifier
+        when {
+          isBuildingSection -> Modifier.border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
+          isUnlock -> Modifier.border(1.dp, UnlockAccent, RoundedCornerShape(8.dp))
+          else -> Modifier
         }
       ),
   ) {
@@ -199,6 +218,7 @@ private fun PhaseActivityButton(
       color = when {
         selected -> Accent
         isBuildingSection -> Color(0xFFC8E6C9)
+        isUnlock -> UnlockAccent
         else -> Color.White
       },
     )
@@ -206,14 +226,205 @@ private fun PhaseActivityButton(
 }
 
 @Composable
+private fun AcademyBuildMenuOverlay(
+  output: EngineOutput.ShowAcademyHub,
+  onDismiss: () -> Unit,
+  onSelectBuilding: (buildingId: String, currentlySelected: Boolean) -> Unit,
+  onQueueUnlock: (unlockId: String?) -> Unit,
+) {
+  var tab by remember { mutableStateOf(BuildMenuTab.Buildings) }
+
+  Box(Modifier.fillMaxSize()) {
+    Box(
+      Modifier
+        .fillMaxSize()
+        .background(Color(0xCC000000))
+        .clickable(
+          indication = null,
+          interactionSource = remember { MutableInteractionSource() },
+        ) { onDismiss() },
+    )
+
+    Column(
+      Modifier
+        .align(Alignment.Center)
+        .fillMaxWidth(0.92f)
+        .fillMaxHeight(0.82f)
+        .background(Color(0xFF1C2838), RoundedCornerShape(14.dp))
+        .border(1.dp, Accent, RoundedCornerShape(14.dp))
+        .padding(12.dp)
+        .clickable(
+          indication = null,
+          interactionSource = remember { MutableInteractionSource() },
+        ) { },
+    ) {
+      Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        SkikoSafeText("Меню", fontSize = 17.sp, color = Color.White)
+        VnOutlinedButton(onClick = onDismiss) {
+          Text("✕", fontSize = 14.sp)
+        }
+      }
+
+      Row(
+        Modifier
+          .fillMaxWidth()
+          .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
+        BuildMenuTabButton(
+          label = "Строения",
+          selected = tab == BuildMenuTab.Buildings,
+          onClick = { tab = BuildMenuTab.Buildings },
+          modifier = Modifier.weight(1f),
+        )
+        BuildMenuTabButton(
+          label = "Действия",
+          selected = tab == BuildMenuTab.Actions,
+          onClick = { tab = BuildMenuTab.Actions },
+          modifier = Modifier.weight(1f),
+        )
+      }
+
+      Column(
+        Modifier
+          .weight(1f)
+          .fillMaxWidth()
+          .verticalScroll(rememberScrollState()),
+      ) {
+        when (tab) {
+          BuildMenuTab.Buildings -> BuildingsMenuContent(output, onSelectBuilding)
+          BuildMenuTab.Actions -> ActionsMenuContent(output, onQueueUnlock)
+        }
+      }
+    }
+  }
+}
+
+private enum class BuildMenuTab { Buildings, Actions }
+
+@Composable
+private fun BuildMenuTabButton(
+  label: String,
+  selected: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  VnOutlinedButton(
+    onClick = onClick,
+    modifier = modifier,
+  ) {
+    Text(
+      text = label,
+      fontSize = 13.sp,
+      color = if (selected) Accent else Color.White,
+    )
+  }
+}
+
+@Composable
+private fun BuildingsMenuContent(
+  output: EngineOutput.ShowAcademyHub,
+  onSelectBuilding: (buildingId: String, currentlySelected: Boolean) -> Unit,
+) {
+  SkikoSafeText(
+    text = "Строительство (1× в день)",
+    fontSize = 12.sp,
+    color = Color(0xBBFFFFFF),
+    modifier = Modifier.padding(bottom = 8.dp),
+  )
+  output.buildingGroups.forEach { group ->
+    SkikoSafeText(
+      group.label,
+      fontSize = 11.sp,
+      color = Color(0x99FFFFFF),
+      modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
+    )
+    group.buildings.forEach { building ->
+      if (building.isBuilt && !building.enabled) {
+        BuiltBuildingRow(building)
+      } else {
+        VnOutlinedButton(
+          onClick = {
+            if (building.enabled) {
+              onSelectBuilding(building.id, building.selected)
+            }
+          },
+          enabled = building.enabled,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        ) {
+          BuildingRowContent(building)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun ActionsMenuContent(
+  output: EngineOutput.ShowAcademyHub,
+  onQueueUnlock: (unlockId: String?) -> Unit,
+) {
+  SkikoSafeText(
+    text = "Разблокировка на следующий день",
+    fontSize = 12.sp,
+    color = Color(0xBBFFFFFF),
+    modifier = Modifier.padding(bottom = 8.dp),
+  )
+
+  if (output.unlockableActions.isEmpty()) {
+    SkikoSafeText("Пока нет доступных режимов", fontSize = 11.sp, color = Color(0x99FFFFFF))
+    return
+  }
+
+  output.unlockableActions.forEach { unlock ->
+    val canTap = unlock.status == EngineOutput.AcademyUnlockableStatus.CAN_QUEUE ||
+      unlock.status == EngineOutput.AcademyUnlockableStatus.PENDING
+    VnOutlinedButton(
+      onClick = { if (canTap) onQueueUnlock(unlock.id) },
+      enabled = canTap,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 3.dp)
+        .then(
+          if (unlock.status == EngineOutput.AcademyUnlockableStatus.ACTIVE) {
+            Modifier.border(1.dp, UnlockAccent, RoundedCornerShape(8.dp))
+          } else {
+            Modifier
+          }
+        ),
+    ) {
+      Column(Modifier.fillMaxWidth()) {
+        Text(
+          text = unlock.label,
+          fontSize = 12.sp,
+          color = when (unlock.status) {
+            EngineOutput.AcademyUnlockableStatus.ACTIVE -> UnlockAccent
+            EngineOutput.AcademyUnlockableStatus.PENDING -> Accent
+            EngineOutput.AcademyUnlockableStatus.CAN_QUEUE -> Color.White
+            EngineOutput.AcademyUnlockableStatus.LOCKED -> Color(0x88FFFFFF)
+          },
+        )
+        unlock.lockedReason?.let {
+          Text(it, fontSize = 10.sp, color = Color(0x99FFFFFF))
+        }
+      }
+    }
+  }
+}
+
+@Composable
 private fun ResourcesAndBuildColumn(
   output: EngineOutput.ShowAcademyHub,
   modifier: Modifier = Modifier,
-  onSelectBuilding: (buildingId: String, currentlySelected: Boolean) -> Unit,
+  onOpenBuildMenu: () -> Unit,
   onCommitDay: () -> Unit,
 ) {
-  var buildMenuOpen by remember { mutableStateOf(false) }
-
   Column(
     modifier
       .fillMaxHeight()
@@ -240,55 +451,23 @@ private fun ResourcesAndBuildColumn(
       }
     }
 
-    Spacer(Modifier.height(12.dp))
-
-    VnOutlinedButton(
-      onClick = { buildMenuOpen = !buildMenuOpen },
-      enabled = output.planning,
-      modifier = Modifier.fillMaxWidth(),
-    ) {
-      Text(
-        text = if (buildMenuOpen) "Скрыть постройки" else "Построить",
-        fontSize = 13.sp,
+    output.pendingUnlockLabel?.let { label ->
+      SkikoSafeText(
+        text = "С завтра: $label",
+        fontSize = 11.sp,
+        color = UnlockAccent,
+        modifier = Modifier.padding(top = 6.dp),
       )
     }
 
-    if (buildMenuOpen) {
-      Spacer(Modifier.height(8.dp))
-      SkikoSafeText(
-        text = "Строительство (1× в день)",
-        fontSize = 11.sp,
-        color = Color(0xBBFFFFFF),
-        modifier = Modifier.padding(bottom = 4.dp),
-      )
+    Spacer(Modifier.height(12.dp))
 
-      output.buildingGroups.forEach { group ->
-        SkikoSafeText(
-          group.label,
-          fontSize = 11.sp,
-          color = Color(0x99FFFFFF),
-          modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
-        )
-        group.buildings.forEach { building ->
-          if (building.isBuilt && !building.enabled) {
-            BuiltBuildingRow(building)
-          } else {
-            VnOutlinedButton(
-              onClick = {
-                if (building.enabled) {
-                  onSelectBuilding(building.id, building.selected)
-                }
-              },
-              enabled = building.enabled,
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 2.dp),
-            ) {
-              BuildingRowContent(building)
-            }
-          }
-        }
-      }
+    VnOutlinedButton(
+      onClick = onOpenBuildMenu,
+      enabled = output.planning,
+      modifier = Modifier.fillMaxWidth(),
+    ) {
+      Text("Построить", fontSize = 13.sp)
     }
 
     output.commitBlockedReason?.let {

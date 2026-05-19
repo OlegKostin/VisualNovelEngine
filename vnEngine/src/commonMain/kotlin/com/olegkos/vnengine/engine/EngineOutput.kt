@@ -80,7 +80,24 @@ sealed interface EngineOutput {
     val commitBlockedReason: String?,
     val selectedBuildingId: String?,
     val buildUsedToday: Boolean,
+    val unlockableActions: List<AcademyUnlockableUi> = emptyList(),
+    val pendingUnlockLabel: String? = null,
   ) : EngineOutput
+
+  data class AcademyUnlockableUi(
+    val id: String,
+    val label: String,
+    val status: AcademyUnlockableStatus,
+    val lockedReason: String?,
+    val selectedForTomorrow: Boolean,
+  )
+
+  enum class AcademyUnlockableStatus {
+    LOCKED,
+    CAN_QUEUE,
+    PENDING,
+    ACTIVE,
+  }
 
   data class AcademyBuildingGroupUi(
     val id: String,
@@ -114,6 +131,7 @@ sealed interface EngineOutput {
     val id: String,
     val label: String,
     val fromBuilding: Boolean = false,
+    val fromUnlockable: Boolean = false,
   )
   data class ShowCard(
     val image: String,

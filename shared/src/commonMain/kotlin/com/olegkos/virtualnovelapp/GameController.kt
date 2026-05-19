@@ -23,6 +23,7 @@ import com.olegkos.vnengine.engine.academyAdvanceAfterScenario
 import com.olegkos.vnengine.engine.academyCommitDay
 import com.olegkos.vnengine.engine.academyHubReturnPointer
 import com.olegkos.vnengine.engine.academyHubReturnScenario
+import com.olegkos.vnengine.engine.academyQueueUnlock
 import com.olegkos.vnengine.engine.academySelectBuilding
 import com.olegkos.vnengine.engine.academySetActivity
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
@@ -268,6 +269,13 @@ class GameController(
     val root = basePath.removeSuffix("/")
     if (path == root || path.startsWith("$root/")) return path
     return basePath + path
+  }
+
+  suspend fun academyQueueUnlock(unlockId: String?): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val engine = requireEngine
+    engine.academyQueueUnlock(unlockId)
+    return academyHubPair(engine)
   }
 
   suspend fun academySelectBuilding(buildingId: String?): Pair<EngineOutput, SceneNode?> {

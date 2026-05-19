@@ -78,6 +78,27 @@
       "phases": ["day", "evening"]
     }
   ],
+  "unlockableActions": [
+    {
+      "id": "night_training",
+      "label": "Ночная тренировка",
+      "unlockRequires": [
+        {
+          "variable": "academy_day",
+          "op": "GTE",
+          "value": { "type": "int", "value": 2 }
+        }
+      ],
+      "activities": [
+        {
+          "id": "train",
+          "label": "Тренировка",
+          "scenarioFile": "scenarios/academy/act_training.json",
+          "phases": ["night"]
+        }
+      ]
+    }
+  ],
   "randomEvents": [
     {
       "id": "visitor",

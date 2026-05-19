@@ -13,6 +13,8 @@ data class AcademyConfig(
   val phases: List<AcademyPhaseConfig> = defaultPhases,
   val buildings: List<AcademyBuildingConfig> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
+  /** Разблокируемые режимы: выбор в меню «Построить» → активны со следующего дня. */
+  val unlockableActions: List<AcademyUnlockableConfig> = emptyList(),
   val randomEvents: List<AcademyRandomEventConfig> = emptyList(),
 ) {
   companion object {
@@ -49,6 +51,14 @@ data class AcademyBuildingLevelConfig(
   val cost: Int = 0,
   val requires: List<AcademyRequirementJson> = emptyList(),
   /** Действия в колонках фаз дня после достижения этого уровня постройки. */
+  val activities: List<AcademyActivityConfig> = emptyList(),
+)
+
+@Serializable
+data class AcademyUnlockableConfig(
+  val id: String,
+  val label: String,
+  val unlockRequires: List<AcademyRequirementJson> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
 )
 
@@ -154,4 +164,6 @@ data class AcademyState(
   var randomEventId: String? = null,
   /** Значения переменных академии на момент «Подтвердить день». */
   val dayStartVars: MutableMap<String, Int> = mutableMapOf(),
+  val activeUnlockIds: MutableSet<String> = mutableSetOf(),
+  var pendingUnlockId: String? = null,
 )

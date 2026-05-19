@@ -34,6 +34,20 @@ fun VnEngine.academySelectBuilding(buildingId: String?) {
   gs.selectedBuildingId = buildingId
 }
 
+fun VnEngine.academyQueueUnlock(unlockId: String?) {
+  val gs = state.academy ?: return
+  val config = state.academyConfig ?: return
+  if (gs.hubPhase != AcademyHubPhase.PLANNING) return
+  if (unlockId == null) {
+    gs.pendingUnlockId = null
+    return
+  }
+  val unlock = config.unlockableActions.firstOrNull { it.id == unlockId } ?: return
+  if (unlock.id in gs.activeUnlockIds) return
+  if (!meetsRequires(unlock.unlockRequires)) return
+  gs.pendingUnlockId = if (gs.pendingUnlockId == unlockId) null else unlockId
+}
+
 fun VnEngine.academySetActivity(phaseId: String, activityId: String?) {
   val gs = state.academy ?: return
   if (gs.hubPhase != AcademyHubPhase.PLANNING) return
@@ -132,6 +146,7 @@ fun VnEngine.resetScenarioEntry(startSceneId: String) {
 
 private fun VnEngine.academyFinishDay() {
   val config = state.academyConfig ?: return
+  val gs = state.academy ?: return
   val dayVar = config.dayVar
   val current = when (val v = state.variables[dayVar]) {
     is GameValue.IntVal -> v.value
@@ -139,6 +154,10 @@ private fun VnEngine.academyFinishDay() {
     else -> 0
   }
   state.variables[dayVar] = GameValue.IntVal(current + 1)
+  gs.pendingUnlockId?.let { id ->
+    gs.activeUnlockIds.add(id)
+    gs.pendingUnlockId = null
+  }
 }
 
 private fun VnEngine.buildAcademyPlaybackQueue(
@@ -300,9 +319,13 @@ internal data class ResolvedAcademyActivity(
   val phases: List<String>,
   val requires: List<AcademyRequirementJson>,
   val fromBuildingId: String? = null,
+  val fromUnlockableId: String? = null,
 )
 
-private fun VnEngine.collectAcademyActivities(config: AcademyConfig): List<ResolvedAcademyActivity> {
+private fun VnEngine.collectAcademyActivities(
+  config: AcademyConfig,
+  gs: AcademyState,
+): List<ResolvedAcademyActivity> {
   val list = mutableListOf<ResolvedAcademyActivity>()
   for (act in config.activities) {
     list.add(
@@ -332,14 +355,31 @@ private fun VnEngine.collectAcademyActivities(config: AcademyConfig): List<Resol
       }
     }
   }
+  for (unlock in config.unlockableActions) {
+    if (unlock.id !in gs.activeUnlockIds) continue
+    for (act in unlock.activities) {
+      list.add(
+        ResolvedAcademyActivity(
+          id = "unlock:${unlock.id}:${act.id}",
+          label = act.label,
+          scenarioFile = act.scenarioFile,
+          phases = act.phases,
+          requires = act.requires,
+          fromUnlockableId = unlock.id,
+        )
+      )
+    }
+  }
   return list
 }
 
 private fun VnEngine.resolveAcademyActivity(
   config: AcademyConfig,
   activityId: String,
-): ResolvedAcademyActivity? =
-  collectAcademyActivities(config).firstOrNull { it.id == activityId }
+): ResolvedAcademyActivity? {
+  val gs = state.academy ?: return null
+  return collectAcademyActivities(config, gs).firstOrNull { it.id == activityId }
+}
 
 private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState): String? {
   for (phase in config.phases) {
@@ -432,7 +472,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
       phaseId = phase.id,
       label = phase.label,
       selectedActivityId = selectedId,
-      activities = collectAcademyActivities(config)
+      activities = collectAcademyActivities(config, gs)
         .filter { act ->
           (act.phases.isEmpty() || phase.id in act.phases) &&
             meetsRequires(act.requires)
@@ -442,9 +482,17 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
             id = it.id,
             label = it.label,
             fromBuilding = it.fromBuildingId != null,
+            fromUnlockable = it.fromUnlockableId != null,
           )
         },
     )
+  }
+
+  val unlockableUi = config.unlockableActions.map { unlock ->
+    unlockableToUi(unlock, gs)
+  }
+  val pendingUnlockLabel = gs.pendingUnlockId?.let { id ->
+    config.unlockableActions.firstOrNull { it.id == id }?.label
   }
 
   return ShowAcademyHub(
@@ -458,6 +506,33 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     commitBlockedReason = validationError,
     selectedBuildingId = gs.selectedBuildingId,
     buildUsedToday = gs.buildUsedToday,
+    unlockableActions = unlockableUi,
+    pendingUnlockLabel = pendingUnlockLabel,
+  )
+}
+
+private fun VnEngine.unlockableToUi(
+  unlock: com.olegkos.vnengine.engine.academy.AcademyUnlockableConfig,
+  gs: AcademyState,
+): EngineOutput.AcademyUnlockableUi {
+  val status = when {
+    unlock.id in gs.activeUnlockIds -> EngineOutput.AcademyUnlockableStatus.ACTIVE
+    unlock.id == gs.pendingUnlockId -> EngineOutput.AcademyUnlockableStatus.PENDING
+    meetsRequires(unlock.unlockRequires) -> EngineOutput.AcademyUnlockableStatus.CAN_QUEUE
+    else -> EngineOutput.AcademyUnlockableStatus.LOCKED
+  }
+  val lockedReason = when (status) {
+    EngineOutput.AcademyUnlockableStatus.LOCKED -> "Условия не выполнены"
+    EngineOutput.AcademyUnlockableStatus.ACTIVE -> "Уже активно"
+    EngineOutput.AcademyUnlockableStatus.PENDING -> "Будет активно завтра"
+    EngineOutput.AcademyUnlockableStatus.CAN_QUEUE -> null
+  }
+  return EngineOutput.AcademyUnlockableUi(
+    id = unlock.id,
+    label = unlock.label,
+    status = status,
+    lockedReason = lockedReason,
+    selectedForTomorrow = unlock.id == gs.pendingUnlockId,
   )
 }
 

@@ -252,6 +252,13 @@
       currentNode = node
     }
 
+    fun academyQueueUnlock(unlockId: String?) {
+      viewModelScope.launch {
+        val (output, node) = controller.academyQueueUnlock(unlockId)
+        applyOutput(output, node)
+      }
+    }
+
     fun academySelectBuilding(buildingId: String?) {
       viewModelScope.launch {
         val (output, node) = controller.academySelectBuilding(buildingId)
