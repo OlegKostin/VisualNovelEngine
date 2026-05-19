@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
+import com.olegkos.virtualnoveltesttwo.theme.VnButtonSurface
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.EngineOutput
 
@@ -69,11 +70,12 @@ fun AcademyDaySummaryScreen(
 
       VnOutlinedButton(
         onClick = onContinue,
+        surface = VnButtonSurface.Dark,
         modifier = Modifier
           .fillMaxWidth()
           .padding(top = 16.dp),
       ) {
-        Text("Продолжить", fontSize = 14.sp)
+        Text("Продолжить", fontSize = 14.sp, color = Color.White)
       }
     }
   }

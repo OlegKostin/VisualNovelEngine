@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
+import com.olegkos.virtualnoveltesttwo.theme.VnButtonSurface
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.EngineOutput
 
@@ -199,16 +200,24 @@ private fun PhaseActivityButton(
   onClick: () -> Unit,
 ) {
   val isUnlock = act.fromUnlockable
+  val accentBorder = when {
+    selected -> Accent
+    isBuildingSection -> Color(0xFF66BB6A)
+    isUnlock -> UnlockAccent
+    else -> null
+  }
   VnOutlinedButton(
     onClick = onClick,
+    selected = selected,
+    surface = VnButtonSurface.Dark,
     modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 3.dp)
       .then(
-        when {
-          isBuildingSection -> Modifier.border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
-          isUnlock -> Modifier.border(1.dp, UnlockAccent, RoundedCornerShape(8.dp))
-          else -> Modifier
+        if (!selected && accentBorder != null) {
+          Modifier.border(1.dp, accentBorder, RoundedCornerShape(8.dp))
+        } else {
+          Modifier
         }
       ),
   ) {
@@ -264,8 +273,8 @@ private fun AcademyBuildMenuOverlay(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         SkikoSafeText("Меню", fontSize = 17.sp, color = Color.White)
-        VnOutlinedButton(onClick = onDismiss) {
-          Text("✕", fontSize = 14.sp)
+        VnOutlinedButton(onClick = onDismiss, surface = VnButtonSurface.Dark) {
+          Text("✕", fontSize = 14.sp, color = Color.White)
         }
       }
 
@@ -315,6 +324,8 @@ private fun BuildMenuTabButton(
 ) {
   VnOutlinedButton(
     onClick = onClick,
+    selected = selected,
+    surface = VnButtonSurface.Dark,
     modifier = modifier,
   ) {
     Text(
@@ -354,6 +365,8 @@ private fun BuildingsMenuContent(
             }
           },
           enabled = building.enabled,
+          selected = building.selected,
+          surface = VnButtonSurface.Dark,
           modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp),
@@ -388,6 +401,8 @@ private fun ActionsMenuContent(
     VnOutlinedButton(
       onClick = { if (canTap) onQueueUnlock(unlock.id) },
       enabled = canTap,
+      selected = unlock.status == EngineOutput.AcademyUnlockableStatus.PENDING,
+      surface = VnButtonSurface.Dark,
       modifier = Modifier
         .fillMaxWidth()
         .padding(vertical = 3.dp)
@@ -465,9 +480,10 @@ private fun ResourcesAndBuildColumn(
     VnOutlinedButton(
       onClick = onOpenBuildMenu,
       enabled = output.planning,
+      surface = VnButtonSurface.Dark,
       modifier = Modifier.fillMaxWidth(),
     ) {
-      Text("Построить", fontSize = 13.sp)
+      Text("Построить", fontSize = 13.sp, color = Color.White)
     }
 
     output.commitBlockedReason?.let {
@@ -477,11 +493,17 @@ private fun ResourcesAndBuildColumn(
     VnOutlinedButton(
       onClick = onCommitDay,
       enabled = output.canCommit,
+      selected = output.canCommit,
+      surface = VnButtonSurface.Dark,
       modifier = Modifier
         .fillMaxWidth()
         .padding(top = 12.dp),
     ) {
-      Text("Подтвердить день", fontSize = 13.sp)
+      Text(
+        "Подтвердить день",
+        fontSize = 13.sp,
+        color = if (output.canCommit) Accent else Color(0xFF6B7588),
+      )
     }
   }
 }
