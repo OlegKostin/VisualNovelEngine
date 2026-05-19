@@ -16,6 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,8 +39,6 @@ fun AcademyHubScreen(
   output: EngineOutput.ShowAcademyHub,
   viewModel: GameViewModel,
 ) {
-  val stats = viewModel.playerStatsUi()
-
   Column(Modifier.fillMaxSize().background(BaseBg)) {
     SkikoSafeText(
       text = "День ${output.day}",
@@ -60,10 +62,9 @@ fun AcademyHubScreen(
         )
       }
 
-      StatsAndBuildingsColumn(
+      ResourcesAndBuildColumn(
         modifier = Modifier.weight(1f),
         output = output,
-        stats = stats,
         onSelectBuilding = { id, selected ->
           if (selected) viewModel.academySelectBuilding(null)
           else viewModel.academySelectBuilding(id)
@@ -135,13 +136,14 @@ private fun PhaseColumn(
 }
 
 @Composable
-private fun StatsAndBuildingsColumn(
+private fun ResourcesAndBuildColumn(
   output: EngineOutput.ShowAcademyHub,
-  stats: com.olegkos.virtualnovelapp.PlayerStatsUi,
   modifier: Modifier = Modifier,
   onSelectBuilding: (buildingId: String, currentlySelected: Boolean) -> Unit,
   onCommitDay: () -> Unit,
 ) {
+  var buildMenuOpen by remember { mutableStateOf(false) }
+
   Column(
     modifier
       .fillMaxHeight()
@@ -150,40 +152,70 @@ private fun StatsAndBuildingsColumn(
       .padding(8.dp)
       .verticalScroll(rememberScrollState()),
   ) {
-    SkikoSafeText("Характеристики", fontSize = 15.sp, color = Accent, modifier = Modifier.padding(bottom = 6.dp))
-    StatLine("Здоровье", stats.health.toString())
-    StatLine("Рассудок", stats.mentalHealth.toString())
-    StatLine("Сила", stats.optStr)
-    StatLine("Мудрость", stats.optWisdom)
-    StatLine("Воля", stats.optWill)
-    StatLine("Удача", stats.optLuck)
+    SkikoSafeText("Ресурсы", fontSize = 15.sp, color = Accent, modifier = Modifier.padding(bottom = 6.dp))
+    StatLine("В наличии", output.resources.toString())
+
+    output.selectedBuildingId?.let { selectedId ->
+      val label = output.buildingGroups
+        .flatMap { it.buildings }
+        .firstOrNull { it.id == selectedId }
+        ?.label
+      if (label != null) {
+        SkikoSafeText(
+          text = "На стройку: $label",
+          fontSize = 11.sp,
+          color = Color(0xFFC8E6C9),
+          modifier = Modifier.padding(top = 6.dp),
+        )
+      }
+    }
 
     Spacer(Modifier.height(12.dp))
-    SkikoSafeText("Строительство (1×/день)", fontSize = 13.sp, color = Accent)
 
-    output.buildingGroups.forEach { group ->
+    VnOutlinedButton(
+      onClick = { buildMenuOpen = !buildMenuOpen },
+      enabled = output.planning,
+      modifier = Modifier.fillMaxWidth(),
+    ) {
+      Text(
+        text = if (buildMenuOpen) "Скрыть постройки" else "Построить",
+        fontSize = 13.sp,
+      )
+    }
+
+    if (buildMenuOpen) {
+      Spacer(Modifier.height(8.dp))
       SkikoSafeText(
-        group.label,
+        text = "Строительство (1× в день)",
         fontSize = 11.sp,
         color = Color(0xBBFFFFFF),
-        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+        modifier = Modifier.padding(bottom = 4.dp),
       )
-      group.buildings.forEach { building ->
-        if (building.isBuilt && !building.enabled) {
-          BuiltBuildingRow(building)
-        } else {
-          VnOutlinedButton(
-            onClick = {
-              if (building.enabled) {
-                onSelectBuilding(building.id, building.selected)
-              }
-            },
-            enabled = building.enabled,
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(vertical = 2.dp),
-          ) {
-            BuildingRowContent(building)
+
+      output.buildingGroups.forEach { group ->
+        SkikoSafeText(
+          group.label,
+          fontSize = 11.sp,
+          color = Color(0x99FFFFFF),
+          modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
+        )
+        group.buildings.forEach { building ->
+          if (building.isBuilt && !building.enabled) {
+            BuiltBuildingRow(building)
+          } else {
+            VnOutlinedButton(
+              onClick = {
+                if (building.enabled) {
+                  onSelectBuilding(building.id, building.selected)
+                }
+              },
+              enabled = building.enabled,
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 2.dp),
+            ) {
+              BuildingRowContent(building)
+            }
           }
         }
       }
@@ -235,7 +267,10 @@ private fun BuildingRowContent(
       },
     )
     Text(
-      text = building.statusLabel,
+      text = buildString {
+        append(building.statusLabel)
+        building.buildCost?.let { append(" · $it рес.") }
+      },
       fontSize = 10.sp,
       color = Color(0xBBFFFFFF),
     )

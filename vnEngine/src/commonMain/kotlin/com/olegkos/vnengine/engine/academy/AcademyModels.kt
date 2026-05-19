@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 data class AcademyConfig(
   val background: String,
   val dayVar: String = "academy_day",
+  val resourcesVar: String = "resources",
   val phases: List<AcademyPhaseConfig> = defaultPhases,
   val buildings: List<AcademyBuildingConfig> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
@@ -44,6 +45,7 @@ data class AcademyBuildingConfig(
 data class AcademyBuildingLevelConfig(
   val level: Int,
   val scenarioFile: String,
+  val cost: Int = 0,
   val requires: List<AcademyRequirementJson> = emptyList(),
   /** Действия в колонках фаз дня после достижения этого уровня постройки. */
   val activities: List<AcademyActivityConfig> = emptyList(),

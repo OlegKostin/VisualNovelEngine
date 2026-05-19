@@ -211,6 +211,7 @@ private fun VnEngine.buildingScenarioFor(
   val currentLevel = buildingLevel(building)
   val next = building.levels.filter { it.level > currentLevel }.minByOrNull { it.level } ?: return null
   if (!meetsRequires(next.requires)) return null
+  if (academyResources(config) < next.cost) return null
   return next.scenarioFile
 }
 
@@ -221,11 +222,27 @@ private fun VnEngine.buildingLevel(building: AcademyBuildingConfig): Int =
     else -> 0
   }
 
+private fun VnEngine.academyResources(config: AcademyConfig): Int =
+  when (val v = state.variables[config.resourcesVar]) {
+    is GameValue.IntVal -> v.value
+    is GameValue.FloatVal -> v.value.toInt()
+    else -> 0
+  }
+
+private fun VnEngine.spendAcademyResources(config: AcademyConfig, amount: Int) {
+  if (amount <= 0) return
+  val current = academyResources(config)
+  state.variables[config.resourcesVar] = GameValue.IntVal((current - amount).coerceAtLeast(0))
+}
+
 private fun VnEngine.applyBuildingUpgrade(step: AcademyPlaybackStep) {
   val buildingId = step.buildingId ?: return
   val targetLevel = step.upgradeToLevel ?: return
-  val building = state.academyConfig?.buildings?.firstOrNull { it.id == buildingId } ?: return
+  val config = state.academyConfig ?: return
+  val building = config.buildings.firstOrNull { it.id == buildingId } ?: return
+  val tier = building.levels.firstOrNull { it.level == targetLevel }
   state.variables[building.levelVar] = GameValue.IntVal(targetLevel)
+  tier?.let { spendAcademyResources(config, it.cost) }
 }
 
 internal data class ResolvedAcademyActivity(
@@ -290,9 +307,12 @@ private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState
     }
   }
   gs.selectedBuildingId?.let { id ->
-    if (buildingScenarioFor(config, id) == null) {
-      return "Постройка недоступна"
-    }
+    val building = config.buildings.firstOrNull { it.id == id }
+      ?: return "Неизвестная постройка"
+    val next = building.levels.filter { it.level > buildingLevel(building) }.minByOrNull { it.level }
+      ?: return "Постройка недоступна"
+    if (!meetsRequires(next.requires)) return "Постройка недоступна"
+    if (academyResources(config) < next.cost) return "Недостаточно ресурсов"
   }
   return null
 }
@@ -383,6 +403,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     background = config.background,
     day = day,
     planning = gs.hubPhase == AcademyHubPhase.PLANNING,
+    resources = academyResources(config),
     buildingGroups = groups,
     timeSlots = phases,
     canCommit = validationError == null && gs.hubPhase == AcademyHubPhase.PLANNING,
@@ -398,16 +419,33 @@ private fun VnEngine.buildingToUi(
 ): EngineOutput.AcademyBuildingUi {
   val level = buildingLevel(building)
   val next = building.levels.filter { it.level > level }.minByOrNull { it.level }
+  val config = state.academyConfig ?: return EngineOutput.AcademyBuildingUi(
+    id = building.id,
+    label = building.label,
+    group = building.group,
+    level = level,
+    xPercent = building.xPercent,
+    yPercent = building.yPercent,
+    enabled = false,
+    lockedReason = null,
+    selected = false,
+    statusLabel = "",
+    isBuilt = level > 0,
+  )
+  val resources = academyResources(config)
   val levelOk = next == null || meetsRequires(next.requires)
+  val canAfford = next == null || resources >= next.cost
   val canBuildToday = gs.hubPhase == AcademyHubPhase.PLANNING &&
     !gs.buildUsedToday &&
     next != null &&
-    levelOk
+    levelOk &&
+    canAfford
   val statusLabel = when {
     level == 0 && next == null -> "Нет улучшений"
-    level == 0 -> "Можно построить"
-    next != null && levelOk -> "Ур. $level · улучшить до ${next.level}"
+    level == 0 && next != null -> "Построить · ур. ${next.level}"
+    next != null && levelOk && canAfford -> "Ур. $level → ${next.level}"
     next != null && !levelOk -> "Ур. $level · условия не выполнены"
+    next != null && !canAfford -> "Ур. $level · мало ресурсов"
     else -> "Построено (ур. $level)"
   }
   val lockedReason = when {
@@ -415,6 +453,7 @@ private fun VnEngine.buildingToUi(
     !canBuildToday && next == null && level > 0 -> null
     !canBuildToday && next == null -> "Недоступно"
     !canBuildToday && !levelOk -> "Условия не выполнены"
+    !canBuildToday && !canAfford -> "Нужно ${next?.cost ?: 0} ресурсов"
     else -> null
   }
   return EngineOutput.AcademyBuildingUi(
@@ -429,6 +468,7 @@ private fun VnEngine.buildingToUi(
     selected = gs.selectedBuildingId == building.id,
     statusLabel = statusLabel,
     isBuilt = level > 0,
+    buildCost = next?.cost?.takeIf { it > 0 },
   )
 }
 

@@ -3,6 +3,7 @@
   "opt_wisdom": 0,
   "opt_luck": 0,
   "academy_day": 1,
+  "resources": 100,
   "building_library_level": 0,
   "building_dorm_level": 0
 }

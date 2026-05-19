@@ -1,6 +1,7 @@
 {
   "background": "backgrounds/02prev_bath/02holl.png",
   "dayVar": "academy_day",
+  "resourcesVar": "resources",
   "buildings": [
     {
       "id": "library",
@@ -12,6 +13,7 @@
       "levels": [
         {
           "level": 1,
+          "cost": 40,
           "scenarioFile": "scenarios/academy/build_library.json",
           "requires": [],
           "activities": [
@@ -35,6 +37,7 @@
       "levels": [
         {
           "level": 1,
+          "cost": 30,
           "scenarioFile": "scenarios/academy/build_dorm.json",
           "requires": [
             {

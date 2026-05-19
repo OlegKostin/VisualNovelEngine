@@ -59,6 +59,7 @@ sealed interface EngineOutput {
     val background: String,
     val day: Int,
     val planning: Boolean,
+    val resources: Int,
     val buildingGroups: List<AcademyBuildingGroupUi>,
     val timeSlots: List<AcademyTimeSlotUi>,
     val canCommit: Boolean,
@@ -85,6 +86,7 @@ sealed interface EngineOutput {
     val selected: Boolean,
     val statusLabel: String = "",
     val isBuilt: Boolean = false,
+    val buildCost: Int? = null,
   )
 
   data class AcademyTimeSlotUi(
