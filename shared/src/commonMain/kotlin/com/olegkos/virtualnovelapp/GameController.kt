@@ -241,6 +241,8 @@ class GameController(
 
       is EngineOutput.ShowAcademyHub -> output to engine.currentNode()
 
+      is EngineOutput.ShowAcademyDaySummary -> output to engine.currentNode()
+
       else -> output to engine.currentNode()
     }
   }
@@ -286,10 +288,11 @@ class GameController(
     ensureAcademyConfigForCurrentHub()
     val out = requireEngine.academyCommitDay(currentScenario)
       ?: return step()
-    if (out is EngineOutput.JumpScenarioOutput) {
-      return switchScenario(out.scenarioFile)
+    return when (out) {
+      is EngineOutput.JumpScenarioOutput -> switchScenario(out.scenarioFile)
+      is EngineOutput.ShowAcademyDaySummary -> out to requireEngine.currentNode()
+      else -> out to requireEngine.currentNode()
     }
-    return out to requireEngine.currentNode()
   }
 
   private fun academyHubPair(engine: VnEngine): Pair<EngineOutput, SceneNode?> {
@@ -304,10 +307,19 @@ class GameController(
     ensureAcademyConfig(hub.configFile)
   }
 
+  suspend fun academyDaySummaryContinue(): Pair<EngineOutput, SceneNode?> {
+    val engine = requireEngine
+    if (engine.state.academy?.hubPhase != AcademyHubPhase.PLAYBACK) {
+      return step()
+    }
+    return advanceAcademyPlayback()
+  }
+
   private suspend fun advanceAcademyPlayback(): Pair<EngineOutput, SceneNode?> {
     val engine = requireEngine
     when (val nextOut = engine.academyAdvanceAfterScenario()) {
       is EngineOutput.JumpScenarioOutput -> return switchScenario(nextOut.scenarioFile)
+      is EngineOutput.ShowAcademyDaySummary -> return nextOut to engine.currentNode()
       null -> {
         val ptr = engine.academyHubReturnPointer() ?: return step()
         val ret = engine.academyHubReturnScenario() ?: return step()

@@ -273,6 +273,13 @@
       }
     }
 
+    fun academyDaySummaryContinue() {
+      viewModelScope.launch {
+        val (output, node) = controller.academyDaySummaryContinue()
+        applyOutput(output, node)
+      }
+    }
+
     private fun applyOutput(output: EngineOutput, node: SceneNode?) {
       when (output) {
         is EngineOutput.JumpScenarioOutput -> {

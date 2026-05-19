@@ -81,6 +81,8 @@ private fun PhaseColumn(
   modifier: Modifier = Modifier,
   onSelectActivity: (String) -> Unit,
 ) {
+  val buildings = slot.activities.filter { it.fromBuilding }
+  val actions = slot.activities.filter { !it.fromBuilding }
   val hasSelection = slot.selectedActivityId != null
   val zoneColor = phaseZoneColor(slot.phaseId)
   val borderColor = if (hasSelection) Accent else Divider
@@ -90,48 +92,116 @@ private fun PhaseColumn(
       .fillMaxHeight()
       .background(zoneColor, RoundedCornerShape(10.dp))
       .border(1.dp, borderColor, RoundedCornerShape(10.dp))
-      .padding(8.dp)
-      .verticalScroll(rememberScrollState()),
+      .padding(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     SkikoSafeText(
       text = slot.label,
       fontSize = 15.sp,
       color = Color.White,
-      modifier = Modifier.padding(bottom = 10.dp),
+      modifier = Modifier.padding(bottom = 6.dp),
     )
 
-    if (slot.activities.isEmpty()) {
-      SkikoSafeText("Нет действий", fontSize = 11.sp, color = Color(0x99FFFFFF))
-    } else {
-      slot.activities.forEach { act ->
-        val selected = act.id == slot.selectedActivityId
-        val buildingAct = act.fromBuilding
-        VnOutlinedButton(
-          onClick = { onSelectActivity(act.id) },
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp)
-            .then(
-              if (buildingAct) {
-                Modifier.border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
-              } else {
-                Modifier
-              }
-            ),
-        ) {
-          Text(
-            text = act.label,
-            fontSize = 12.sp,
-            color = when {
-              selected -> Accent
-              buildingAct -> Color(0xFFC8E6C9)
-              else -> Color.White
-            },
+    PhaseHalfPanel(
+      title = "Строения",
+      items = buildings,
+      selectedActivityId = slot.selectedActivityId,
+      isBuildingSection = true,
+      emptyHint = "Нет строений",
+      onSelectActivity = onSelectActivity,
+      modifier = Modifier.weight(1f),
+    )
+
+    Spacer(Modifier.height(4.dp))
+    Spacer(
+      Modifier
+        .fillMaxWidth()
+        .height(1.dp)
+        .background(Divider),
+    )
+    Spacer(Modifier.height(4.dp))
+
+    PhaseHalfPanel(
+      title = "Действия",
+      items = actions,
+      selectedActivityId = slot.selectedActivityId,
+      isBuildingSection = false,
+      emptyHint = "Нет действий",
+      onSelectActivity = onSelectActivity,
+      modifier = Modifier.weight(1f),
+    )
+  }
+}
+
+@Composable
+private fun PhaseHalfPanel(
+  title: String,
+  items: List<EngineOutput.AcademyActivityOptionUi>,
+  selectedActivityId: String?,
+  isBuildingSection: Boolean,
+  emptyHint: String,
+  onSelectActivity: (String) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier.fillMaxWidth()) {
+    SkikoSafeText(
+      text = title,
+      fontSize = 12.sp,
+      color = if (isBuildingSection) Color(0xFFC8E6C9) else Accent,
+      modifier = Modifier.padding(bottom = 6.dp),
+    )
+
+    Column(
+      Modifier
+        .weight(1f)
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState()),
+    ) {
+      if (items.isEmpty()) {
+        SkikoSafeText(emptyHint, fontSize = 10.sp, color = Color(0x99FFFFFF))
+      } else {
+        items.forEach { act ->
+          PhaseActivityButton(
+            act = act,
+            selected = act.id == selectedActivityId,
+            isBuildingSection = isBuildingSection,
+            onClick = { onSelectActivity(act.id) },
           )
         }
       }
     }
+  }
+}
+
+@Composable
+private fun PhaseActivityButton(
+  act: EngineOutput.AcademyActivityOptionUi,
+  selected: Boolean,
+  isBuildingSection: Boolean,
+  onClick: () -> Unit,
+) {
+  VnOutlinedButton(
+    onClick = onClick,
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 3.dp)
+      .then(
+        if (isBuildingSection) {
+          Modifier.border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
+        } else {
+          Modifier
+        }
+      ),
+  ) {
+    Text(
+      text = act.label,
+      fontSize = 12.sp,
+      color = when {
+        selected -> Accent
+        isBuildingSection -> Color(0xFFC8E6C9)
+        else -> Color.White
+      },
+    )
   }
 }
 

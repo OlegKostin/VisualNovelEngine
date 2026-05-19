@@ -1,6 +1,7 @@
 package com.olegkos.vnengine.engine
 
 import com.olegkos.vnengine.engine.EngineOutput.JumpScenarioOutput
+import com.olegkos.vnengine.engine.EngineOutput.ShowAcademyDaySummary
 import com.olegkos.vnengine.engine.EngineOutput.ShowAcademyHub
 import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
 import com.olegkos.vnengine.engine.academy.AcademyBuildingConfig
@@ -52,6 +53,7 @@ fun VnEngine.academyCommitDay(returnScenario: String): EngineOutput? {
 
   gs.returnScenario = returnScenario
   gs.randomEventId = pickAcademyRandomEvent(config)?.id
+  snapshotAcademyDayStart(config, gs)
   gs.playbackQueue = buildAcademyPlaybackQueue(config, gs)
   gs.playbackIndex = 0
   gs.hubPhase = AcademyHubPhase.PLAYBACK
@@ -67,7 +69,9 @@ fun VnEngine.academyAdvanceAfterScenario(): EngineOutput? {
   if (gs.hubPhase != AcademyHubPhase.PLAYBACK) return null
 
   gs.playbackQueue.getOrNull(gs.playbackIndex)?.let { completed ->
-    applyBuildingUpgrade(completed)
+    if (!completed.isDaySummary) {
+      applyBuildingUpgrade(completed)
+    }
   }
 
   gs.playbackIndex++
@@ -83,6 +87,7 @@ fun VnEngine.academyAdvanceAfterScenario(): EngineOutput? {
   gs.playbackIndex = 0
   gs.randomEventId = null
   gs.buildUsedToday = false
+  gs.dayStartVars.clear()
   return null
 }
 
@@ -98,6 +103,9 @@ private fun VnEngine.academyStartCurrentPlayback(): EngineOutput {
 }
 
 private fun VnEngine.beginAcademyPlaybackStep(step: AcademyPlaybackStep): EngineOutput {
+  if (step.isDaySummary) {
+    return buildAcademyDaySummaryOutput()
+  }
   if (step.phaseId.isNotEmpty()) {
     state.variables["academy_phase_id"] = GameValue.StringVal(step.phaseId)
     state.variables["academy_phase_label"] = GameValue.StringVal(step.phaseLabel)
@@ -181,7 +189,47 @@ private fun VnEngine.buildAcademyPlaybackQueue(
     }
   }
 
+  queue.add(
+    AcademyPlaybackStep(
+      scenarioFile = "",
+      activityLabel = "Итоги дня",
+      isDaySummary = true,
+    )
+  )
+
   return queue
+}
+
+private fun VnEngine.snapshotAcademyDayStart(config: AcademyConfig, gs: AcademyState) {
+  gs.dayStartVars.clear()
+  gs.dayStartVars[config.resourcesVar] = academyResources(config)
+}
+
+fun VnEngine.buildAcademyDaySummaryOutput(): ShowAcademyDaySummary {
+  val config = state.academyConfig
+    ?: error("Academy config not loaded")
+  val gs = state.academy
+    ?: error("Academy state missing")
+
+  val day = when (val v = state.variables[config.dayVar]) {
+    is GameValue.IntVal -> v.value
+    is GameValue.FloatVal -> v.value.toInt()
+    else -> 0
+  }
+
+  val resourcesBefore = gs.dayStartVars[config.resourcesVar] ?: academyResources(config)
+  val resourcesAfter = academyResources(config)
+
+  return ShowAcademyDaySummary(
+    day = day,
+    changes = listOf(
+      EngineOutput.AcademyDayVarChangeUi(
+        label = config.resourcesLabel,
+        before = resourcesBefore,
+        after = resourcesAfter,
+      )
+    ),
+  )
 }
 
 private fun VnEngine.pickAcademyRandomEvent(config: AcademyConfig): AcademyRandomEventConfig? {

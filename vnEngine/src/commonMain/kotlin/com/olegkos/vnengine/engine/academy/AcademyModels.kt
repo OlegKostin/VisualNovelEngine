@@ -9,6 +9,7 @@ data class AcademyConfig(
   val background: String,
   val dayVar: String = "academy_day",
   val resourcesVar: String = "resources",
+  val resourcesLabel: String = "Ресурсы",
   val phases: List<AcademyPhaseConfig> = defaultPhases,
   val buildings: List<AcademyBuildingConfig> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
@@ -136,6 +137,7 @@ data class AcademyPlaybackStep(
   /** После сценария стройки — id здания и целевой уровень. */
   val buildingId: String? = null,
   val upgradeToLevel: Int? = null,
+  val isDaySummary: Boolean = false,
 )
 
 data class AcademyState(
@@ -150,4 +152,6 @@ data class AcademyState(
   var returnPointer: NodePointer? = null,
   var buildUsedToday: Boolean = false,
   var randomEventId: String? = null,
+  /** Значения переменных академии на момент «Подтвердить день». */
+  val dayStartVars: MutableMap<String, Int> = mutableMapOf(),
 )

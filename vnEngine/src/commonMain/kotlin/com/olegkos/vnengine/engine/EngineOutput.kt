@@ -55,6 +55,20 @@ sealed interface EngineOutput {
     val hotspots: List<SceneNode.Hotspot>
   ) : EngineOutput
 
+  data class ShowAcademyDaySummary(
+    val day: Int,
+    val title: String = "Итоги дня",
+    val changes: List<AcademyDayVarChangeUi>,
+  ) : EngineOutput
+
+  data class AcademyDayVarChangeUi(
+    val label: String,
+    val before: Int,
+    val after: Int,
+  ) {
+    val delta: Int get() = after - before
+  }
+
   data class ShowAcademyHub(
     val background: String,
     val day: Int,

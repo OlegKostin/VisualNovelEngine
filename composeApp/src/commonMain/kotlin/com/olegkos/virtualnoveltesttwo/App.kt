@@ -393,6 +393,13 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           }
         }
 
+        is EngineOutput.ShowAcademyDaySummary -> {
+          AcademyDaySummaryScreen(
+            output = o,
+            onContinue = { viewModel.academyDaySummaryContinue() },
+          )
+        }
+
         is EngineOutput.ShowBattle -> {
           Box(modifier = Modifier.fillMaxSize()) {
             BattleScreen(
