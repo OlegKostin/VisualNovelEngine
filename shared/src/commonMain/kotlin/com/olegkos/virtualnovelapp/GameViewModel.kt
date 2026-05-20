@@ -252,6 +252,13 @@
       currentNode = node
     }
 
+    fun academyEnactLaw(lawId: String) {
+      viewModelScope.launch {
+        val (output, node) = controller.academyEnactLaw(lawId)
+        applyOutput(output, node)
+      }
+    }
+
     fun academyQueueUnlock(unlockId: String?) {
       viewModelScope.launch {
         val (output, node) = controller.academyQueueUnlock(unlockId)

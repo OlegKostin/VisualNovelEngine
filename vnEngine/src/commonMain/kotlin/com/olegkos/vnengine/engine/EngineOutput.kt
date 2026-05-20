@@ -90,7 +90,24 @@ sealed interface EngineOutput {
     val buildUsedToday: Boolean,
     val unlockableActions: List<AcademyUnlockableUi> = emptyList(),
     val pendingUnlockLabel: String? = null,
+    val laws: List<AcademyLawUi> = emptyList(),
   ) : EngineOutput
+
+  enum class AcademyLawStatus {
+    ENACTED,
+    AVAILABLE,
+    LOCKED,
+  }
+
+  data class AcademyLawUi(
+    val id: String,
+    val label: String,
+    val status: AcademyLawStatus,
+    val lockedReason: String?,
+    val cost: Int,
+    /** Что даст закон (из effectHint или effects в JSON). */
+    val effectSummary: String? = null,
+  )
 
   data class AcademyUnlockableUi(
     val id: String,

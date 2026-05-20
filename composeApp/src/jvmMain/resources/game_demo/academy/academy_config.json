@@ -84,6 +84,37 @@
       "phases": ["day", "evening"]
     }
   ],
+  "laws": [
+    {
+      "id": "candy",
+      "label": "Раздать конфеты всем",
+      "enactedVar": "law_candy",
+      "cost": 20,
+      "requires": [],
+      "scenarioFile": "scenarios/academy/law_candy.json",
+      "effects": [
+        { "varName": "loyalty", "delta": 5 }
+      ]
+    },
+    {
+      "id": "curfew",
+      "label": "Комендантский час",
+      "enactedVar": "law_curfew",
+      "cost": 0,
+      "requires": [
+        {
+          "variable": "students",
+          "op": "GTE",
+          "value": { "type": "int", "value": 15 }
+        }
+      ],
+      "lockedHint": "Нужно не меньше 15 студентов",
+      "scenarioFile": "scenarios/academy/law_curfew.json",
+      "effects": [
+        { "varName": "corruption", "delta": -2 }
+      ]
+    }
+  ],
   "unlockableActions": [
     {
       "id": "night_training",

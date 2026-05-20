@@ -17,6 +17,8 @@ data class AcademyConfig(
   val activities: List<AcademyActivityConfig> = emptyList(),
   /** Разблокируемые режимы: выбор в меню «Построить» → активны со следующего дня. */
   val unlockableActions: List<AcademyUnlockableConfig> = emptyList(),
+  /** Одноразовые законы: ресурсы, сценарий, флаг enactedVar = true, зелёная строка в меню. */
+  val laws: List<AcademyLawConfig> = emptyList(),
   val randomEvents: List<AcademyRandomEventConfig> = emptyList(),
 ) {
   companion object {
@@ -60,6 +62,27 @@ data class AcademyBuildingLevelConfig(
   val requires: List<AcademyRequirementJson> = emptyList(),
   /** Действия в колонках фаз дня после достижения этого уровня постройки. */
   val activities: List<AcademyActivityConfig> = emptyList(),
+)
+
+@Serializable
+data class AcademyLawConfig(
+  val id: String,
+  val label: String,
+  /** Bool-переменная: true после принятия закона. */
+  val enactedVar: String,
+  val cost: Int = 0,
+  val requires: List<AcademyRequirementJson> = emptyList(),
+  val lockedHint: String? = null,
+  val scenarioFile: String? = null,
+  val effects: List<AcademyLawEffectJson> = emptyList(),
+  /** Свой текст эффекта; если пусто — собирается из [effects]. */
+  val effectHint: String? = null,
+)
+
+@Serializable
+data class AcademyLawEffectJson(
+  val varName: String,
+  val delta: Int = 0,
 )
 
 @Serializable
@@ -174,4 +197,8 @@ data class AcademyState(
   val dayStartVars: MutableMap<String, Int> = mutableMapOf(),
   val activeUnlockIds: MutableSet<String> = mutableSetOf(),
   var pendingUnlockId: String? = null,
+  /** Закон, сценарий которого сейчас проигрывается (до EndOfScene). */
+  var pendingLawEnactId: String? = null,
+  var lawReturnScenario: String? = null,
+  var lawReturnPointer: NodePointer? = null,
 )

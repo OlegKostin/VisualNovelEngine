@@ -7,6 +7,8 @@
   "loyalty": 50,
   "corruption": 10,
   "students": 25,
+  "law_candy": false,
+  "law_curfew": false,
   "building_library_level": 0,
   "building_dorm_level": 0
 }

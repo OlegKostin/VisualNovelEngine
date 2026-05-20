@@ -89,6 +89,7 @@ fun AcademyHubScreen(
           else viewModel.academySelectBuilding(id)
         },
         onQueueUnlock = { viewModel.academyQueueUnlock(it) },
+        onEnactLaw = { viewModel.academyEnactLaw(it) },
       )
     }
   }
@@ -240,6 +241,7 @@ private fun AcademyBuildMenuOverlay(
   onDismiss: () -> Unit,
   onSelectBuilding: (buildingId: String, currentlySelected: Boolean) -> Unit,
   onQueueUnlock: (unlockId: String?) -> Unit,
+  onEnactLaw: (lawId: String) -> Unit,
 ) {
   var tab by remember { mutableStateOf(BuildMenuTab.Buildings) }
 
@@ -296,6 +298,12 @@ private fun AcademyBuildMenuOverlay(
           onClick = { tab = BuildMenuTab.Actions },
           modifier = Modifier.weight(1f),
         )
+        BuildMenuTabButton(
+          label = "Законы",
+          selected = tab == BuildMenuTab.Laws,
+          onClick = { tab = BuildMenuTab.Laws },
+          modifier = Modifier.weight(1f),
+        )
       }
 
       Column(
@@ -307,13 +315,17 @@ private fun AcademyBuildMenuOverlay(
         when (tab) {
           BuildMenuTab.Buildings -> BuildingsMenuContent(output, onSelectBuilding)
           BuildMenuTab.Actions -> ActionsMenuContent(output, onQueueUnlock)
+          BuildMenuTab.Laws -> LawsMenuContent(output, onEnactLaw)
         }
       }
     }
   }
 }
 
-private enum class BuildMenuTab { Buildings, Actions }
+private enum class BuildMenuTab { Buildings, Actions, Laws }
+
+private val LawDoneGreen = Color(0xFF66BB6A)
+private val LawDoneBg = Color(0xFF2E4A3A)
 
 @Composable
 private fun BuildMenuTabButton(
@@ -375,6 +387,88 @@ private fun BuildingsMenuContent(
         }
       }
     }
+  }
+}
+
+@Composable
+private fun LawsMenuContent(
+  output: EngineOutput.ShowAcademyHub,
+  onEnactLaw: (lawId: String) -> Unit,
+) {
+  SkikoSafeText(
+    text = "Одноразовые законы (принять сразу)",
+    fontSize = 12.sp,
+    color = Color(0xBBFFFFFF),
+    modifier = Modifier.padding(bottom = 8.dp),
+  )
+
+  if (output.laws.isEmpty()) {
+    SkikoSafeText("Нет законов в конфиге", fontSize = 11.sp, color = Color(0x99FFFFFF))
+    return
+  }
+
+  output.laws.forEach { law ->
+    when (law.status) {
+      EngineOutput.AcademyLawStatus.ENACTED -> EnactedLawRow(law)
+      else -> {
+        val canEnact = law.status == EngineOutput.AcademyLawStatus.AVAILABLE
+        VnOutlinedButton(
+          onClick = { if (canEnact) onEnactLaw(law.id) },
+          enabled = canEnact,
+          surface = VnButtonSurface.Dark,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        ) {
+          LawRowContent(law)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun EnactedLawRow(law: EngineOutput.AcademyLawUi) {
+  Column(
+    Modifier
+      .fillMaxWidth()
+      .padding(vertical = 3.dp)
+      .background(LawDoneBg, RoundedCornerShape(8.dp))
+      .border(1.dp, LawDoneGreen, RoundedCornerShape(8.dp))
+      .padding(horizontal = 10.dp, vertical = 8.dp),
+  ) {
+    LawRowContent(law, enacted = true)
+  }
+}
+
+@Composable
+private fun LawRowContent(
+  law: EngineOutput.AcademyLawUi,
+  enacted: Boolean = false,
+) {
+  Column(Modifier.fillMaxWidth()) {
+    Text(
+      text = law.label,
+      fontSize = 12.sp,
+      color = if (enacted) Color(0xFFC8E6C9) else Color.White,
+    )
+    val costLine = if (law.cost > 0) "${law.cost} рес." else null
+    law.effectSummary?.let { summary ->
+      Text(
+        text = "Даст: $summary",
+        fontSize = 10.sp,
+        color = if (enacted) Color(0xFFA5D6A7) else Color(0xFFBBDEFB),
+      )
+    }
+    val statusLine = when {
+      enacted -> "Принят"
+      law.status == EngineOutput.AcademyLawStatus.AVAILABLE -> buildString {
+        append("Принять")
+        costLine?.let { append(" · $it") }
+      }
+      else -> law.lockedReason ?: "Недоступно"
+    }
+    Text(statusLine, fontSize = 10.sp, color = Color(0xBBFFFFFF))
   }
 }
 

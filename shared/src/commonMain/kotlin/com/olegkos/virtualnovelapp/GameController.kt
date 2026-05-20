@@ -20,7 +20,9 @@ import com.olegkos.vnengine.engine.academy.AcademyConfigLoader
 import com.olegkos.vnengine.engine.academy.AcademyHubPhase
 import com.olegkos.vnengine.engine.academy.AcademyState
 import com.olegkos.vnengine.engine.academyAdvanceAfterScenario
+import com.olegkos.vnengine.engine.academyBeginLawEnact
 import com.olegkos.vnengine.engine.academyCommitDay
+import com.olegkos.vnengine.engine.academyFinishPendingLawScenario
 import com.olegkos.vnengine.engine.academyHubReturnPointer
 import com.olegkos.vnengine.engine.academyHubReturnScenario
 import com.olegkos.vnengine.engine.academyQueueUnlock
@@ -237,6 +239,16 @@ class GameController(
         if (engine.state.academy?.hubPhase == AcademyHubPhase.PLAYBACK) {
           return runBlocking { advanceAcademyPlayback() }
         }
+        if (engine.state.academy?.pendingLawEnactId != null) {
+          val done = engine.academyFinishPendingLawScenario()
+          if (done != null) {
+            return runBlocking {
+              switchScenario(done.returnScenario)
+              engine.state.pointer = done.returnPointer
+              academyHubPair(engine)
+            }
+          }
+        }
         output to null
       }
 
@@ -269,6 +281,17 @@ class GameController(
     val root = basePath.removeSuffix("/")
     if (path == root || path.startsWith("$root/")) return path
     return basePath + path
+  }
+
+  suspend fun academyEnactLaw(lawId: String): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val engine = requireEngine
+    val out = engine.academyBeginLawEnact(lawId, currentScenario) ?: return academyHubPair(engine)
+    return when (out) {
+      is EngineOutput.JumpScenarioOutput -> switchScenario(out.scenarioFile)
+      is EngineOutput.ShowAcademyHub -> out to engine.currentNode()
+      else -> step()
+    }
   }
 
   suspend fun academyQueueUnlock(unlockId: String?): Pair<EngineOutput, SceneNode?> {

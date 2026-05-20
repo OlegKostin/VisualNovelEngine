@@ -34,6 +34,54 @@ fun VnEngine.academySelectBuilding(buildingId: String?) {
   gs.selectedBuildingId = buildingId
 }
 
+data class AcademyLawScenarioDone(
+  val returnScenario: String,
+  val returnPointer: NodePointer,
+)
+
+/** Принять закон (один раз): списать ресурсы, сценарий, эффекты, enactedVar = true. */
+fun VnEngine.academyBeginLawEnact(lawId: String, returnScenario: String): EngineOutput? {
+  val gs = state.academy ?: return null
+  val config = state.academyConfig ?: return null
+  if (gs.hubPhase != AcademyHubPhase.PLANNING) return null
+  val law = config.laws.firstOrNull { it.id == lawId } ?: return null
+  if (isLawEnacted(law)) return null
+  if (!meetsRequires(law.requires)) return null
+  if (academyResources(config) < law.cost) return null
+
+  spendAcademyResources(config, law.cost)
+
+  val scenario = law.scenarioFile?.trim()?.takeIf { it.isNotEmpty() }
+  if (scenario != null) {
+    gs.pendingLawEnactId = lawId
+    gs.lawReturnScenario = returnScenario
+    gs.lawReturnPointer = state.pointer.copy()
+    return JumpScenarioOutput(scenario)
+  }
+
+  completeLawEnact(law)
+  val node = currentAcademyHubNode() ?: return null
+  return buildAcademyHubOutput(node, gs)
+}
+
+/** После EndOfScene микро-сценария закона. */
+fun VnEngine.academyFinishPendingLawScenario(): AcademyLawScenarioDone? {
+  val gs = state.academy ?: return null
+  val lawId = gs.pendingLawEnactId ?: return null
+  val config = state.academyConfig ?: return null
+  val law = config.laws.firstOrNull { it.id == lawId } ?: return null
+  val retScenario = gs.lawReturnScenario ?: return null
+  val retPointer = gs.lawReturnPointer ?: return null
+  gs.pendingLawEnactId = null
+  gs.lawReturnScenario = null
+  gs.lawReturnPointer = null
+  completeLawEnact(law)
+  return AcademyLawScenarioDone(
+    returnScenario = retScenario,
+    returnPointer = retPointer,
+  )
+}
+
 fun VnEngine.academyQueueUnlock(unlockId: String?) {
   val gs = state.academy ?: return
   val config = state.academyConfig ?: return
@@ -508,6 +556,8 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     config.unlockableActions.firstOrNull { it.id == id }?.label
   }
 
+  val lawUi = config.laws.map { lawToUi(it, config) }
+
   val statUi = config.stats.map { stat ->
     EngineOutput.AcademyStatUi(
       varName = stat.varName,
@@ -531,7 +581,109 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     buildUsedToday = gs.buildUsedToday,
     unlockableActions = unlockableUi,
     pendingUnlockLabel = pendingUnlockLabel,
+    laws = lawUi,
   )
+}
+
+private fun VnEngine.isLawEnacted(law: com.olegkos.vnengine.engine.academy.AcademyLawConfig): Boolean =
+  when (val v = state.variables[law.enactedVar]) {
+    is GameValue.Bool -> v.value
+    is GameValue.IntVal -> v.value != 0
+    is GameValue.FloatVal -> v.value.toInt() != 0
+    else -> false
+  }
+
+private fun VnEngine.completeLawEnact(law: com.olegkos.vnengine.engine.academy.AcademyLawConfig) {
+  state.variables[law.enactedVar] = GameValue.Bool(true)
+  for (effect in law.effects) {
+    if (effect.delta != 0) {
+      variables.modify(effect.varName, GameValue.IntVal(effect.delta))
+    }
+  }
+}
+
+private fun VnEngine.lawToUi(
+  law: com.olegkos.vnengine.engine.academy.AcademyLawConfig,
+  config: AcademyConfig,
+): EngineOutput.AcademyLawUi {
+  val enacted = isLawEnacted(law)
+  val resources = academyResources(config)
+  val status = when {
+    enacted -> EngineOutput.AcademyLawStatus.ENACTED
+    !meetsRequires(law.requires) -> EngineOutput.AcademyLawStatus.LOCKED
+    law.cost > 0 && resources < law.cost -> EngineOutput.AcademyLawStatus.LOCKED
+    else -> EngineOutput.AcademyLawStatus.AVAILABLE
+  }
+  val lockedReason = when (status) {
+    EngineOutput.AcademyLawStatus.ENACTED -> "Принят"
+    EngineOutput.AcademyLawStatus.AVAILABLE -> null
+    EngineOutput.AcademyLawStatus.LOCKED -> when {
+      !meetsRequires(law.requires) ->
+        academyRequirementHint(law.requires, law.lockedHint, config)
+      law.cost > 0 && resources < law.cost -> "Нужно ${law.cost} ресурсов"
+      else -> law.lockedHint ?: "Недоступно"
+    }
+  }
+  return EngineOutput.AcademyLawUi(
+    id = law.id,
+    label = law.label,
+    status = status,
+    lockedReason = lockedReason,
+    cost = law.cost,
+    effectSummary = formatLawEffectSummary(law, config),
+  )
+}
+
+private fun VnEngine.formatLawEffectSummary(
+  law: com.olegkos.vnengine.engine.academy.AcademyLawConfig,
+  config: AcademyConfig,
+): String? {
+  law.effectHint?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+  if (law.effects.isEmpty()) return null
+  val labels = config.stats.associate { it.varName to it.label }
+  return law.effects.joinToString(" · ") { effect ->
+    val name = labels[effect.varName] ?: effect.varName
+    when {
+      effect.delta > 0 -> "$name +${effect.delta}"
+      effect.delta < 0 -> "$name ${effect.delta}"
+      else -> name
+    }
+  }
+}
+
+private fun VnEngine.academyRequirementHint(
+  requires: List<AcademyRequirementJson>,
+  lockedHint: String?,
+  config: AcademyConfig,
+): String {
+  if (!lockedHint.isNullOrBlank()) return lockedHint
+  if (requires.isEmpty()) return "Условия не выполнены"
+  val labels = config.stats.associate { it.varName to it.label }
+  return requires.joinToString(" · ") { formatAcademyRequirement(it, labels) }
+}
+
+private fun formatAcademyRequirement(
+  req: AcademyRequirementJson,
+  statLabels: Map<String, String>,
+): String {
+  val name = statLabels[req.variable] ?: req.variable
+  val op = when (req.op.uppercase()) {
+    "GTE", ">=" -> "≥"
+    "LTE", "<=" -> "≤"
+    "GT", ">" -> ">"
+    "LT", "<" -> "<"
+    "EQ", "==" -> "="
+    "NEQ", "!=", "<>" -> "≠"
+    else -> "≥"
+  }
+  val value = when (val v = req.value) {
+    is com.olegkos.vnengine.engine.academy.AcademyValueJson.IntVal -> v.value.toString()
+    is com.olegkos.vnengine.engine.academy.AcademyValueJson.FloatVal -> v.value.toString()
+    is com.olegkos.vnengine.engine.academy.AcademyValueJson.BoolVal ->
+      if (v.value) "да" else "нет"
+    is com.olegkos.vnengine.engine.academy.AcademyValueJson.StringVal -> v.value
+  }
+  return "$name $op $value"
 }
 
 private fun VnEngine.unlockableToUi(
