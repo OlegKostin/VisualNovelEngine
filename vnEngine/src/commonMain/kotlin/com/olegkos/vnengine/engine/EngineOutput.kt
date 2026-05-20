@@ -69,11 +69,19 @@ sealed interface EngineOutput {
     val delta: Int get() = after - before
   }
 
+  data class AcademyStatUi(
+    val varName: String,
+    val label: String,
+    val value: Int,
+  )
+
   data class ShowAcademyHub(
     val background: String,
     val day: Int,
     val planning: Boolean,
     val resources: Int,
+    val resourcesLabel: String = "Ресурсы",
+    val stats: List<AcademyStatUi> = emptyList(),
     val buildingGroups: List<AcademyBuildingGroupUi>,
     val timeSlots: List<AcademyTimeSlotUi>,
     val canCommit: Boolean,

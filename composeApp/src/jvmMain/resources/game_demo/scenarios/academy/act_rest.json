@@ -6,6 +6,12 @@
         {
           "type": "text",
           "text": "{academy_phase_label}: отдых — тишина комнаты, вы восстанавливаете силы."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "loyalty",
+          "value": { "type": "int", "value": 2 },
+          "text": "Лояльность +2"
         }
       ]
     }

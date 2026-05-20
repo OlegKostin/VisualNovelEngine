@@ -6,6 +6,18 @@
         {
           "type": "text",
           "text": "{academy_phase_label}: прогулка по двору академии. Ветер, крики ворон, далёкий звон."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "corruption",
+          "value": { "type": "int", "value": 1 },
+          "text": "Коррупция +1"
+        },
+        {
+          "type": "modifyVar",
+          "varName": "loyalty",
+          "value": { "type": "int", "value": -1 },
+          "text": "Лояльность −1"
         }
       ]
     }

@@ -448,8 +448,11 @@ private fun ResourcesAndBuildColumn(
       .padding(8.dp)
       .verticalScroll(rememberScrollState()),
   ) {
-    SkikoSafeText("Ресурсы", fontSize = 15.sp, color = Accent, modifier = Modifier.padding(bottom = 6.dp))
-    StatLine("В наличии", output.resources.toString())
+    SkikoSafeText("Показатели", fontSize = 15.sp, color = Accent, modifier = Modifier.padding(bottom = 6.dp))
+    StatLine(output.resourcesLabel, output.resources.toString())
+    output.stats.forEach { stat ->
+      StatLine(stat.label, stat.value.toString())
+    }
 
     output.selectedBuildingId?.let { selectedId ->
       val label = output.buildingGroups

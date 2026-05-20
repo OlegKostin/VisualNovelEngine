@@ -6,6 +6,12 @@
         {
           "type": "text",
           "text": "{academy_phase_label}: учёба — вы проводите время за книгами и конспектами."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "students",
+          "value": { "type": "int", "value": 1 },
+          "text": "Студенты +1"
         }
       ]
     }

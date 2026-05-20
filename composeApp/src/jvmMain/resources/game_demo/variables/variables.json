@@ -4,6 +4,9 @@
   "opt_luck": 0,
   "academy_day": 1,
   "resources": 100,
+  "loyalty": 50,
+  "corruption": 10,
+  "students": 25,
   "building_library_level": 0,
   "building_dorm_level": 0
 }

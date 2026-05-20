@@ -222,6 +222,9 @@ private fun VnEngine.buildAcademyPlaybackQueue(
 private fun VnEngine.snapshotAcademyDayStart(config: AcademyConfig, gs: AcademyState) {
   gs.dayStartVars.clear()
   gs.dayStartVars[config.resourcesVar] = academyResources(config)
+  config.stats.forEach { stat ->
+    gs.dayStartVars[stat.varName] = academyIntVar(stat.varName)
+  }
 }
 
 fun VnEngine.buildAcademyDaySummaryOutput(): ShowAcademyDaySummary {
@@ -236,19 +239,26 @@ fun VnEngine.buildAcademyDaySummaryOutput(): ShowAcademyDaySummary {
     else -> 0
   }
 
-  val resourcesBefore = gs.dayStartVars[config.resourcesVar] ?: academyResources(config)
-  val resourcesAfter = academyResources(config)
-
-  return ShowAcademyDaySummary(
-    day = day,
-    changes = listOf(
+  val changes = buildList {
+    add(
       EngineOutput.AcademyDayVarChangeUi(
         label = config.resourcesLabel,
-        before = resourcesBefore,
-        after = resourcesAfter,
+        before = gs.dayStartVars[config.resourcesVar] ?: academyResources(config),
+        after = academyResources(config),
+      ),
+    )
+    config.stats.forEach { stat ->
+      add(
+        EngineOutput.AcademyDayVarChangeUi(
+          label = stat.label,
+          before = gs.dayStartVars[stat.varName] ?: academyIntVar(stat.varName),
+          after = academyIntVar(stat.varName),
+        ),
       )
-    ),
-  )
+    }
+  }
+
+  return ShowAcademyDaySummary(day = day, changes = changes)
 }
 
 private fun VnEngine.pickAcademyRandomEvent(config: AcademyConfig): AcademyRandomEventConfig? {
@@ -289,12 +299,15 @@ private fun VnEngine.buildingLevel(building: AcademyBuildingConfig): Int =
     else -> 0
   }
 
-private fun VnEngine.academyResources(config: AcademyConfig): Int =
-  when (val v = state.variables[config.resourcesVar]) {
+private fun VnEngine.academyIntVar(varName: String): Int =
+  when (val v = state.variables[varName]) {
     is GameValue.IntVal -> v.value
     is GameValue.FloatVal -> v.value.toInt()
     else -> 0
   }
+
+private fun VnEngine.academyResources(config: AcademyConfig): Int =
+  academyIntVar(config.resourcesVar)
 
 private fun VnEngine.spendAcademyResources(config: AcademyConfig, amount: Int) {
   if (amount <= 0) return
@@ -495,11 +508,21 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     config.unlockableActions.firstOrNull { it.id == id }?.label
   }
 
+  val statUi = config.stats.map { stat ->
+    EngineOutput.AcademyStatUi(
+      varName = stat.varName,
+      label = stat.label,
+      value = academyIntVar(stat.varName),
+    )
+  }
+
   return ShowAcademyHub(
     background = config.background,
     day = day,
     planning = gs.hubPhase == AcademyHubPhase.PLANNING,
     resources = academyResources(config),
+    resourcesLabel = config.resourcesLabel,
+    stats = statUi,
     buildingGroups = groups,
     timeSlots = phases,
     canCommit = validationError == null && gs.hubPhase == AcademyHubPhase.PLANNING,

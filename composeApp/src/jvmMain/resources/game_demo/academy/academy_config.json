@@ -2,6 +2,12 @@
   "background": "backgrounds/02prev_bath/02holl.png",
   "dayVar": "academy_day",
   "resourcesVar": "resources",
+  "resourcesLabel": "Ресурсы",
+  "stats": [
+    { "varName": "loyalty", "label": "Лояльность" },
+    { "varName": "corruption", "label": "Коррупция" },
+    { "varName": "students", "label": "Студенты" }
+  ],
   "buildings": [
     {
       "id": "library",

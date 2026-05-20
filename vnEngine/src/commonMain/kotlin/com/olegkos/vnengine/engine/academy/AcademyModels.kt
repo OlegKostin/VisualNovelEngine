@@ -10,6 +10,8 @@ data class AcademyConfig(
   val dayVar: String = "academy_day",
   val resourcesVar: String = "resources",
   val resourcesLabel: String = "Ресурсы",
+  /** Показатели академии: переменные из variables.json, отображаются в хабе и в итогах дня. */
+  val stats: List<AcademyStatConfig> = emptyList(),
   val phases: List<AcademyPhaseConfig> = defaultPhases,
   val buildings: List<AcademyBuildingConfig> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
@@ -26,6 +28,12 @@ data class AcademyConfig(
     )
   }
 }
+
+@Serializable
+data class AcademyStatConfig(
+  val varName: String,
+  val label: String,
+)
 
 @Serializable
 data class AcademyPhaseConfig(
