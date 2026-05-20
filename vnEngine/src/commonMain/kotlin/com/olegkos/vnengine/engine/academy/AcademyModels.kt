@@ -59,6 +59,7 @@ data class AcademyBuildingLevelConfig(
   val level: Int,
   val scenarioFile: String,
   val cost: Int = 0,
+  val description: String? = null,
   val requires: List<AcademyRequirementJson> = emptyList(),
   /** Действия в колонках фаз дня после достижения этого уровня постройки. */
   val activities: List<AcademyActivityConfig> = emptyList(),
@@ -74,6 +75,7 @@ data class AcademyLawConfig(
   val requires: List<AcademyRequirementJson> = emptyList(),
   val lockedHint: String? = null,
   val scenarioFile: String? = null,
+  val description: String? = null,
   val effects: List<AcademyLawEffectJson> = emptyList(),
   /** Свой текст эффекта; если пусто — собирается из [effects]. */
   val effectHint: String? = null,
@@ -89,6 +91,7 @@ data class AcademyLawEffectJson(
 data class AcademyUnlockableConfig(
   val id: String,
   val label: String,
+  val description: String? = null,
   val unlockRequires: List<AcademyRequirementJson> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
 )

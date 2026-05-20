@@ -7,12 +7,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +29,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnovelapp.GameViewModel
@@ -280,37 +287,14 @@ private fun AcademyBuildMenuOverlay(
         }
       }
 
-      Row(
-        Modifier
-          .fillMaxWidth()
-          .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        BuildMenuTabButton(
-          label = "Строения",
-          selected = tab == BuildMenuTab.Buildings,
-          onClick = { tab = BuildMenuTab.Buildings },
-          modifier = Modifier.weight(1f),
-        )
-        BuildMenuTabButton(
-          label = "Действия",
-          selected = tab == BuildMenuTab.Actions,
-          onClick = { tab = BuildMenuTab.Actions },
-          modifier = Modifier.weight(1f),
-        )
-        BuildMenuTabButton(
-          label = "Законы",
-          selected = tab == BuildMenuTab.Laws,
-          onClick = { tab = BuildMenuTab.Laws },
-          modifier = Modifier.weight(1f),
-        )
-      }
+      BuildMenuTabRow(
+        selected = tab,
+        onSelect = { tab = it },
+        modifier = Modifier.padding(vertical = 10.dp),
+      )
 
-      Column(
-        Modifier
-          .weight(1f)
-          .fillMaxWidth()
-          .verticalScroll(rememberScrollState()),
+      BuildMenuListPanel(
+        modifier = Modifier.weight(1f),
       ) {
         when (tab) {
           BuildMenuTab.Buildings -> BuildingsMenuContent(output, onSelectBuilding)
@@ -324,8 +308,194 @@ private fun AcademyBuildMenuOverlay(
 
 private enum class BuildMenuTab { Buildings, Actions, Laws }
 
+/** Ширина вкладки «Строения / Действия / Законы». */
+private const val BuildMenuTabWidthFraction = 0.2f
+
+@Composable
+private fun BuildMenuTabRow(
+  selected: BuildMenuTab,
+  onSelect: (BuildMenuTab) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  BoxWithConstraints(modifier.fillMaxWidth()) {
+    val tabWidth = maxWidth * BuildMenuTabWidthFraction
+    Row(
+      Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.Center,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      BuildMenuTab.entries.forEach { entry ->
+        BuildMenuTabButton(
+          label = when (entry) {
+            BuildMenuTab.Buildings -> "Строения"
+            BuildMenuTab.Actions -> "Действия"
+            BuildMenuTab.Laws -> "Законы"
+          },
+          selected = selected == entry,
+          onClick = { onSelect(entry) },
+          modifier = Modifier
+            .width(tabWidth)
+            .padding(horizontal = 4.dp),
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun BuildMenuListPanel(
+  modifier: Modifier = Modifier,
+  content: @Composable () -> Unit,
+) {
+  Column(
+    modifier
+      .fillMaxWidth()
+      .fillMaxHeight()
+      .verticalScroll(rememberScrollState()),
+  ) {
+    content()
+  }
+}
+
 private val LawDoneGreen = Color(0xFF66BB6A)
 private val LawDoneBg = Color(0xFF2E4A3A)
+private val CardZoneTitleBg = Color(0xFF2A3A52)
+private val CardZoneReqBg = Color(0xFF232D3F)
+private val CardZoneDescBg = Color(0xFF1E2836)
+private val CardZoneActionBg = Color(0xFF1A2230)
+
+@Composable
+private fun AcademyMenuItemCard(
+  title: String,
+  requirements: String,
+  description: String,
+  actionLabel: String,
+  onAction: () -> Unit,
+  actionEnabled: Boolean,
+  actionSelected: Boolean = false,
+  completed: Boolean = false,
+  modifier: Modifier = Modifier,
+) {
+  val borderColor = when {
+    completed -> LawDoneGreen
+    actionSelected -> Accent
+    else -> Divider
+  }
+  val titleColor = if (completed) Color(0xFFC8E6C9) else Color.White
+  val bodyColor = Color(0xD9FFFFFF)
+  val row1Bg = if (completed) LawDoneBg else CardZoneTitleBg
+  val row2Bg = if (completed) LawDoneBg.copy(alpha = 0.85f) else CardZoneDescBg
+
+  BoxWithConstraints(
+    modifier
+      .fillMaxWidth()
+      .padding(vertical = 6.dp)
+      .clip(RoundedCornerShape(10.dp))
+      .border(1.dp, borderColor, RoundedCornerShape(10.dp)),
+  ) {
+    val titleWidth = maxWidth * 0.25f
+    val requirementsWidth = maxWidth * 0.75f
+    val descriptionWidth = maxWidth * 0.8f
+    val buttonWidth = maxWidth * 0.2f
+
+    Column(Modifier.fillMaxWidth()) {
+      Row(
+        Modifier
+          .fillMaxWidth()
+          .heightIn(min = 52.dp)
+          .background(row1Bg),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Box(
+          Modifier
+            .width(titleWidth)
+            .fillMaxHeight()
+            .padding(horizontal = 6.dp, vertical = 8.dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          Text(
+            text = title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = titleColor,
+            textAlign = TextAlign.Center,
+            lineHeight = 17.sp,
+          )
+        }
+        Box(
+          Modifier
+            .width(requirementsWidth)
+            .fillMaxHeight()
+            .background(if (completed) LawDoneBg else CardZoneReqBg)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          Text(
+            text = requirements,
+            fontSize = 11.sp,
+            color = bodyColor,
+            textAlign = TextAlign.Center,
+            lineHeight = 14.sp,
+          )
+        }
+      }
+
+      Row(
+        Modifier
+          .fillMaxWidth()
+          .heightIn(min = 48.dp)
+          .background(row2Bg),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Box(
+          Modifier
+            .width(descriptionWidth)
+            .fillMaxHeight()
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          Text(
+            text = description,
+            fontSize = 11.sp,
+            color = bodyColor,
+            textAlign = TextAlign.Center,
+            lineHeight = 14.sp,
+          )
+        }
+        Box(
+          Modifier
+            .width(buttonWidth)
+            .fillMaxHeight()
+            .background(if (completed) LawDoneBg else CardZoneActionBg)
+            .padding(horizontal = 4.dp, vertical = 6.dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          VnOutlinedButton(
+            onClick = onAction,
+            enabled = actionEnabled,
+            selected = actionSelected,
+            surface = VnButtonSurface.Dark,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+          ) {
+            Text(
+              text = actionLabel,
+              fontSize = 10.sp,
+              textAlign = TextAlign.Center,
+              maxLines = 2,
+              color = when {
+                completed -> Color(0xFFC8E6C9)
+                actionSelected -> Accent
+                actionEnabled -> Color.White
+                else -> Color(0xFF6B7588)
+              },
+            )
+          }
+        }
+      }
+    }
+  }
+}
 
 @Composable
 private fun BuildMenuTabButton(
@@ -338,12 +508,14 @@ private fun BuildMenuTabButton(
     onClick = onClick,
     selected = selected,
     surface = VnButtonSurface.Dark,
-    modifier = modifier,
+    modifier = modifier.fillMaxWidth(),
   ) {
     Text(
       text = label,
-      fontSize = 13.sp,
+      fontSize = 12.sp,
       color = if (selected) Accent else Color.White,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.fillMaxWidth(),
     )
   }
 }
@@ -364,28 +536,23 @@ private fun BuildingsMenuContent(
       group.label,
       fontSize = 11.sp,
       color = Color(0x99FFFFFF),
-      modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
+      modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
     )
     group.buildings.forEach { building ->
-      if (building.isBuilt && !building.enabled) {
-        BuiltBuildingRow(building)
-      } else {
-        VnOutlinedButton(
-          onClick = {
-            if (building.enabled) {
-              onSelectBuilding(building.id, building.selected)
-            }
-          },
-          enabled = building.enabled,
-          selected = building.selected,
-          surface = VnButtonSurface.Dark,
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        ) {
-          BuildingRowContent(building)
-        }
-      }
+      AcademyMenuItemCard(
+        title = building.label,
+        requirements = building.requirementsText,
+        description = building.descriptionText,
+        actionLabel = building.actionLabel,
+        onAction = {
+          if (building.enabled || building.selected) {
+            onSelectBuilding(building.id, building.selected)
+          }
+        },
+        actionEnabled = building.enabled || building.selected,
+        actionSelected = building.selected,
+        completed = building.completed,
+      )
     }
   }
 }
@@ -408,67 +575,15 @@ private fun LawsMenuContent(
   }
 
   output.laws.forEach { law ->
-    when (law.status) {
-      EngineOutput.AcademyLawStatus.ENACTED -> EnactedLawRow(law)
-      else -> {
-        val canEnact = law.status == EngineOutput.AcademyLawStatus.AVAILABLE
-        VnOutlinedButton(
-          onClick = { if (canEnact) onEnactLaw(law.id) },
-          enabled = canEnact,
-          surface = VnButtonSurface.Dark,
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp),
-        ) {
-          LawRowContent(law)
-        }
-      }
-    }
-  }
-}
-
-@Composable
-private fun EnactedLawRow(law: EngineOutput.AcademyLawUi) {
-  Column(
-    Modifier
-      .fillMaxWidth()
-      .padding(vertical = 3.dp)
-      .background(LawDoneBg, RoundedCornerShape(8.dp))
-      .border(1.dp, LawDoneGreen, RoundedCornerShape(8.dp))
-      .padding(horizontal = 10.dp, vertical = 8.dp),
-  ) {
-    LawRowContent(law, enacted = true)
-  }
-}
-
-@Composable
-private fun LawRowContent(
-  law: EngineOutput.AcademyLawUi,
-  enacted: Boolean = false,
-) {
-  Column(Modifier.fillMaxWidth()) {
-    Text(
-      text = law.label,
-      fontSize = 12.sp,
-      color = if (enacted) Color(0xFFC8E6C9) else Color.White,
+    AcademyMenuItemCard(
+      title = law.label,
+      requirements = law.requirementsText,
+      description = law.descriptionText,
+      actionLabel = law.actionLabel,
+      onAction = { if (law.actionEnabled) onEnactLaw(law.id) },
+      actionEnabled = law.actionEnabled,
+      completed = law.status == EngineOutput.AcademyLawStatus.ENACTED,
     )
-    val costLine = if (law.cost > 0) "${law.cost} рес." else null
-    law.effectSummary?.let { summary ->
-      Text(
-        text = "Даст: $summary",
-        fontSize = 10.sp,
-        color = if (enacted) Color(0xFFA5D6A7) else Color(0xFFBBDEFB),
-      )
-    }
-    val statusLine = when {
-      enacted -> "Принят"
-      law.status == EngineOutput.AcademyLawStatus.AVAILABLE -> buildString {
-        append("Принять")
-        costLine?.let { append(" · $it") }
-      }
-      else -> law.lockedReason ?: "Недоступно"
-    }
-    Text(statusLine, fontSize = 10.sp, color = Color(0xBBFFFFFF))
   }
 }
 
@@ -490,40 +605,16 @@ private fun ActionsMenuContent(
   }
 
   output.unlockableActions.forEach { unlock ->
-    val canTap = unlock.status == EngineOutput.AcademyUnlockableStatus.CAN_QUEUE ||
-      unlock.status == EngineOutput.AcademyUnlockableStatus.PENDING
-    VnOutlinedButton(
-      onClick = { if (canTap) onQueueUnlock(unlock.id) },
-      enabled = canTap,
-      selected = unlock.status == EngineOutput.AcademyUnlockableStatus.PENDING,
-      surface = VnButtonSurface.Dark,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 3.dp)
-        .then(
-          if (unlock.status == EngineOutput.AcademyUnlockableStatus.ACTIVE) {
-            Modifier.border(1.dp, UnlockAccent, RoundedCornerShape(8.dp))
-          } else {
-            Modifier
-          }
-        ),
-    ) {
-      Column(Modifier.fillMaxWidth()) {
-        Text(
-          text = unlock.label,
-          fontSize = 12.sp,
-          color = when (unlock.status) {
-            EngineOutput.AcademyUnlockableStatus.ACTIVE -> UnlockAccent
-            EngineOutput.AcademyUnlockableStatus.PENDING -> Accent
-            EngineOutput.AcademyUnlockableStatus.CAN_QUEUE -> Color.White
-            EngineOutput.AcademyUnlockableStatus.LOCKED -> Color(0x88FFFFFF)
-          },
-        )
-        unlock.lockedReason?.let {
-          Text(it, fontSize = 10.sp, color = Color(0x99FFFFFF))
-        }
-      }
-    }
+    AcademyMenuItemCard(
+      title = unlock.label,
+      requirements = unlock.requirementsText,
+      description = unlock.descriptionText,
+      actionLabel = unlock.actionLabel,
+      onAction = { if (unlock.actionEnabled) onQueueUnlock(unlock.id) },
+      actionEnabled = unlock.actionEnabled,
+      actionSelected = unlock.status == EngineOutput.AcademyUnlockableStatus.PENDING,
+      completed = unlock.completed,
+    )
   }
 }
 
@@ -601,49 +692,6 @@ private fun ResourcesAndBuildColumn(
         fontSize = 13.sp,
         color = if (output.canCommit) Accent else Color(0xFF6B7588),
       )
-    }
-  }
-}
-
-@Composable
-private fun BuiltBuildingRow(building: EngineOutput.AcademyBuildingUi) {
-  Column(
-    Modifier
-      .fillMaxWidth()
-      .padding(vertical = 2.dp)
-      .background(Color(0xFF2E4A3A), RoundedCornerShape(8.dp))
-      .border(1.dp, Color(0xFF66BB6A), RoundedCornerShape(8.dp))
-      .padding(horizontal = 10.dp, vertical = 8.dp),
-  ) {
-    BuildingRowContent(building, builtHighlight = true)
-  }
-}
-
-@Composable
-private fun BuildingRowContent(
-  building: EngineOutput.AcademyBuildingUi,
-  builtHighlight: Boolean = false,
-) {
-  Column(Modifier.fillMaxWidth()) {
-    Text(
-      text = building.label,
-      fontSize = 12.sp,
-      color = when {
-        building.selected -> Accent
-        builtHighlight || building.isBuilt -> Color(0xFFC8E6C9)
-        else -> Color.White
-      },
-    )
-    Text(
-      text = buildString {
-        append(building.statusLabel)
-        building.buildCost?.let { append(" · $it рес.") }
-      },
-      fontSize = 10.sp,
-      color = Color(0xBBFFFFFF),
-    )
-    building.lockedReason?.let {
-      Text(it, fontSize = 9.sp, color = Color(0x99FFFFFF))
     }
   }
 }

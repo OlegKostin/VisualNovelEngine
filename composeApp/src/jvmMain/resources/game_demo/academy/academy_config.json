@@ -20,6 +20,7 @@
         {
           "level": 1,
           "cost": 40,
+          "description": "Новые полки и читальный зал. После постройки откроется посещение библиотеки днём и вечером.",
           "scenarioFile": "scenarios/academy/build_library.json",
           "requires": [],
           "activities": [
@@ -44,6 +45,7 @@
         {
           "level": 1,
           "cost": 30,
+          "description": "Комнаты для студентов. Отдых в общежитии станет доступен вечером и ночью.",
           "scenarioFile": "scenarios/academy/build_dorm.json",
           "requires": [
             {
@@ -88,6 +90,7 @@
     {
       "id": "candy",
       "label": "Раздать конфеты всем",
+      "description": "Праздничная раздача сладостей — студенты запомнят заботу.",
       "enactedVar": "law_candy",
       "cost": 20,
       "requires": [],
@@ -99,6 +102,7 @@
     {
       "id": "curfew",
       "label": "Комендантский час",
+      "description": "Строгий отбой: меньше беспорядков, но часть студентов недовольна.",
       "enactedVar": "law_curfew",
       "cost": 0,
       "requires": [
@@ -119,6 +123,7 @@
     {
       "id": "night_training",
       "label": "Ночная тренировка",
+      "description": "Ночные занятия в зале — тренировка появится в фазе «Ночь» со следующего дня.",
       "unlockRequires": [
         {
           "variable": "academy_day",

@@ -624,12 +624,30 @@ private fun VnEngine.lawToUi(
       else -> law.lockedHint ?: "Недоступно"
     }
   }
+  val requirementsText = formatRequirementsDisplay(
+    requires = law.requires,
+    lockedHint = law.lockedHint,
+    config = config,
+    resourceCost = law.cost.takeIf { it > 0 },
+  )
+  val descriptionText = law.description?.trim()?.takeIf { it.isNotEmpty() }
+    ?: formatLawEffectSummary(law, config)
+    ?: "—"
+  val actionLabel = when (status) {
+    EngineOutput.AcademyLawStatus.ENACTED -> "Принят"
+    EngineOutput.AcademyLawStatus.AVAILABLE -> "Принять закон"
+    else -> lockedReason ?: "Недоступно"
+  }
   return EngineOutput.AcademyLawUi(
     id = law.id,
     label = law.label,
     status = status,
     lockedReason = lockedReason,
     cost = law.cost,
+    requirementsText = requirementsText,
+    descriptionText = descriptionText,
+    actionLabel = actionLabel,
+    actionEnabled = status == EngineOutput.AcademyLawStatus.AVAILABLE,
     effectSummary = formatLawEffectSummary(law, config),
   )
 }
@@ -649,6 +667,25 @@ private fun VnEngine.formatLawEffectSummary(
       else -> name
     }
   }
+}
+
+private fun VnEngine.formatRequirementsDisplay(
+  requires: List<AcademyRequirementJson>,
+  lockedHint: String?,
+  config: AcademyConfig,
+  resourceCost: Int? = null,
+): String {
+  val lines = mutableListOf<String>()
+  when {
+    !lockedHint.isNullOrBlank() -> lines.add(lockedHint)
+    requires.isNotEmpty() -> {
+      val labels = config.stats.associate { it.varName to it.label }
+      requires.forEach { lines.add(formatAcademyRequirement(it, labels)) }
+    }
+    else -> lines.add("Нет особых условий")
+  }
+  resourceCost?.takeIf { it > 0 }?.let { lines.add("Стоимость: $it ресурсов") }
+  return lines.joinToString("\n")
 }
 
 private fun VnEngine.academyRequirementHint(
@@ -702,12 +739,36 @@ private fun VnEngine.unlockableToUi(
     EngineOutput.AcademyUnlockableStatus.PENDING -> "Будет активно завтра"
     EngineOutput.AcademyUnlockableStatus.CAN_QUEUE -> null
   }
+  val config = state.academyConfig
+  val requirementsText = if (config != null) {
+    formatRequirementsDisplay(
+      requires = unlock.unlockRequires,
+      lockedHint = null,
+      config = config,
+    )
+  } else {
+    "—"
+  }
+  val descriptionText = unlock.description?.trim()?.takeIf { it.isNotEmpty() }
+    ?: "Режим появится в колонках фаз дня со следующего утра."
+  val actionLabel = when (status) {
+    EngineOutput.AcademyUnlockableStatus.ACTIVE -> "Активно"
+    EngineOutput.AcademyUnlockableStatus.PENDING -> "Отменить"
+    EngineOutput.AcademyUnlockableStatus.CAN_QUEUE -> "Включить с завтра"
+    else -> lockedReason ?: "Недоступно"
+  }
   return EngineOutput.AcademyUnlockableUi(
     id = unlock.id,
     label = unlock.label,
     status = status,
     lockedReason = lockedReason,
     selectedForTomorrow = unlock.id == gs.pendingUnlockId,
+    requirementsText = requirementsText,
+    descriptionText = descriptionText,
+    actionLabel = actionLabel,
+    actionEnabled = status == EngineOutput.AcademyUnlockableStatus.CAN_QUEUE ||
+      status == EngineOutput.AcademyUnlockableStatus.PENDING,
+    completed = status == EngineOutput.AcademyUnlockableStatus.ACTIVE,
   )
 }
 
@@ -729,6 +790,10 @@ private fun VnEngine.buildingToUi(
     selected = false,
     statusLabel = "",
     isBuilt = level > 0,
+    requirementsText = "—",
+    descriptionText = "—",
+    actionLabel = "Недоступно",
+    completed = level > 0,
   )
   val resources = academyResources(config)
   val levelOk = next == null || meetsRequires(next.requires)
@@ -754,6 +819,26 @@ private fun VnEngine.buildingToUi(
     !canBuildToday && !canAfford -> "Нужно ${next?.cost ?: 0} ресурсов"
     else -> null
   }
+  val completed = next == null && level > 0
+  val requirementsText = when {
+    next != null -> formatRequirementsDisplay(
+      requires = next.requires,
+      lockedHint = null,
+      config = config,
+      resourceCost = next.cost.takeIf { it > 0 },
+    )
+    level > 0 -> "Построено (уровень $level)"
+    else -> "Нет доступных улучшений"
+  }
+  val descriptionText = next?.description?.trim()?.takeIf { it.isNotEmpty() }
+    ?: if (completed) "Все улучшения этого строения уже возведены."
+    else "—"
+  val actionLabel = when {
+    completed -> "Построено"
+    gs.selectedBuildingId == building.id -> "Снять выбор"
+    canBuildToday -> "Построить"
+    else -> lockedReason ?: "Недоступно"
+  }
   return EngineOutput.AcademyBuildingUi(
     id = building.id,
     label = building.label,
@@ -767,6 +852,10 @@ private fun VnEngine.buildingToUi(
     statusLabel = statusLabel,
     isBuilt = level > 0,
     buildCost = next?.cost?.takeIf { it > 0 },
+    requirementsText = requirementsText,
+    descriptionText = descriptionText,
+    actionLabel = actionLabel,
+    completed = completed,
   )
 }
 

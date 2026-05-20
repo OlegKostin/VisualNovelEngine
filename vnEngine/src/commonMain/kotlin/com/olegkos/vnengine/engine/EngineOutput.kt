@@ -105,6 +105,10 @@ sealed interface EngineOutput {
     val status: AcademyLawStatus,
     val lockedReason: String?,
     val cost: Int,
+    val requirementsText: String,
+    val descriptionText: String,
+    val actionLabel: String,
+    val actionEnabled: Boolean,
     /** Что даст закон (из effectHint или effects в JSON). */
     val effectSummary: String? = null,
   )
@@ -115,6 +119,11 @@ sealed interface EngineOutput {
     val status: AcademyUnlockableStatus,
     val lockedReason: String?,
     val selectedForTomorrow: Boolean,
+    val requirementsText: String,
+    val descriptionText: String,
+    val actionLabel: String,
+    val actionEnabled: Boolean,
+    val completed: Boolean = false,
   )
 
   enum class AcademyUnlockableStatus {
@@ -143,6 +152,10 @@ sealed interface EngineOutput {
     val statusLabel: String = "",
     val isBuilt: Boolean = false,
     val buildCost: Int? = null,
+    val requirementsText: String = "",
+    val descriptionText: String = "",
+    val actionLabel: String = "",
+    val completed: Boolean = false,
   )
 
   data class AcademyTimeSlotUi(
