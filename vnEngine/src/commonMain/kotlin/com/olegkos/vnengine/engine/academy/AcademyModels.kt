@@ -204,4 +204,6 @@ data class AcademyState(
   var pendingLawEnactId: String? = null,
   var lawReturnScenario: String? = null,
   var lawReturnPointer: NodePointer? = null,
+  val buildingsBuiltThisPlayback: MutableSet<String> = mutableSetOf(),
+  val buildingHighlightDay: MutableMap<String, Int> = mutableMapOf(),
 )

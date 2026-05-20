@@ -171,10 +171,15 @@ private fun PhaseHalfPanel(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier.fillMaxWidth()) {
+    val sectionTitleColor = if (isBuildingSection && items.any { it.highlightBuilding }) {
+      Color(0xFFC8E6C9)
+    } else {
+      Accent
+    }
     SkikoSafeText(
       text = title,
       fontSize = 12.sp,
-      color = if (isBuildingSection) Color(0xFFC8E6C9) else Accent,
+      color = sectionTitleColor,
       modifier = Modifier.padding(bottom = 6.dp),
     )
 
@@ -191,7 +196,6 @@ private fun PhaseHalfPanel(
           PhaseActivityButton(
             act = act,
             selected = act.id == selectedActivityId,
-            isBuildingSection = isBuildingSection,
             onClick = { onSelectActivity(act.id) },
           )
         }
@@ -204,13 +208,13 @@ private fun PhaseHalfPanel(
 private fun PhaseActivityButton(
   act: EngineOutput.AcademyActivityOptionUi,
   selected: Boolean,
-  isBuildingSection: Boolean,
   onClick: () -> Unit,
 ) {
   val isUnlock = act.fromUnlockable
+  val showBuildingGreen = act.highlightBuilding
   val accentBorder = when {
     selected -> Accent
-    isBuildingSection -> Color(0xFF66BB6A)
+    showBuildingGreen -> Color(0xFF66BB6A)
     isUnlock -> UnlockAccent
     else -> null
   }
@@ -234,7 +238,7 @@ private fun PhaseActivityButton(
       fontSize = 12.sp,
       color = when {
         selected -> Accent
-        isBuildingSection -> Color(0xFFC8E6C9)
+        showBuildingGreen -> Color(0xFFC8E6C9)
         isUnlock -> UnlockAccent
         else -> Color.White
       },

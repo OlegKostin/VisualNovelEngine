@@ -170,6 +170,8 @@ sealed interface EngineOutput {
     val label: String,
     val fromBuilding: Boolean = false,
     val fromUnlockable: Boolean = false,
+    /** Зелёная подсветка «новое строение» — только в день после постройки. */
+    val highlightBuilding: Boolean = false,
   )
   data class ShowCard(
     val image: String,

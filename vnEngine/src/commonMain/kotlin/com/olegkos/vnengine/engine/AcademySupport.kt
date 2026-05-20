@@ -115,6 +115,7 @@ fun VnEngine.academyCommitDay(returnScenario: String): EngineOutput? {
 
   gs.returnScenario = returnScenario
   gs.randomEventId = pickAcademyRandomEvent(config)?.id
+  gs.buildingsBuiltThisPlayback.clear()
   snapshotAcademyDayStart(config, gs)
   gs.playbackQueue = buildAcademyPlaybackQueue(config, gs)
   gs.playbackIndex = 0
@@ -201,7 +202,12 @@ private fun VnEngine.academyFinishDay() {
     is GameValue.FloatVal -> v.value.toInt()
     else -> 0
   }
-  state.variables[dayVar] = GameValue.IntVal(current + 1)
+  val newDay = current + 1
+  state.variables[dayVar] = GameValue.IntVal(newDay)
+  gs.buildingsBuiltThisPlayback.forEach { buildingId ->
+    gs.buildingHighlightDay[buildingId] = newDay
+  }
+  gs.buildingsBuiltThisPlayback.clear()
   gs.pendingUnlockId?.let { id ->
     gs.activeUnlockIds.add(id)
     gs.pendingUnlockId = null
@@ -347,6 +353,9 @@ private fun VnEngine.buildingLevel(building: AcademyBuildingConfig): Int =
     else -> 0
   }
 
+private fun VnEngine.academyDay(config: AcademyConfig): Int =
+  academyIntVar(config.dayVar)
+
 private fun VnEngine.academyIntVar(varName: String): Int =
   when (val v = state.variables[varName]) {
     is GameValue.IntVal -> v.value
@@ -367,10 +376,12 @@ private fun VnEngine.applyBuildingUpgrade(step: AcademyPlaybackStep) {
   val buildingId = step.buildingId ?: return
   val targetLevel = step.upgradeToLevel ?: return
   val config = state.academyConfig ?: return
+  val gs = state.academy ?: return
   val building = config.buildings.firstOrNull { it.id == buildingId } ?: return
   val tier = building.levels.firstOrNull { it.level == targetLevel }
   state.variables[building.levelVar] = GameValue.IntVal(targetLevel)
   tier?.let { spendAcademyResources(config, it.cost) }
+  gs.buildingsBuiltThisPlayback.add(buildingId)
 }
 
 internal data class ResolvedAcademyActivity(
@@ -527,6 +538,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
       )
     }
 
+  val currentDay = academyDay(config)
   val phases = config.phases.map { phase ->
     val selectedId = gs.planByPhase[phase.id]
     EngineOutput.AcademyTimeSlotUi(
@@ -539,11 +551,14 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
             meetsRequires(act.requires)
         }
         .map {
+          val buildingId = it.fromBuildingId
           EngineOutput.AcademyActivityOptionUi(
             id = it.id,
             label = it.label,
-            fromBuilding = it.fromBuildingId != null,
+            fromBuilding = buildingId != null,
             fromUnlockable = it.fromUnlockableId != null,
+            highlightBuilding = buildingId != null &&
+              gs.buildingHighlightDay[buildingId] == currentDay,
           )
         },
     )
@@ -793,9 +808,10 @@ private fun VnEngine.buildingToUi(
     requirementsText = "—",
     descriptionText = "—",
     actionLabel = "Недоступно",
-    completed = level > 0,
+    completed = false,
   )
   val resources = academyResources(config)
+  val currentDay = academyDay(config)
   val levelOk = next == null || meetsRequires(next.requires)
   val canAfford = next == null || resources >= next.cost
   val canBuildToday = gs.hubPhase == AcademyHubPhase.PLANNING &&
@@ -819,7 +835,9 @@ private fun VnEngine.buildingToUi(
     !canBuildToday && !canAfford -> "Нужно ${next?.cost ?: 0} ресурсов"
     else -> null
   }
-  val completed = next == null && level > 0
+  val builtMaxLevel = next == null && level > 0
+  val showBuildHighlight = builtMaxLevel &&
+    gs.buildingHighlightDay[building.id] == currentDay
   val requirementsText = when {
     next != null -> formatRequirementsDisplay(
       requires = next.requires,
@@ -831,10 +849,10 @@ private fun VnEngine.buildingToUi(
     else -> "Нет доступных улучшений"
   }
   val descriptionText = next?.description?.trim()?.takeIf { it.isNotEmpty() }
-    ?: if (completed) "Все улучшения этого строения уже возведены."
+    ?: if (builtMaxLevel) "Все улучшения этого строения уже возведены."
     else "—"
   val actionLabel = when {
-    completed -> "Построено"
+    builtMaxLevel -> "Построено"
     gs.selectedBuildingId == building.id -> "Снять выбор"
     canBuildToday -> "Построить"
     else -> lockedReason ?: "Недоступно"
@@ -855,7 +873,7 @@ private fun VnEngine.buildingToUi(
     requirementsText = requirementsText,
     descriptionText = descriptionText,
     actionLabel = actionLabel,
-    completed = completed,
+    completed = showBuildHighlight,
   )
 }
 
