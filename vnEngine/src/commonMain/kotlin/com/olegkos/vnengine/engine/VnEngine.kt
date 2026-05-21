@@ -186,6 +186,9 @@ class VnEngine(
         }
 
         is SceneNode.SpriteAnimation -> {
+          val speakerName =
+            node.speakerVar?.let { variables.getString(it) }
+              ?: node.speaker
           return ShowSpriteAnimation(
             image = node.image,
             columns = node.columns,
@@ -193,6 +196,8 @@ class VnEngine(
             frameDurationMs = node.frameDurationMs,
             loop = node.loop,
             scale = node.scale,
+            text = node.text?.let { resolveTextVariables(it) },
+            speaker = speakerName,
           )
         }
 

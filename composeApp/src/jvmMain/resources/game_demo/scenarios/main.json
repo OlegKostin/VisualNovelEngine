@@ -4,6 +4,17 @@
     "intro": {
       "nodes": [
         {
+          "type": "spriteAnimation",
+          "image": "images/sprite_4x4.png",
+          "columns": 4,
+          "rows": 4,
+          "frameDurationMs": 50,
+          "scale": "fit",
+          "loop": true,
+          "speakerVar": "my_name",
+          "text": "Реплика поверх анимации…ика поверх аника поверх аника поверх ан"
+        },
+        {
           "type": "choice",
           "options": [
             {

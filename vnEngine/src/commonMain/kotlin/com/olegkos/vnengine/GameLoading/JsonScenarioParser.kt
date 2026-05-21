@@ -136,6 +136,9 @@ class JsonScenarioParser : ScenarioParser {
                 frameDurationMs = nodeJson.frameDurationMs,
                 loop = nodeJson.loop,
                 scale = SpriteSheetScale.fromJson(nodeJson.scale),
+                text = nodeJson.text,
+                speaker = nodeJson.speaker,
+                speakerVar = nodeJson.speakerVar,
               )
               is EffectNode -> Image(nodeJson.image)
               is SceneNodeJson.JumpJson -> Jump(
@@ -640,6 +643,9 @@ data class SpriteAnimationNode(
   val loop: Boolean = true,
   /** "fit" | "crop" | "fill" */
   val scale: String? = "fit",
+  val text: String? = null,
+  val speaker: String? = null,
+  val speakerVar: String? = null,
 ) : SceneNodeJson()
 @Serializable
 @SerialName("character")

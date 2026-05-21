@@ -43,6 +43,8 @@ sealed interface EngineOutput {
     val loop: Boolean = true,
     val clicksToAdvance: Int = 2,
     val scale: SpriteSheetScale = SpriteSheetScale.Fit,
+    val text: String? = null,
+    val speaker: String? = null,
   ) : EngineOutput
   data class ShowCharacter(
     val id: String,

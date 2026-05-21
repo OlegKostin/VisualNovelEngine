@@ -29,6 +29,7 @@ import kotlinx.coroutines.delay
  * Один кадр спрайт-листа на весь экран.
  * Ячейка в пикселях: bitmap.width/columns × bitmap.height/rows.
  * Кадры: слева направо, затем следующий ряд.
+ * При [text] — снизу [VNTextBox], переход как у обычной реплики.
  */
 @Composable
 fun SpriteSheetAnimationScreen(
@@ -39,9 +40,12 @@ fun SpriteSheetAnimationScreen(
   loop: Boolean = true,
   clicksToAdvance: Int = 2,
   scale: SpriteSheetScale = SpriteSheetScale.Fit,
+  text: String? = null,
+  speaker: String? = null,
   onAdvance: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val hasText = !text.isNullOrBlank()
   var clicks by remember { mutableIntStateOf(0) }
   var frameIndex by remember { mutableIntStateOf(0) }
   val gridColumns = columns.coerceAtLeast(1)
@@ -65,18 +69,24 @@ fun SpriteSheetAnimationScreen(
     }
   }
 
-  Box(
-    modifier = modifier
-      .fillMaxSize()
-      .clip(RectangleShape)
-      .clickable(
-        indication = null,
-        interactionSource = remember { MutableInteractionSource() },
-      ) {
-        clicks++
-        if (clicks >= clicksToAdvance) onAdvance()
+  val boxModifier = modifier
+    .fillMaxSize()
+    .clip(RectangleShape)
+    .then(
+      if (!hasText) {
+        Modifier.clickable(
+          indication = null,
+          interactionSource = remember { MutableInteractionSource() },
+        ) {
+          clicks++
+          if (clicks >= clicksToAdvance) onAdvance()
+        }
+      } else {
+        Modifier
       },
-  ) {
+    )
+
+  Box(modifier = boxModifier) {
     val bitmap = sheetBitmap
     if (bitmap == null) {
       Text(
@@ -130,7 +140,13 @@ fun SpriteSheetAnimationScreen(
       )
     }
 
-    if (clicks == 1 && clicksToAdvance > 1) {
+    if (hasText) {
+      VNTextBox(
+        text = text!!,
+        speaker = speaker,
+        onNext = onAdvance,
+      )
+    } else if (clicks == 1 && clicksToAdvance > 1) {
       Text(
         text = "▶",
         modifier = Modifier

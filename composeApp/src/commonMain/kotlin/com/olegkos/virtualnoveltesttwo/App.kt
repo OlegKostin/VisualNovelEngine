@@ -475,6 +475,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         loop = sprite.loop,
         clicksToAdvance = sprite.clicksToAdvance,
         scale = sprite.scale,
+        text = sprite.text,
+        speaker = sprite.speaker,
         onAdvance = { viewModel.next() },
       )
     }

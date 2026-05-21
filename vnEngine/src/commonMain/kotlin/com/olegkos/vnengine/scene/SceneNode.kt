@@ -109,7 +109,7 @@ sealed interface SceneNode {
     val image: String
   ) : SceneNode
 
-  /** Спрайт-лист: кадры слева направо, ряд за рядом; зацикленная анимация до двух кликов. */
+  /** Спрайт-лист: кадры слева направо, ряд за рядом. С текстом — VNTextBox снизу; без — два клика. */
   data class SpriteAnimation(
     val image: String,
     val columns: Int = 4,
@@ -117,6 +117,9 @@ sealed interface SceneNode {
     val frameDurationMs: Long = 80,
     val loop: Boolean = true,
     val scale: SpriteSheetScale = SpriteSheetScale.Fit,
+    val text: String? = null,
+    val speaker: String? = null,
+    val speakerVar: String? = null,
   ) : SceneNode
 
   data class ShowCharacter(
