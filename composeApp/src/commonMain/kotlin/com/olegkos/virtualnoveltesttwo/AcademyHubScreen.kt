@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnovelapp.GameViewModel
+import com.olegkos.virtualnoveltesttwo.theme.AcademyHubTypography
+import com.olegkos.virtualnoveltesttwo.theme.LocalAcademyHubTypography
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
 import com.olegkos.virtualnoveltesttwo.theme.VnButtonSurface
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
@@ -54,11 +57,15 @@ fun AcademyHubScreen(
 ) {
   var buildMenuOpen by remember { mutableStateOf(false) }
 
-  Box(Modifier.fillMaxSize().background(BaseBg)) {
+  BoxWithConstraints(Modifier.fillMaxSize().background(BaseBg)) {
+    val typography = remember(maxHeight, maxWidth) {
+      AcademyHubTypography.fromViewport(maxHeight.value, maxWidth.value)
+    }
+    CompositionLocalProvider(LocalAcademyHubTypography provides typography) {
   Column(Modifier.fillMaxSize()) {
     SkikoSafeText(
       text = "День ${output.day}",
-      fontSize = 18.sp,
+      fontSize = typography.dayHeader,
       color = Color.White,
       modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
     )
@@ -99,6 +106,7 @@ fun AcademyHubScreen(
         onEnactLaw = { viewModel.academyEnactLaw(it) },
       )
     }
+    }
   }
 }
 
@@ -108,6 +116,7 @@ private fun PhaseColumn(
   modifier: Modifier = Modifier,
   onSelectActivity: (String) -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   val buildings = slot.activities.filter { it.fromBuilding }
   val actions = slot.activities.filter { !it.fromBuilding }
   val hasSelection = slot.selectedActivityId != null
@@ -124,7 +133,7 @@ private fun PhaseColumn(
   ) {
     SkikoSafeText(
       text = slot.label,
-      fontSize = 15.sp,
+      fontSize = typography.phaseHeader,
       color = Color.White,
       modifier = Modifier.padding(bottom = 6.dp),
     )
@@ -170,6 +179,7 @@ private fun PhaseHalfPanel(
   onSelectActivity: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val typography = LocalAcademyHubTypography.current
   Column(modifier.fillMaxWidth()) {
     val sectionTitleColor = if (isBuildingSection && items.any { it.highlightBuilding }) {
       Color(0xFFC8E6C9)
@@ -178,7 +188,7 @@ private fun PhaseHalfPanel(
     }
     SkikoSafeText(
       text = title,
-      fontSize = 12.sp,
+      fontSize = typography.section,
       color = sectionTitleColor,
       modifier = Modifier.padding(bottom = 6.dp),
     )
@@ -190,7 +200,7 @@ private fun PhaseHalfPanel(
         .verticalScroll(rememberScrollState()),
     ) {
       if (items.isEmpty()) {
-        SkikoSafeText(emptyHint, fontSize = 10.sp, color = Color(0x99FFFFFF))
+        SkikoSafeText(emptyHint, fontSize = typography.hint, color = Color(0x99FFFFFF))
       } else {
         items.forEach { act ->
           PhaseActivityButton(
@@ -210,6 +220,7 @@ private fun PhaseActivityButton(
   selected: Boolean,
   onClick: () -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   val isUnlock = act.fromUnlockable
   val showBuildingGreen = act.highlightBuilding
   val accentBorder = when {
@@ -235,7 +246,7 @@ private fun PhaseActivityButton(
   ) {
     Text(
       text = act.label,
-      fontSize = 12.sp,
+      fontSize = typography.body,
       color = when {
         selected -> Accent
         showBuildingGreen -> Color(0xFFC8E6C9)
@@ -254,6 +265,7 @@ private fun AcademyBuildMenuOverlay(
   onQueueUnlock: (unlockId: String?) -> Unit,
   onEnactLaw: (lawId: String) -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   var tab by remember { mutableStateOf(BuildMenuTab.Buildings) }
 
   Box(Modifier.fillMaxSize()) {
@@ -285,9 +297,9 @@ private fun AcademyBuildMenuOverlay(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        SkikoSafeText("Меню", fontSize = 17.sp, color = Color.White)
+        SkikoSafeText("Меню", fontSize = typography.menuTitle, color = Color.White)
         VnOutlinedButton(onClick = onDismiss, surface = VnButtonSurface.Dark) {
-          Text("✕", fontSize = 14.sp, color = Color.White)
+          Text("✕", fontSize = typography.menuClose, color = Color.White)
         }
       }
 
@@ -380,6 +392,7 @@ private fun AcademyMenuItemCard(
   completed: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
+  val typography = LocalAcademyHubTypography.current
   val borderColor = when {
     completed -> LawDoneGreen
     actionSelected -> Accent
@@ -406,7 +419,7 @@ private fun AcademyMenuItemCard(
       Row(
         Modifier
           .fillMaxWidth()
-          .heightIn(min = 52.dp)
+          .heightIn(min = typography.cardRowMinHeight)
           .background(row1Bg),
         verticalAlignment = Alignment.CenterVertically,
       ) {
@@ -419,11 +432,11 @@ private fun AcademyMenuItemCard(
         ) {
           Text(
             text = title,
-            fontSize = 14.sp,
+            fontSize = typography.cardTitle,
             fontWeight = FontWeight.Bold,
             color = titleColor,
             textAlign = TextAlign.Center,
-            lineHeight = 17.sp,
+            lineHeight = typography.lineHeight(typography.cardTitle),
           )
         }
         Box(
@@ -436,10 +449,10 @@ private fun AcademyMenuItemCard(
         ) {
           Text(
             text = requirements,
-            fontSize = 11.sp,
+            fontSize = typography.cardBody,
             color = bodyColor,
             textAlign = TextAlign.Center,
-            lineHeight = 14.sp,
+            lineHeight = typography.lineHeight(typography.cardBody),
           )
         }
       }
@@ -447,7 +460,7 @@ private fun AcademyMenuItemCard(
       Row(
         Modifier
           .fillMaxWidth()
-          .heightIn(min = 48.dp)
+          .heightIn(min = typography.cardActionRowMinHeight)
           .background(row2Bg),
         verticalAlignment = Alignment.CenterVertically,
       ) {
@@ -460,10 +473,10 @@ private fun AcademyMenuItemCard(
         ) {
           Text(
             text = description,
-            fontSize = 11.sp,
+            fontSize = typography.cardBody,
             color = bodyColor,
             textAlign = TextAlign.Center,
-            lineHeight = 14.sp,
+            lineHeight = typography.lineHeight(typography.cardBody),
           )
         }
         Box(
@@ -484,7 +497,7 @@ private fun AcademyMenuItemCard(
           ) {
             Text(
               text = actionLabel,
-              fontSize = 10.sp,
+              fontSize = typography.cardButton,
               textAlign = TextAlign.Center,
               maxLines = 2,
               color = when {
@@ -508,6 +521,7 @@ private fun BuildMenuTabButton(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val typography = LocalAcademyHubTypography.current
   VnOutlinedButton(
     onClick = onClick,
     selected = selected,
@@ -516,7 +530,7 @@ private fun BuildMenuTabButton(
   ) {
     Text(
       text = label,
-      fontSize = 12.sp,
+      fontSize = typography.tab,
       color = if (selected) Accent else Color.White,
       textAlign = TextAlign.Center,
       modifier = Modifier.fillMaxWidth(),
@@ -529,16 +543,17 @@ private fun BuildingsMenuContent(
   output: EngineOutput.ShowAcademyHub,
   onSelectBuilding: (buildingId: String, currentlySelected: Boolean) -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   SkikoSafeText(
     text = "Строительство (1× в день)",
-    fontSize = 12.sp,
+    fontSize = typography.menuHint,
     color = Color(0xBBFFFFFF),
     modifier = Modifier.padding(bottom = 8.dp),
   )
   output.buildingGroups.forEach { group ->
     SkikoSafeText(
       group.label,
-      fontSize = 11.sp,
+      fontSize = typography.hint,
       color = Color(0x99FFFFFF),
       modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
     )
@@ -566,15 +581,16 @@ private fun LawsMenuContent(
   output: EngineOutput.ShowAcademyHub,
   onEnactLaw: (lawId: String) -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   SkikoSafeText(
     text = "Одноразовые законы (принять сразу)",
-    fontSize = 12.sp,
+    fontSize = typography.menuHint,
     color = Color(0xBBFFFFFF),
     modifier = Modifier.padding(bottom = 8.dp),
   )
 
   if (output.laws.isEmpty()) {
-    SkikoSafeText("Нет законов в конфиге", fontSize = 11.sp, color = Color(0x99FFFFFF))
+    SkikoSafeText("Нет законов в конфиге", fontSize = typography.hint, color = Color(0x99FFFFFF))
     return
   }
 
@@ -596,15 +612,16 @@ private fun ActionsMenuContent(
   output: EngineOutput.ShowAcademyHub,
   onQueueUnlock: (unlockId: String?) -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   SkikoSafeText(
     text = "Разблокировка на следующий день",
-    fontSize = 12.sp,
+    fontSize = typography.menuHint,
     color = Color(0xBBFFFFFF),
     modifier = Modifier.padding(bottom = 8.dp),
   )
 
   if (output.unlockableActions.isEmpty()) {
-    SkikoSafeText("Пока нет доступных режимов", fontSize = 11.sp, color = Color(0x99FFFFFF))
+    SkikoSafeText("Пока нет доступных режимов", fontSize = typography.hint, color = Color(0x99FFFFFF))
     return
   }
 
@@ -629,6 +646,7 @@ private fun ResourcesAndBuildColumn(
   onOpenBuildMenu: () -> Unit,
   onCommitDay: () -> Unit,
 ) {
+  val typography = LocalAcademyHubTypography.current
   Column(
     modifier
       .fillMaxHeight()
@@ -637,10 +655,15 @@ private fun ResourcesAndBuildColumn(
       .padding(8.dp)
       .verticalScroll(rememberScrollState()),
   ) {
-    SkikoSafeText("Показатели", fontSize = 15.sp, color = Accent, modifier = Modifier.padding(bottom = 6.dp))
-    StatLine(output.resourcesLabel, output.resources.toString())
+    SkikoSafeText(
+      "Показатели",
+      fontSize = typography.panelTitle,
+      color = Accent,
+      modifier = Modifier.padding(bottom = 6.dp),
+    )
+    StatLine(output.resourcesLabel, output.resources.toString(), typography)
     output.stats.forEach { stat ->
-      StatLine(stat.label, stat.value.toString())
+      StatLine(stat.label, stat.value.toString(), typography)
     }
 
     output.selectedBuildingId?.let { selectedId ->
@@ -651,7 +674,7 @@ private fun ResourcesAndBuildColumn(
       if (label != null) {
         SkikoSafeText(
           text = "На стройку: $label",
-          fontSize = 11.sp,
+          fontSize = typography.hint,
           color = Color(0xFFC8E6C9),
           modifier = Modifier.padding(top = 6.dp),
         )
@@ -661,7 +684,7 @@ private fun ResourcesAndBuildColumn(
     output.pendingUnlockLabel?.let { label ->
       SkikoSafeText(
         text = "С завтра: $label",
-        fontSize = 11.sp,
+        fontSize = typography.hint,
         color = UnlockAccent,
         modifier = Modifier.padding(top = 6.dp),
       )
@@ -675,11 +698,11 @@ private fun ResourcesAndBuildColumn(
       surface = VnButtonSurface.Dark,
       modifier = Modifier.fillMaxWidth(),
     ) {
-      Text("Построить", fontSize = 13.sp, color = Color.White)
+      Text("Построить", fontSize = typography.button, color = Color.White)
     }
 
     output.commitBlockedReason?.let {
-      SkikoSafeText(it, fontSize = 11.sp, color = Color(0xFFFFAB91), modifier = Modifier.padding(top = 8.dp))
+      SkikoSafeText(it, fontSize = typography.hint, color = Color(0xFFFFAB91), modifier = Modifier.padding(top = 8.dp))
     }
 
     VnOutlinedButton(
@@ -693,7 +716,7 @@ private fun ResourcesAndBuildColumn(
     ) {
       Text(
         "Подтвердить день",
-        fontSize = 13.sp,
+        fontSize = typography.button,
         color = if (output.canCommit) Accent else Color(0xFF6B7588),
       )
     }
@@ -701,15 +724,19 @@ private fun ResourcesAndBuildColumn(
 }
 
 @Composable
-private fun StatLine(label: String, value: String) {
+private fun StatLine(
+  label: String,
+  value: String,
+  typography: AcademyHubTypography,
+) {
   Row(
     Modifier
       .fillMaxWidth()
       .padding(vertical = 2.dp),
     horizontalArrangement = Arrangement.SpaceBetween,
   ) {
-    Text(label, fontSize = 11.sp, color = Color(0xCCFFFFFF))
-    Text(value, fontSize = 11.sp, color = Color.White)
+    Text(label, fontSize = typography.stat, color = Color(0xCCFFFFFF))
+    Text(value, fontSize = typography.stat, color = Color.White)
   }
 }
 
