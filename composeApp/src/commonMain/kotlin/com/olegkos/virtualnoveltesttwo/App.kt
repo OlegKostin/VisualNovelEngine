@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.loadImageBitmap
@@ -39,6 +40,7 @@ import com.olegkos.virtualnoveltesttwo.composable.GameMenuHub
 import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
 import com.olegkos.virtualnoveltesttwo.composable.PlayerStatsScreen
 import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
+import com.olegkos.virtualnoveltesttwo.composable.SpriteSheetAnimationScreen
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.GameLoading.AssetReader
@@ -332,6 +334,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
 
+        is EngineOutput.ShowSpriteAnimation -> Unit
+
         is EngineOutput.ShowCard -> {
           Box(
             modifier = Modifier
@@ -458,6 +462,23 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
     }
 
+    (output as? EngineOutput.ShowSpriteAnimation)?.let { sprite ->
+      SpriteSheetAnimationScreen(
+        modifier = Modifier.fillMaxSize(),
+        sheetBitmap = rememberImageBitmap(
+          viewModel.assets.image(sprite.image),
+          viewModel.reader,
+        ),
+        columns = sprite.columns,
+        rows = sprite.rows,
+        frameDurationMs = sprite.frameDurationMs,
+        loop = sprite.loop,
+        clicksToAdvance = sprite.clicksToAdvance,
+        scale = sprite.scale,
+        onAdvance = { viewModel.next() },
+      )
+    }
+
     Box(
       modifier = Modifier
         .fillMaxSize()
@@ -578,16 +599,25 @@ private fun defaultNavGlyph(alignment: Alignment): String = when (alignment) {
 }
 
 @Composable
+fun rememberImageBitmap(
+  path: String,
+  reader: AssetReader,
+): ImageBitmap? {
+  var bitmap by remember(path) { mutableStateOf<ImageBitmap?>(null) }
+
+  LaunchedEffect(path) {
+    val bytes = reader.readBytes(path)
+    bitmap = loadImageBitmap(bytes.inputStream())
+  }
+
+  return bitmap
+}
+
+@Composable
 fun rememberPainter(
   path: String,
   reader: AssetReader,
 ): BitmapPainter? {
-  var painter by remember(path) { mutableStateOf<BitmapPainter?>(null) }
-
-  LaunchedEffect(path) {
-    val bytes = reader.readBytes(path)
-    painter = BitmapPainter(loadImageBitmap(bytes.inputStream()))
-  }
-
-  return painter
+  val bitmap = rememberImageBitmap(path, reader)
+  return bitmap?.let { remember(it) { BitmapPainter(it) } }
 }

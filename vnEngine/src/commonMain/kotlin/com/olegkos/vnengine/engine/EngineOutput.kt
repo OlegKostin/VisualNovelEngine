@@ -6,6 +6,7 @@ import com.olegkos.vnengine.engine.cardgame.ClashResolution
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.SpriteSheetScale
 import com.olegkos.vnengine.scene.SubClass
 
 sealed interface EngineOutput {
@@ -33,6 +34,15 @@ sealed interface EngineOutput {
   object EndOfScene : EngineOutput
   data class ShowImage(
     val image: String
+  ) : EngineOutput
+  data class ShowSpriteAnimation(
+    val image: String,
+    val columns: Int = 4,
+    val rows: Int = 4,
+    val frameDurationMs: Long = 80,
+    val loop: Boolean = true,
+    val clicksToAdvance: Int = 2,
+    val scale: SpriteSheetScale = SpriteSheetScale.Fit,
   ) : EngineOutput
   data class ShowCharacter(
     val id: String,

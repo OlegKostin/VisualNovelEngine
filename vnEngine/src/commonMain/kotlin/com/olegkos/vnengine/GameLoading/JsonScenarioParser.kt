@@ -40,6 +40,8 @@ import com.olegkos.vnengine.scene.SceneNode.SceneView
 import com.olegkos.vnengine.scene.SceneNode.SetVar
 import com.olegkos.vnengine.scene.SceneNode.AcademyHub
 import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
+import com.olegkos.vnengine.scene.SceneNode.SpriteAnimation
+import com.olegkos.vnengine.scene.SpriteSheetScale
 import com.olegkos.vnengine.scene.SceneNode.Switch
 import com.olegkos.vnengine.scene.SceneNode.SwitchRange
 import com.olegkos.vnengine.scene.SceneNode.Text
@@ -127,6 +129,14 @@ class JsonScenarioParser : ScenarioParser {
               )
               is BackgroundNode -> Background(nodeJson.image)
               is ImageNode -> Image(nodeJson.image)
+              is SpriteAnimationNode -> SpriteAnimation(
+                image = nodeJson.image,
+                columns = nodeJson.columns,
+                rows = nodeJson.rows,
+                frameDurationMs = nodeJson.frameDurationMs,
+                loop = nodeJson.loop,
+                scale = SpriteSheetScale.fromJson(nodeJson.scale),
+              )
               is EffectNode -> Image(nodeJson.image)
               is SceneNodeJson.JumpJson -> Jump(
                 targetSceneId = nodeJson.nextSceneId
@@ -620,6 +630,17 @@ data class BackgroundNode(val image: String) : SceneNodeJson()
 @Serializable
 @SerialName("image")
 data class ImageNode(val image: String) : SceneNodeJson()
+@Serializable
+@SerialName("spriteAnimation")
+data class SpriteAnimationNode(
+  val image: String,
+  val columns: Int = 4,
+  val rows: Int = 4,
+  val frameDurationMs: Long = 80,
+  val loop: Boolean = true,
+  /** "fit" | "crop" | "fill" */
+  val scale: String? = "fit",
+) : SceneNodeJson()
 @Serializable
 @SerialName("character")
 data class CharacterNode(

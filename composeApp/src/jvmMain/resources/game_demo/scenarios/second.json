@@ -6,6 +6,14 @@
     "second": {
       "nodes": [
         {
+          "type": "spriteAnimation",
+          "image": "effects/sprite_4x4.png",
+          "columns": 4,
+          "rows": 4,
+          "frameDurationMs": 80,
+          "scale": "fit"
+        },
+        {
           "type": "text",
           "text": "Это второй сценарий!"
         }

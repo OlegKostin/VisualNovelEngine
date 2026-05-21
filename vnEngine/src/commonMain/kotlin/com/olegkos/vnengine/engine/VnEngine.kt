@@ -185,6 +185,17 @@ class VnEngine(
           return ShowImage(node.image)
         }
 
+        is SceneNode.SpriteAnimation -> {
+          return ShowSpriteAnimation(
+            image = node.image,
+            columns = node.columns,
+            rows = node.rows,
+            frameDurationMs = node.frameDurationMs,
+            loop = node.loop,
+            scale = node.scale,
+          )
+        }
+
         is SceneNode.ShowCharacter -> {
           val finalImage = when {
             node.flagVar != null -> {

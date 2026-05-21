@@ -109,6 +109,16 @@ sealed interface SceneNode {
     val image: String
   ) : SceneNode
 
+  /** Спрайт-лист: кадры слева направо, ряд за рядом; зацикленная анимация до двух кликов. */
+  data class SpriteAnimation(
+    val image: String,
+    val columns: Int = 4,
+    val rows: Int = 4,
+    val frameDurationMs: Long = 80,
+    val loop: Boolean = true,
+    val scale: SpriteSheetScale = SpriteSheetScale.Fit,
+  ) : SceneNode
+
   data class ShowCharacter(
     val id: String,
     val image: String? = null,
