@@ -190,12 +190,16 @@ class VnEngine(
             node.speakerVar?.let { variables.getString(it) }
               ?: node.speaker
           return ShowSpriteAnimation(
-            image = node.image,
-            columns = node.columns,
-            rows = node.rows,
-            frameDurationMs = node.frameDurationMs,
-            loop = node.loop,
-            scale = node.scale,
+            layers = node.layers.map { layer ->
+              EngineOutput.SpriteAnimationLayerOutput(
+                image = layer.image,
+                columns = layer.columns,
+                rows = layer.rows,
+                frameDurationMs = layer.frameDurationMs,
+                loop = layer.loop,
+                scale = layer.scale,
+              )
+            },
             text = node.text?.let { resolveTextVariables(it) },
             speaker = speakerName,
           )

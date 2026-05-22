@@ -35,14 +35,18 @@ sealed interface EngineOutput {
   data class ShowImage(
     val image: String
   ) : EngineOutput
-  data class ShowSpriteAnimation(
+  data class SpriteAnimationLayerOutput(
     val image: String,
     val columns: Int = 4,
     val rows: Int = 4,
     val frameDurationMs: Long = 80,
     val loop: Boolean = true,
-    val clicksToAdvance: Int = 2,
     val scale: SpriteSheetScale = SpriteSheetScale.Fit,
+  )
+
+  data class ShowSpriteAnimation(
+    val layers: List<SpriteAnimationLayerOutput>,
+    val clicksToAdvance: Int = 2,
     val text: String? = null,
     val speaker: String? = null,
   ) : EngineOutput

@@ -109,14 +109,9 @@ sealed interface SceneNode {
     val image: String
   ) : SceneNode
 
-  /** Спрайт-лист: кадры слева направо, ряд за рядом. С текстом — VNTextBox снизу; без — два клика. */
+  /** Спрайт-лист(ы): слои рисуются снизу вверх. С текстом — VNTextBox снизу; без — два клика. */
   data class SpriteAnimation(
-    val image: String,
-    val columns: Int = 4,
-    val rows: Int = 4,
-    val frameDurationMs: Long = 80,
-    val loop: Boolean = true,
-    val scale: SpriteSheetScale = SpriteSheetScale.Fit,
+    val layers: List<SpriteAnimationLayer>,
     val text: String? = null,
     val speaker: String? = null,
     val speakerVar: String? = null,

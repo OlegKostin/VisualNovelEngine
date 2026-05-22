@@ -41,6 +41,7 @@ import com.olegkos.vnengine.scene.SceneNode.SetVar
 import com.olegkos.vnengine.scene.SceneNode.AcademyHub
 import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
 import com.olegkos.vnengine.scene.SceneNode.SpriteAnimation
+import com.olegkos.vnengine.scene.SpriteAnimationLayer
 import com.olegkos.vnengine.scene.SpriteSheetScale
 import com.olegkos.vnengine.scene.SceneNode.Switch
 import com.olegkos.vnengine.scene.SceneNode.SwitchRange
@@ -130,12 +131,7 @@ class JsonScenarioParser : ScenarioParser {
               is BackgroundNode -> Background(nodeJson.image)
               is ImageNode -> Image(nodeJson.image)
               is SpriteAnimationNode -> SpriteAnimation(
-                image = nodeJson.image,
-                columns = nodeJson.columns,
-                rows = nodeJson.rows,
-                frameDurationMs = nodeJson.frameDurationMs,
-                loop = nodeJson.loop,
-                scale = SpriteSheetScale.fromJson(nodeJson.scale),
+                layers = nodeJson.resolveLayers(),
                 text = nodeJson.text,
                 speaker = nodeJson.speaker,
                 speakerVar = nodeJson.speakerVar,
@@ -636,17 +632,53 @@ data class ImageNode(val image: String) : SceneNodeJson()
 @Serializable
 @SerialName("spriteAnimation")
 data class SpriteAnimationNode(
-  val image: String,
+  val image: String = "",
   val columns: Int = 4,
   val rows: Int = 4,
   val frameDurationMs: Long = 80,
   val loop: Boolean = true,
   /** "fit" | "crop" | "fill" */
   val scale: String? = "fit",
+  val layers: List<SpriteAnimationLayerJson> = emptyList(),
   val text: String? = null,
   val speaker: String? = null,
   val speakerVar: String? = null,
-) : SceneNodeJson()
+) : SceneNodeJson() {
+  fun resolveLayers(): List<SpriteAnimationLayer> {
+    val parsed = layers.map { it.toLayer() }
+    if (parsed.isNotEmpty()) return parsed
+    require(image.isNotBlank()) { "spriteAnimation: укажите image или layers" }
+    return listOf(
+      SpriteAnimationLayer(
+        image = image,
+        columns = columns,
+        rows = rows,
+        frameDurationMs = frameDurationMs,
+        loop = loop,
+        scale = SpriteSheetScale.fromJson(scale),
+      ),
+    )
+  }
+}
+
+@Serializable
+data class SpriteAnimationLayerJson(
+  val image: String,
+  val columns: Int = 4,
+  val rows: Int = 4,
+  val frameDurationMs: Long = 80,
+  val loop: Boolean = true,
+  val scale: String? = "fit",
+) {
+  fun toLayer(): SpriteAnimationLayer = SpriteAnimationLayer(
+    image = image,
+    columns = columns,
+    rows = rows,
+    frameDurationMs = frameDurationMs,
+    loop = loop,
+    scale = SpriteSheetScale.fromJson(scale),
+  )
+}
 @Serializable
 @SerialName("character")
 data class CharacterNode(
