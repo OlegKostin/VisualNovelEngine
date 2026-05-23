@@ -25,8 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -40,12 +38,14 @@ import com.olegkos.virtualnoveltesttwo.composable.PlayerStatsScreen
 import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.SpriteSheetAnimationScreen
 import com.olegkos.virtualnoveltesttwo.composable.rememberBitmapPainter
+import com.olegkos.virtualnoveltesttwo.composable.VisibleCharacterView
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.scene.SceneNode.NavLink
+import com.olegkos.vnengine.scene.speakerVarToCharacterId
 import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.coroutines.delay
 
@@ -172,25 +172,20 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     if (viewModel.isReady) {
       val reader = viewModel.reader
       val assets = viewModel.assets
+      val activeSpeakerId = when (val o = output) {
+        is EngineOutput.ShowText -> speakerVarToCharacterId(o.speakerVar)
+        else -> null
+      }
       viewModel.visibleCharacters.forEach { char ->
         key(char.id) {
-          val painter = rememberPainter(assets.character(char.image), reader)
-          painter?.let {
-            val xOffset = positionOffsetFromString(char.position, boxWidth)
-            Image(
-              painter = it,
-              contentDescription = null,
-              modifier = Modifier
-                .align(Alignment.BottomStart)
-                .offset(x = xOffset)
-                .graphicsLayer(
-                  scaleX = char.scale,
-                  scaleY = char.scale,
-                  transformOrigin = TransformOrigin(0.5f, 1f)
-                ),
-              contentScale = ContentScale.Fit
-            )
-          }
+          VisibleCharacterView(
+            character = char,
+            isSpeaking = activeSpeakerId != null && char.id == activeSpeakerId,
+            positionOffset = positionOffsetFromString(char.position, boxWidth),
+            assets = assets,
+            reader = reader,
+            modifier = Modifier.align(Alignment.BottomStart),
+          )
         }
       }
     }
