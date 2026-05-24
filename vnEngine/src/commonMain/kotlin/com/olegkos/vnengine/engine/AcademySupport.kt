@@ -5,6 +5,7 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowAcademyDaySummary
 import com.olegkos.vnengine.engine.EngineOutput.ShowAcademyHub
 import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
 import com.olegkos.vnengine.engine.academy.AcademyBuildingConfig
+import com.olegkos.vnengine.engine.academy.AcademyBuildingLevelConfig
 import com.olegkos.vnengine.engine.academy.AcademyConfig
 import com.olegkos.vnengine.engine.academy.AcademyHubPhase
 import com.olegkos.vnengine.engine.academy.AcademyRandomEventConfig
@@ -375,6 +376,15 @@ private fun VnEngine.buildingLevel(building: AcademyBuildingConfig): Int =
     else -> 0
   }
 
+/** Активности здания берутся только с максимального достигнутого уровня (не суммируются). */
+private fun effectiveBuildingLevelConfig(
+  building: AcademyBuildingConfig,
+  builtLevel: Int,
+): AcademyBuildingLevelConfig? {
+  if (builtLevel <= 0) return null
+  return building.levels.filter { it.level <= builtLevel }.maxByOrNull { it.level }
+}
+
 private fun VnEngine.academyDay(config: AcademyConfig): Int =
   academyIntVar(config.dayVar)
 
@@ -487,20 +497,18 @@ private fun VnEngine.collectAcademyActivities(
     )
   }
   for (building in config.buildings) {
-    val builtLevel = buildingLevel(building)
-    for (levelCfg in building.levels.filter { it.level <= builtLevel }) {
-      for (act in levelCfg.activities) {
-        list.add(
-          ResolvedAcademyActivity(
-            id = "${building.id}:${act.id}",
-            label = act.label,
-            scenarioFile = act.scenarioFile,
-            phases = act.phases,
-            requires = act.requires,
-            fromBuildingId = building.id,
-          )
+    val levelCfg = effectiveBuildingLevelConfig(building, buildingLevel(building)) ?: continue
+    for (act in levelCfg.activities) {
+      list.add(
+        ResolvedAcademyActivity(
+          id = "${building.id}:${act.id}",
+          label = act.label,
+          scenarioFile = act.scenarioFile,
+          phases = act.phases,
+          requires = act.requires,
+          fromBuildingId = building.id,
         )
-      }
+      )
     }
   }
   for (unlock in config.unlockableActions) {

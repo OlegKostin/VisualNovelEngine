@@ -63,7 +63,7 @@ data class AcademyBuildingLevelConfig(
   val cost: Int = 0,
   val description: String? = null,
   val requires: List<AcademyRequirementJson> = emptyList(),
-  /** Действия в колонках фаз дня после достижения этого уровня постройки. */
+  /** Действия в хабе после этого уровня; при апгрейде заменяют список предыдущего уровня. */
   val activities: List<AcademyActivityConfig> = emptyList(),
 )
 
