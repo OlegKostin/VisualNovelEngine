@@ -10,8 +10,17 @@ import com.olegkos.vnengine.engine.academy.AcademyHubPhase
 import com.olegkos.vnengine.engine.academy.AcademyRandomEventConfig
 import com.olegkos.vnengine.engine.academy.AcademyRequirementJson
 import com.olegkos.vnengine.engine.academy.AcademyPlaybackStep
+import com.olegkos.vnengine.engine.academy.AcademyLawOnEnactEffectJson
 import com.olegkos.vnengine.engine.academy.AcademyState
+import com.olegkos.vnengine.engine.academy.formatAcademyStatNumber
+import com.olegkos.vnengine.engine.academy.formatLawDailyLine
+import com.olegkos.vnengine.engine.academy.formatLawOnEnactLine
+import com.olegkos.vnengine.engine.academy.isFloatStat
+import com.olegkos.vnengine.engine.academy.randomDailyDelta
+import com.olegkos.vnengine.engine.academy.readAcademyStatFloat
+import com.olegkos.vnengine.engine.academy.resolvedOnEnact
 import com.olegkos.vnengine.engine.academy.toRequirement
+import kotlin.math.roundToInt
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.scene.SceneNode
 import kotlin.random.Random
@@ -117,6 +126,7 @@ fun VnEngine.academyCommitDay(returnScenario: String): EngineOutput? {
   gs.randomEventId = pickAcademyRandomEvent(config)?.id
   gs.buildingsBuiltThisPlayback.clear()
   snapshotAcademyDayStart(config, gs)
+  applyAcademyDailyLawEffects(config)
   gs.playbackQueue = buildAcademyPlaybackQueue(config, gs)
   gs.playbackIndex = 0
   gs.hubPhase = AcademyHubPhase.PLAYBACK
@@ -275,9 +285,19 @@ private fun VnEngine.buildAcademyPlaybackQueue(
 
 private fun VnEngine.snapshotAcademyDayStart(config: AcademyConfig, gs: AcademyState) {
   gs.dayStartVars.clear()
-  gs.dayStartVars[config.resourcesVar] = academyResources(config)
+  gs.dayStartVars[config.resourcesVar] = academyResources(config).toFloat()
   config.stats.forEach { stat ->
-    gs.dayStartVars[stat.varName] = academyIntVar(stat.varName)
+    gs.dayStartVars[stat.varName] = readAcademyStatFloat(state.variables, stat.varName)
+  }
+}
+
+private fun VnEngine.applyAcademyDailyLawEffects(config: AcademyConfig) {
+  for (law in config.laws) {
+    if (!isLawEnacted(law)) continue
+    for (daily in law.daily) {
+      val delta = randomDailyDelta(daily.deltaMin, daily.deltaMax)
+      applyAcademyStatDelta(config, daily.varName, delta)
+    }
   }
 }
 
@@ -295,18 +315,20 @@ fun VnEngine.buildAcademyDaySummaryOutput(): ShowAcademyDaySummary {
 
   val changes = buildList {
     add(
-      EngineOutput.AcademyDayVarChangeUi(
+      buildAcademyDayVarChange(
         label = config.resourcesLabel,
-        before = gs.dayStartVars[config.resourcesVar] ?: academyResources(config),
-        after = academyResources(config),
+        varName = config.resourcesVar,
+        isFloat = false,
+        dayStart = gs.dayStartVars,
       ),
     )
     config.stats.forEach { stat ->
       add(
-        EngineOutput.AcademyDayVarChangeUi(
+        buildAcademyDayVarChange(
           label = stat.label,
-          before = gs.dayStartVars[stat.varName] ?: academyIntVar(stat.varName),
-          after = academyIntVar(stat.varName),
+          varName = stat.varName,
+          isFloat = stat.isFloatStat(),
+          dayStart = gs.dayStartVars,
         ),
       )
     }
@@ -357,11 +379,65 @@ private fun VnEngine.academyDay(config: AcademyConfig): Int =
   academyIntVar(config.dayVar)
 
 private fun VnEngine.academyIntVar(varName: String): Int =
-  when (val v = state.variables[varName]) {
-    is GameValue.IntVal -> v.value
-    is GameValue.FloatVal -> v.value.toInt()
-    else -> 0
+  readAcademyStatFloat(state.variables, varName).roundToInt()
+
+private fun VnEngine.buildAcademyDayVarChange(
+  label: String,
+  varName: String,
+  isFloat: Boolean,
+  dayStart: Map<String, Float>,
+): EngineOutput.AcademyDayVarChangeUi {
+  val before = dayStart[varName] ?: readAcademyStatFloat(state.variables, varName)
+  val after = readAcademyStatFloat(state.variables, varName)
+  val delta = after - before
+  return EngineOutput.AcademyDayVarChangeUi(
+    label = label,
+    before = formatAcademyStatNumber(before, isFloat),
+    after = formatAcademyStatNumber(after, isFloat),
+    delta = formatDayDelta(delta, isFloat),
+    deltaSign = when {
+      delta > 0f -> 1
+      delta < 0f -> -1
+      else -> 0
+    },
+  )
+}
+
+private fun formatDayDelta(delta: Float, isFloat: Boolean): String {
+  if (delta == 0f) return "0"
+  val magnitude = formatAcademyStatNumber(kotlin.math.abs(delta), isFloat)
+  return if (delta > 0) "+$magnitude" else "-$magnitude"
+}
+
+private fun VnEngine.applyAcademyStatDelta(
+  config: AcademyConfig,
+  varName: String,
+  delta: Float,
+) {
+  if (delta == 0f) return
+  if (varName == config.resourcesVar) {
+    val intDelta = delta.roundToInt()
+    if (intDelta < 0) spendAcademyResources(config, -intDelta)
+    else if (intDelta > 0) {
+      val cur = academyResources(config)
+      state.variables[config.resourcesVar] = GameValue.IntVal(cur + intDelta)
+    }
+    return
   }
+  val stat = config.stats.firstOrNull { it.varName == varName }
+  if (stat?.isFloatStat() == true) {
+    variables.modify(varName, GameValue.FloatVal(delta))
+  } else {
+    variables.modify(varName, GameValue.IntVal(delta.roundToInt()))
+  }
+}
+
+private fun VnEngine.applyLawOnEnactEffect(
+  config: AcademyConfig,
+  effect: AcademyLawOnEnactEffectJson,
+) {
+  applyAcademyStatDelta(config, effect.varName, effect.delta.toFloat())
+}
 
 private fun VnEngine.academyResources(config: AcademyConfig): Int =
   academyIntVar(config.resourcesVar)
@@ -574,10 +650,11 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
   val lawUi = config.laws.map { lawToUi(it, config) }
 
   val statUi = config.stats.map { stat ->
+    val value = readAcademyStatFloat(state.variables, stat.varName)
     EngineOutput.AcademyStatUi(
       varName = stat.varName,
       label = stat.label,
-      value = academyIntVar(stat.varName),
+      displayValue = formatAcademyStatNumber(value, stat.isFloatStat()),
     )
   }
 
@@ -609,11 +686,10 @@ private fun VnEngine.isLawEnacted(law: com.olegkos.vnengine.engine.academy.Acade
   }
 
 private fun VnEngine.completeLawEnact(law: com.olegkos.vnengine.engine.academy.AcademyLawConfig) {
+  val config = state.academyConfig ?: return
   state.variables[law.enactedVar] = GameValue.Bool(true)
-  for (effect in law.effects) {
-    if (effect.delta != 0) {
-      variables.modify(effect.varName, GameValue.IntVal(effect.delta))
-    }
+  for (effect in law.resolvedOnEnact()) {
+    applyLawOnEnactEffect(config, effect)
   }
 }
 
@@ -672,16 +748,34 @@ private fun VnEngine.formatLawEffectSummary(
   config: AcademyConfig,
 ): String? {
   law.effectHint?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
-  if (law.effects.isEmpty()) return null
-  val labels = config.stats.associate { it.varName to it.label }
-  return law.effects.joinToString(" · ") { effect ->
-    val name = labels[effect.varName] ?: effect.varName
-    when {
-      effect.delta > 0 -> "$name +${effect.delta}"
-      effect.delta < 0 -> "$name ${effect.delta}"
-      else -> name
+  val labels = lawEffectLabels(config)
+  val onEnact = law.resolvedOnEnact()
+  val daily = law.daily
+  if (onEnact.isEmpty() && daily.isEmpty()) return null
+  return buildList {
+    if (onEnact.isNotEmpty()) {
+      add(
+        "При принятии: " + onEnact.joinToString(", ") { effect ->
+          val name = labels[effect.varName] ?: effect.varName
+          val isFloat = config.stats.firstOrNull { it.varName == effect.varName }?.isFloatStat() == true
+          formatLawOnEnactLine(effect, name, isFloat)
+        },
+      )
     }
-  }
+    if (daily.isNotEmpty()) {
+      add(
+        "Каждый день: " + daily.joinToString(", ") { effect ->
+          val name = labels[effect.varName] ?: effect.varName
+          formatLawDailyLine(effect, name)
+        },
+      )
+    }
+  }.joinToString("\n")
+}
+
+private fun lawEffectLabels(config: AcademyConfig): Map<String, String> {
+  val fromStats = config.stats.associate { it.varName to it.label }
+  return fromStats + (config.resourcesVar to config.resourcesLabel)
 }
 
 private fun VnEngine.formatRequirementsDisplay(

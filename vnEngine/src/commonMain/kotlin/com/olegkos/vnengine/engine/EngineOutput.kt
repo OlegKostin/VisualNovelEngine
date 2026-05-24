@@ -79,16 +79,17 @@ sealed interface EngineOutput {
 
   data class AcademyDayVarChangeUi(
     val label: String,
-    val before: Int,
-    val after: Int,
-  ) {
-    val delta: Int get() = after - before
-  }
+    val before: String,
+    val after: String,
+    val delta: String,
+    /** −1 / 0 / +1 для цвета в UI */
+    val deltaSign: Int = 0,
+  )
 
   data class AcademyStatUi(
     val varName: String,
     val label: String,
-    val value: Int,
+    val displayValue: String,
   )
 
   data class ShowAcademyHub(

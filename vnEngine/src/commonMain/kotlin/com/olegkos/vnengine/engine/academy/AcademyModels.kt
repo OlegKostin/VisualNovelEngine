@@ -35,6 +35,8 @@ data class AcademyConfig(
 data class AcademyStatConfig(
   val varName: String,
   val label: String,
+  /** "int" — целое; "float" — дробное (например лояльность). */
+  val type: String = "int",
 )
 
 @Serializable
@@ -76,16 +78,31 @@ data class AcademyLawConfig(
   val lockedHint: String? = null,
   val scenarioFile: String? = null,
   val description: String? = null,
-  val effects: List<AcademyLawEffectJson> = emptyList(),
-  /** Свой текст эффекта; если пусто — собирается из [effects]. */
+  /** @deprecated используйте [onEnact] */
+  val effects: List<AcademyLawOnEnactEffectJson> = emptyList(),
+  /** Одноразово при принятии закона (целые дельты). */
+  val onEnact: List<AcademyLawOnEnactEffectJson> = emptyList(),
+  /** Каждый день, пока закон принят (дробный случайный диапазон). */
+  val daily: List<AcademyLawDailyEffectJson> = emptyList(),
+  /** Свой текст эффекта; если пусто — собирается из onEnact и daily. */
   val effectHint: String? = null,
 )
 
 @Serializable
-data class AcademyLawEffectJson(
+data class AcademyLawOnEnactEffectJson(
   val varName: String,
   val delta: Int = 0,
 )
+
+@Serializable
+data class AcademyLawDailyEffectJson(
+  val varName: String,
+  val deltaMin: Float,
+  val deltaMax: Float,
+)
+
+/** @deprecated typealias для старых JSON с "effects" */
+typealias AcademyLawEffectJson = AcademyLawOnEnactEffectJson
 
 @Serializable
 data class AcademyUnlockableConfig(
@@ -197,7 +214,7 @@ data class AcademyState(
   var buildUsedToday: Boolean = false,
   var randomEventId: String? = null,
   /** Значения переменных академии на момент «Подтвердить день». */
-  val dayStartVars: MutableMap<String, Int> = mutableMapOf(),
+  val dayStartVars: MutableMap<String, Float> = mutableMapOf(),
   val activeUnlockIds: MutableSet<String> = mutableSetOf(),
   var pendingUnlockId: String? = null,
   /** Закон, сценарий которого сейчас проигрывается (до EndOfScene). */

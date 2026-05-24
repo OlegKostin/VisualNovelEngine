@@ -663,7 +663,7 @@ private fun ResourcesAndBuildColumn(
     )
     StatLine(output.resourcesLabel, output.resources.toString(), typography)
     output.stats.forEach { stat ->
-      StatLine(stat.label, stat.value.toString(), typography)
+      StatLine(stat.label, stat.displayValue, typography)
     }
 
     output.selectedBuildingId?.let { selectedId ->

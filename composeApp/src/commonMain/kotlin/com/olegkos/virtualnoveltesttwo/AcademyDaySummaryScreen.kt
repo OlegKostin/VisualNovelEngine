@@ -97,16 +97,12 @@ private fun VarChangeRow(
   change: EngineOutput.AcademyDayVarChangeUi,
   typography: AcademyHubTypography,
 ) {
-  val deltaColor = when {
-    change.delta > 0 -> Positive
-    change.delta < 0 -> Negative
+  val deltaColor = when (change.deltaSign) {
+    1 -> Positive
+    -1 -> Negative
     else -> Color(0xBBFFFFFF)
   }
-  val deltaText = when {
-    change.delta > 0 -> "+${change.delta}"
-    change.delta < 0 -> change.delta.toString()
-    else -> "0"
-  }
+  val deltaText = change.delta
 
   Column(
     Modifier

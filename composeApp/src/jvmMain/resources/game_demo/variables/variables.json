@@ -4,7 +4,7 @@
   "opt_luck": 0,
   "academy_day": 1,
   "resources": 100,
-  "loyalty": 50,
+  "loyalty": 50.0,
   "corruption": 10,
   "students": 25,
   "law_candy": false,
