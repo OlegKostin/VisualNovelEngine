@@ -36,6 +36,7 @@ import com.olegkos.virtualnoveltesttwo.composable.GameMenuHub
 import com.olegkos.virtualnoveltesttwo.composable.InitGameScreen
 import com.olegkos.virtualnoveltesttwo.composable.PlayerStatsScreen
 import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
+import com.olegkos.virtualnoveltesttwo.composable.PanImageScreen
 import com.olegkos.virtualnoveltesttwo.composable.SpriteSheetAnimationScreen
 import com.olegkos.virtualnoveltesttwo.composable.rememberBitmapPainter
 import com.olegkos.virtualnoveltesttwo.composable.VisibleCharacterView
@@ -329,6 +330,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowSpriteAnimation -> Unit
+        is EngineOutput.ShowPanImage -> Unit
 
         is EngineOutput.ShowCard -> {
           Box(
@@ -467,6 +469,21 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         clicksToAdvance = sprite.clicksToAdvance,
         text = sprite.text,
         speaker = sprite.speaker,
+        onAdvance = { viewModel.next() },
+      )
+    }
+
+    (output as? EngineOutput.ShowPanImage)?.let { pan ->
+      PanImageScreen(
+        modifier = Modifier.fillMaxSize(),
+        image = pan.image,
+        direction = pan.direction,
+        durationMs = pan.durationMs,
+        clicksToAdvance = pan.clicksToAdvance,
+        text = pan.text,
+        speaker = pan.speaker,
+        assets = viewModel.assets,
+        reader = viewModel.reader,
         onAdvance = { viewModel.next() },
       )
     }

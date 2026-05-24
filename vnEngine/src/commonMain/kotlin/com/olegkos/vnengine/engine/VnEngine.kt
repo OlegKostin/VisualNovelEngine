@@ -10,6 +10,7 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowChoices
 import com.olegkos.vnengine.engine.EngineOutput.ShowDice
 import com.olegkos.vnengine.engine.EngineOutput.ShowDiceDuel
 import com.olegkos.vnengine.engine.EngineOutput.ShowImage
+import com.olegkos.vnengine.engine.EngineOutput.ShowPanImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
 import com.olegkos.vnengine.engine.EngineOutput.ShowVar
 import com.olegkos.vnengine.engine.variables.GameValue
@@ -210,6 +211,20 @@ class VnEngine(
                 scale = layer.scale,
               )
             },
+            text = node.text?.let { resolveTextVariables(it) },
+            speaker = speakerName,
+          )
+        }
+
+        is SceneNode.PanImage -> {
+          val speakerName =
+            node.speakerVar?.let { variables.getString(it) }
+              ?: node.speaker
+          return ShowPanImage(
+            image = node.image,
+            direction = node.direction,
+            durationMs = node.durationMs.coerceAtLeast(0L),
+            clicksToAdvance = node.clicksToAdvance,
             text = node.text?.let { resolveTextVariables(it) },
             speaker = speakerName,
           )

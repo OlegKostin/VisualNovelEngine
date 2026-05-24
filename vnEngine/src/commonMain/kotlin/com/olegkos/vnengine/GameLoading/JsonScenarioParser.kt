@@ -40,7 +40,9 @@ import com.olegkos.vnengine.scene.SceneNode.SceneView
 import com.olegkos.vnengine.scene.SceneNode.SetVar
 import com.olegkos.vnengine.scene.SceneNode.AcademyHub
 import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
+import com.olegkos.vnengine.scene.SceneNode.PanImage
 import com.olegkos.vnengine.scene.SceneNode.SpriteAnimation
+import com.olegkos.vnengine.scene.PanImageDirection
 import com.olegkos.vnengine.scene.SpriteAnimationLayer
 import com.olegkos.vnengine.scene.SpriteSheetScale
 import com.olegkos.vnengine.scene.SceneNode.Switch
@@ -135,6 +137,15 @@ class JsonScenarioParser : ScenarioParser {
                 text = nodeJson.text,
                 speaker = nodeJson.speaker,
                 speakerVar = nodeJson.speakerVar,
+              )
+              is PanImageNode -> PanImage(
+                image = nodeJson.image,
+                direction = PanImageDirection.fromJson(nodeJson.direction),
+                durationMs = nodeJson.durationMs,
+                text = nodeJson.text,
+                speaker = nodeJson.speaker,
+                speakerVar = nodeJson.speakerVar,
+                clicksToAdvance = nodeJson.clicksToAdvance.coerceAtLeast(1),
               )
               is EffectNode -> Image(nodeJson.image)
               is SceneNodeJson.JumpJson -> Jump(
@@ -633,6 +644,19 @@ data class BackgroundNode(val image: String) : SceneNodeJson()
 @Serializable
 @SerialName("image")
 data class ImageNode(val image: String) : SceneNodeJson()
+@Serializable
+@SerialName("panImage")
+data class PanImageNode(
+  val image: String,
+  /** leftToRight | rightToLeft | topToBottom | bottomToTop */
+  val direction: String? = null,
+  val durationMs: Long = 8_000L,
+  val text: String? = null,
+  val speaker: String? = null,
+  val speakerVar: String? = null,
+  val clicksToAdvance: Int = 1,
+) : SceneNodeJson()
+
 @Serializable
 @SerialName("spriteAnimation")
 data class SpriteAnimationNode(

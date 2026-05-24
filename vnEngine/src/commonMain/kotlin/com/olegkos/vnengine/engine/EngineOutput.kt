@@ -6,6 +6,7 @@ import com.olegkos.vnengine.engine.cardgame.ClashResolution
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
+import com.olegkos.vnengine.scene.PanImageDirection
 import com.olegkos.vnengine.scene.SpriteSheetScale
 import com.olegkos.vnengine.scene.SubClass
 
@@ -50,6 +51,16 @@ sealed interface EngineOutput {
     val text: String? = null,
     val speaker: String? = null,
   ) : EngineOutput
+
+  data class ShowPanImage(
+    val image: String,
+    val direction: PanImageDirection,
+    val durationMs: Long,
+    val clicksToAdvance: Int = 1,
+    val text: String? = null,
+    val speaker: String? = null,
+  ) : EngineOutput
+
   data class ShowCharacter(
     val id: String,
     val image: String,

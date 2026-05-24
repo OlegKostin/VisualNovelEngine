@@ -117,6 +117,21 @@ sealed interface SceneNode {
     val speakerVar: String? = null,
   ) : SceneNode
 
+  /**
+   * Широкое (или высокое) изображение с панорамированием.
+   * Горизонтальные направления: картинка по высоте экрана, движение по X.
+   * Вертикальные: по ширине экрана, движение по Y.
+   */
+  data class PanImage(
+    val image: String,
+    val direction: PanImageDirection = PanImageDirection.LeftToRight,
+    val durationMs: Long = 8_000L,
+    val text: String? = null,
+    val speaker: String? = null,
+    val speakerVar: String? = null,
+    val clicksToAdvance: Int = 1,
+  ) : SceneNode
+
   data class ShowCharacter(
     val id: String,
     val image: String? = null,
