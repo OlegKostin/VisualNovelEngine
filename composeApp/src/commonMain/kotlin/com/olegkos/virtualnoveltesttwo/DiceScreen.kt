@@ -212,17 +212,20 @@ fun DiceScreen(
             .toFloat()
 
           VnOutlinedButton(
-            enabled = selectedCards.isNotEmpty(),
             onClick = {
-              val usedCards = selectedCards.toList()
-
-              onApplyCard(bonus, usedCards)
-
+              if (selectedCards.isEmpty()) {
+                onApplyCard(0f, emptyList())
+              } else {
+                onApplyCard(bonus, selectedCards.toList())
+              }
               selectedCards = emptySet()
               showCards = false
-            }
+            },
           ) {
-            Text("Применить (+$bonus)")
+            Text(
+              if (selectedCards.isEmpty()) "Применить"
+              else "Применить (+$bonus)",
+            )
           }
         }
       }
