@@ -363,23 +363,25 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowDice -> {
-          DiceScreen(
-            name = o.name,
-            sides = o.sides,
-            result = o.result,
-            modifier = o.modifier,
-            difficulty = o.difficulty,
-            onRoll = { viewModel.rollDice() },
-            phase = o.phase,
-            cards = viewModel.getCards(),
-            onContinue = { viewModel.next() },
-            cardPainter = { path ->
-              rememberPainter(viewModel.assets.card(path), viewModel.reader)
-            },
-            onApplyCard = { value, usedCards ->
-              viewModel.applyDiceModifier(value, usedCards)
-            }
-          )
+          Box(Modifier.fillMaxSize()) {
+            DiceScreen(
+              name = o.name,
+              sides = o.sides,
+              result = o.result,
+              modifier = o.modifier,
+              difficulty = o.difficulty,
+              onRoll = { viewModel.rollDice() },
+              phase = o.phase,
+              cards = viewModel.getCards(),
+              onContinue = { viewModel.next() },
+              cardPainter = { path ->
+                rememberPainter(viewModel.assets.card(path), viewModel.reader)
+              },
+              onApplyCard = { value, usedCards ->
+                viewModel.applyDiceModifier(value, usedCards)
+              },
+            )
+          }
         }
 
         is EngineOutput.ShowCardGame -> {

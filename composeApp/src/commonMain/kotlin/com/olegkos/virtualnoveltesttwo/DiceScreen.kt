@@ -8,15 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import com.olegkos.vnengine.engine.DicePhase
 import com.olegkos.vnengine.engine.UiCard
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.painterResource
-import virtualnoveltesttwo.composeapp.generated.resources.*
 
 @Composable
 fun DiceScreen(
@@ -55,34 +51,43 @@ fun DiceScreen(
     isRolling = false
   }
 
-  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+  BoxWithConstraints(
+    modifier = Modifier.fillMaxSize(),
+    contentAlignment = Alignment.Center,
+  ) {
+    val diceSize = maxHeight * 0.35f
 
-    Text("Проверка: $name d$sides")
+    Column(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
 
-    Spacer(Modifier.height(24.dp))
+      Text("Проверка: $name d$sides")
 
-    val valueToShow = when {
-      isRolling -> rollingValue
-      result != null -> result
-      else -> 1
-    }
+      Spacer(Modifier.height(24.dp))
 
-    val dicePainter = diceFacePainter(valueToShow)
+      val valueToShow = when {
+        isRolling -> rollingValue
+        result != null -> result
+        else -> 1
+      }
 
-    Image(
-      painter = dicePainter,
-      contentDescription = null,
-      modifier = Modifier.size(160.dp)
-    )
+      val dicePainter = diceFacePainter(valueToShow)
 
-    Spacer(Modifier.height(24.dp))
+      Image(
+        painter = dicePainter,
+        contentDescription = null,
+        modifier = Modifier.size(diceSize),
+      )
 
-    val uiPhase = when {
-      showCards -> DicePhase.CARD_SELECTION
-      else -> phase
-    }
+      Spacer(Modifier.height(24.dp))
 
-    when (uiPhase) {
+      val uiPhase = when {
+        showCards -> DicePhase.CARD_SELECTION
+        else -> phase
+      }
+
+      when (uiPhase) {
 
       DicePhase.ROLL -> {
         VnOutlinedButton(onClick = {
@@ -221,37 +226,7 @@ fun DiceScreen(
           }
         }
       }
+      }
     }
   }
 }
-
-@Composable
-fun diceFacePainter(face: Int): Painter {
-  val v = face.coerceIn(1, 20)
-  return painterResource(diceImage(v))
-}
-
-fun diceImage(value: Int): DrawableResource =
-  when (value) {
-    1 -> Res.drawable.d1
-    2 -> Res.drawable.d2
-    3 -> Res.drawable.d3
-    4 -> Res.drawable.d4
-    5 -> Res.drawable.d5
-    6 -> Res.drawable.d6
-    7 -> Res.drawable.d7
-    8 -> Res.drawable.d8
-    9 -> Res.drawable.d9
-    10 -> Res.drawable.d10
-    11 -> Res.drawable.d11
-    12 -> Res.drawable.d12
-    13 -> Res.drawable.d13
-    14 -> Res.drawable.d14
-    15 -> Res.drawable.d15
-    16 -> Res.drawable.d16
-    17 -> Res.drawable.d17
-    18 -> Res.drawable.d18
-    19 -> Res.drawable.d19
-    20 -> Res.drawable.d20
-    else -> Res.drawable.d20
-  }
