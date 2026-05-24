@@ -32,13 +32,14 @@ import kotlinx.coroutines.launch
 
 /**
  * Панорама по широкому/высокому изображению.
- * С [text] — [VNTextBox] после (или во время) панорамы; без текста — клик после конца.
+ * При [endAtCenter] и leftToRight: слева → вправо → центр и стоп.
  */
 @Composable
 fun PanImageScreen(
   image: String,
   direction: PanImageDirection,
   durationMs: Long,
+  endAtCenter: Boolean,
   clicksToAdvance: Int,
   text: String?,
   speaker: String?,
@@ -56,25 +57,44 @@ fun PanImageScreen(
   var clicks by remember { mutableIntStateOf(0) }
   val progress = remember { Animatable(initialProgress(direction)) }
 
+  val restProgress = remember(direction, endAtCenter) {
+    restingProgress(direction, endAtCenter)
+  }
+
   fun skipPanToEnd() {
     scope.launch {
-      progress.snapTo(targetProgress(direction))
+      progress.snapTo(restProgress)
       panDone = true
     }
   }
 
-  LaunchedEffect(bitmap, direction, durationMs) {
-    if (bitmap == null) return@LaunchedEffect
+  suspend fun runPanAnimation() {
     panDone = false
-    val target = targetProgress(direction)
     progress.snapTo(initialProgress(direction))
+
     if (durationMs <= 0L) {
-      progress.snapTo(target)
+      progress.snapTo(restProgress)
       panDone = true
-    } else {
-      progress.animateTo(target, tween(durationMs.toInt().coerceAtLeast(1)))
-      panDone = true
+      return
     }
+
+    val total = durationMs.toInt().coerceAtLeast(1)
+
+    if (endAtCenter) {
+      val sweepEnd = sweepEndProgress(direction)
+      val leg1 = (total * 0.62f).toInt().coerceAtLeast(1)
+      val leg2 = (total - leg1).coerceAtLeast(1)
+      progress.animateTo(sweepEnd, tween(leg1))
+      progress.animateTo(0.5f, tween(leg2))
+    } else {
+      progress.animateTo(sweepEndProgress(direction), tween(total))
+    }
+    panDone = true
+  }
+
+  LaunchedEffect(bitmap, direction, durationMs, endAtCenter) {
+    if (bitmap == null) return@LaunchedEffect
+    runPanAnimation()
   }
 
   val canClickThrough = !hasText && panDone
@@ -184,8 +204,13 @@ private fun initialProgress(direction: PanImageDirection): Float =
     else -> 0f
   }
 
-private fun targetProgress(direction: PanImageDirection): Float =
+/** Конец первого прохода (край противоположный старту). */
+private fun sweepEndProgress(direction: PanImageDirection): Float =
   when (direction) {
     PanImageDirection.RightToLeft, PanImageDirection.BottomToTop -> 0f
     else -> 1f
   }
+
+/** Финальная позиция после анимации. */
+private fun restingProgress(direction: PanImageDirection, endAtCenter: Boolean): Float =
+  if (endAtCenter) 0.5f else sweepEndProgress(direction)

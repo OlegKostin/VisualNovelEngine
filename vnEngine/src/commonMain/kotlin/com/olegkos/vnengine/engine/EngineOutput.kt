@@ -56,6 +56,7 @@ sealed interface EngineOutput {
     val image: String,
     val direction: PanImageDirection,
     val durationMs: Long,
+    val endAtCenter: Boolean = true,
     val clicksToAdvance: Int = 1,
     val text: String? = null,
     val speaker: String? = null,

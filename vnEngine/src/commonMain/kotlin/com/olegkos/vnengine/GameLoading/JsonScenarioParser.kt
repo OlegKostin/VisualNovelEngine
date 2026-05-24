@@ -142,6 +142,7 @@ class JsonScenarioParser : ScenarioParser {
                 image = nodeJson.image,
                 direction = PanImageDirection.fromJson(nodeJson.direction),
                 durationMs = nodeJson.durationMs,
+                endAtCenter = nodeJson.endAtCenter,
                 text = nodeJson.text,
                 speaker = nodeJson.speaker,
                 speakerVar = nodeJson.speakerVar,
@@ -651,6 +652,8 @@ data class PanImageNode(
   /** leftToRight | rightToLeft | topToBottom | bottomToTop */
   val direction: String? = null,
   val durationMs: Long = 8_000L,
+  /** true: после прохода остановка в центре (leftToRight — слева, вправо, центр). */
+  val endAtCenter: Boolean = true,
   val text: String? = null,
   val speaker: String? = null,
   val speakerVar: String? = null,

@@ -224,6 +224,7 @@ class VnEngine(
             image = node.image,
             direction = node.direction,
             durationMs = node.durationMs.coerceAtLeast(0L),
+            endAtCenter = node.endAtCenter,
             clicksToAdvance = node.clicksToAdvance,
             text = node.text?.let { resolveTextVariables(it) },
             speaker = speakerName,

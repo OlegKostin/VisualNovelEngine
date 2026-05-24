@@ -126,6 +126,8 @@ sealed interface SceneNode {
     val image: String,
     val direction: PanImageDirection = PanImageDirection.LeftToRight,
     val durationMs: Long = 8_000L,
+    /** После прохода по краям — остановка в центре кадра (для leftToRight: слева→вправо→центр). */
+    val endAtCenter: Boolean = true,
     val text: String? = null,
     val speaker: String? = null,
     val speakerVar: String? = null,

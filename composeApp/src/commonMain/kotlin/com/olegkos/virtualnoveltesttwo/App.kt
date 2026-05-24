@@ -479,6 +479,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         image = pan.image,
         direction = pan.direction,
         durationMs = pan.durationMs,
+        endAtCenter = pan.endAtCenter,
         clicksToAdvance = pan.clicksToAdvance,
         text = pan.text,
         speaker = pan.speaker,
