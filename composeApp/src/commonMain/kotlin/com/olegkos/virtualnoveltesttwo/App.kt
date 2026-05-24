@@ -98,7 +98,10 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     when (val o = output) {
 
       is EngineOutput.ShowBackground -> {
+        image = null
+        cardImage = null
         background = o.image
+        viewModel.setSceneBackground(o.image)
         viewModel.next()
       }
 
@@ -485,6 +488,12 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         speaker = pan.speaker,
         assets = viewModel.assets,
         reader = viewModel.reader,
+        onSettledAsBackground = {
+          image = null
+          cardImage = null
+          background = pan.image
+          viewModel.setSceneBackground(pan.image)
+        },
         onAdvance = { viewModel.next() },
       )
     }

@@ -45,6 +45,7 @@ fun PanImageScreen(
   speaker: String?,
   assets: AssetPathResolver,
   reader: AssetReader,
+  onSettledAsBackground: () -> Unit,
   onAdvance: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -54,6 +55,7 @@ fun PanImageScreen(
   val scope = rememberCoroutineScope()
 
   var panDone by remember { mutableStateOf(false) }
+  var committedToBackground by remember { mutableStateOf(false) }
   var clicks by remember { mutableIntStateOf(0) }
   val progress = remember { Animatable(initialProgress(direction)) }
 
@@ -94,7 +96,14 @@ fun PanImageScreen(
 
   LaunchedEffect(bitmap, direction, durationMs, endAtCenter) {
     if (bitmap == null) return@LaunchedEffect
+    committedToBackground = false
     runPanAnimation()
+  }
+
+  LaunchedEffect(panDone) {
+    if (!panDone || committedToBackground) return@LaunchedEffect
+    onSettledAsBackground()
+    committedToBackground = true
   }
 
   val canClickThrough = !hasText && panDone
@@ -124,13 +133,15 @@ fun PanImageScreen(
       return@Box
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-      PanImageCanvas(
-        bitmap = bitmap,
-        direction = direction,
-        progress = progress.value,
-        modifier = Modifier.fillMaxSize(),
-      )
+    if (!committedToBackground) {
+      BoxWithConstraints(Modifier.fillMaxSize()) {
+        PanImageCanvas(
+          bitmap = bitmap,
+          direction = direction,
+          progress = progress.value,
+          modifier = Modifier.fillMaxSize(),
+        )
+      }
     }
 
     if (hasText && panDone) {

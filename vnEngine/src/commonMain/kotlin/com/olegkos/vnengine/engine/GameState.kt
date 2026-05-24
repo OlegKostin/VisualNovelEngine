@@ -34,7 +34,9 @@ data class GameState(
   /** Макс. целые значения для переменных после InitGame (сейчас: health, mental_health). */
   var statCapsInt: Map<String, Int> = emptyMap(),
   /** Персонажи на экране (ShowCharacter без HideCharacter); участвует в save/load. */
-  var visibleCharacters: List<VisibleCharacter> = emptyList()
+  var visibleCharacters: List<VisibleCharacter> = emptyList(),
+  /** Текущий фон сцены (нода background или panImage после остановки). */
+  var currentBackground: String? = null,
 )
 
 data class BattleState(

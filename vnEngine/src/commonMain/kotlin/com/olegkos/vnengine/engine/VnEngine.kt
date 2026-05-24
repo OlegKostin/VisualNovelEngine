@@ -189,6 +189,7 @@ class VnEngine(
         }
 
         is SceneNode.Background -> {
+          state.currentBackground = node.image
           return ShowBackground(node.image)
         }
 

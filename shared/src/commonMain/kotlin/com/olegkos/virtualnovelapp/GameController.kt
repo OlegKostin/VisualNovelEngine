@@ -388,6 +388,12 @@ class GameController(
   fun visibleCharactersInWorld(): List<VisibleCharacter> =
     engine?.state?.visibleCharacters ?: emptyList()
 
+  fun sceneBackground(): String? = engine?.state?.currentBackground
+
+  fun setSceneBackground(path: String) {
+    requireEngine.state.currentBackground = path
+  }
+
   /** Превью стартовой карты для экрана init; результат закэширован на (classId, slot). */
   fun previewStartingCard(
     classId: String,

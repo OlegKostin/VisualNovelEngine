@@ -40,6 +40,10 @@
     val visibleCharacters: List<VisibleCharacter>
       get() = controller.visibleCharactersInWorld()
 
+    fun setSceneBackground(path: String) {
+      controller.setSceneBackground(path)
+    }
+
     init {
       viewModelScope.launch {
         val (output, node) = controller.init()
