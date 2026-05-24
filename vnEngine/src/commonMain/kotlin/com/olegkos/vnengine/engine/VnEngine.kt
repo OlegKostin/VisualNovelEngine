@@ -11,11 +11,14 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowDice
 import com.olegkos.vnengine.engine.EngineOutput.ShowDiceDuel
 import com.olegkos.vnengine.engine.EngineOutput.ShowImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
+import com.olegkos.vnengine.engine.EngineOutput.ShowVar
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.engine.variables.GameValue.FloatVal
 import com.olegkos.vnengine.engine.variables.GameValue.IntVal
 import com.olegkos.vnengine.engine.variables.VariableStore
+import com.olegkos.vnengine.engine.variables.formatModifyVarDelta
 import com.olegkos.vnengine.engine.variables.resolve
+import com.olegkos.vnengine.engine.variables.shouldShowModifyVarUi
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.Scene
 import com.olegkos.vnengine.scene.SceneNode
@@ -89,6 +92,13 @@ class VnEngine(
         is SceneNode.ModifyVar -> {
           val resolved = node.value.resolve()
           variables.modify(node.varName, resolved)
+          if (shouldShowModifyVarUi(node.varName, node.text)) {
+            return ShowVar(
+              name = node.varName,
+              value = resolved.formatModifyVarDelta(),
+              text = node.text!!.trim(),
+            )
+          }
           advance()
           continue
         }

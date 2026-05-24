@@ -533,7 +533,11 @@ sealed class SceneNodeJson {
 
   @Serializable
   @SerialName("modifyVar")
-  data class ModifyVar(val varName: String, val value: GameValueJson,val text: String) : SceneNodeJson()
+  data class ModifyVar(
+    val varName: String,
+    val value: GameValueJson,
+    val text: String? = null,
+  ) : SceneNodeJson()
   @Serializable
   @SerialName("if")
   data class If(
