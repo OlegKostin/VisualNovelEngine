@@ -20,6 +20,8 @@ data class AcademyConfig(
   /** Одноразовые законы: ресурсы, сценарий, флаг enactedVar = true, зелёная строка в меню. */
   val laws: List<AcademyLawConfig> = emptyList(),
   val randomEvents: List<AcademyRandomEventConfig> = emptyList(),
+  /** 5 будних + 2 выходных в цикле (день академии с 1). */
+  val weekSchedule: AcademyWeekSchedule = AcademyWeekSchedule(),
 ) {
   companion object {
     val defaultPhases = listOf(
@@ -53,8 +55,20 @@ data class AcademyBuildingConfig(
   val levelVar: String,
   val xPercent: Float = 50f,
   val yPercent: Float = 70f,
+  /** Когда можно строить/улучшать: always | weekday | weekend */
+  val buildSchedule: String? = null,
+  /** Когда можно посещать (действия здания), если у действия нет своего schedule */
+  val visitSchedule: String? = null,
+  /** @deprecated то же, что [buildSchedule] */
+  val schedule: String? = null,
   val levels: List<AcademyBuildingLevelConfig> = emptyList(),
-)
+) {
+  fun buildScheduleScope(): AcademyScheduleScope =
+    AcademyScheduleScope.fromJson(buildSchedule ?: schedule)
+
+  fun visitScheduleScope(): AcademyScheduleScope =
+    AcademyScheduleScope.fromJson(visitSchedule)
+}
 
 @Serializable
 data class AcademyBuildingLevelConfig(
@@ -86,7 +100,11 @@ data class AcademyLawConfig(
   val daily: List<AcademyLawDailyEffectJson> = emptyList(),
   /** Свой текст эффекта; если пусто — собирается из onEnact и daily. */
   val effectHint: String? = null,
-)
+  /** always | weekday | weekend */
+  val schedule: String? = null,
+) {
+  fun scheduleScope(): AcademyScheduleScope = AcademyScheduleScope.fromJson(schedule)
+}
 
 @Serializable
 data class AcademyLawOnEnactEffectJson(
@@ -111,7 +129,19 @@ data class AcademyUnlockableConfig(
   val description: String? = null,
   val unlockRequires: List<AcademyRequirementJson> = emptyList(),
   val activities: List<AcademyActivityConfig> = emptyList(),
-)
+  /** Когда можно включить режим в меню */
+  val queueSchedule: String? = null,
+  /** Расписание посещения для [activities], если у действия нет своего schedule */
+  val visitSchedule: String? = null,
+  /** @deprecated то же, что [queueSchedule] */
+  val schedule: String? = null,
+) {
+  fun queueScheduleScope(): AcademyScheduleScope =
+    AcademyScheduleScope.fromJson(queueSchedule ?: schedule)
+
+  fun visitScheduleScope(): AcademyScheduleScope =
+    AcademyScheduleScope.fromJson(visitSchedule)
+}
 
 @Serializable
 data class AcademyActivityConfig(
@@ -120,7 +150,22 @@ data class AcademyActivityConfig(
   val scenarioFile: String,
   val phases: List<String> = emptyList(),
   val requires: List<AcademyRequirementJson> = emptyList(),
-)
+  /** Когда можно выбрать в фазах дня (посещение): always | weekday | weekend */
+  val schedule: String? = null,
+) {
+  fun scheduleScope(): AcademyScheduleScope = AcademyScheduleScope.fromJson(schedule)
+
+  /** schedule действия → visitSchedule здания → visitSchedule разблокировки → always */
+  fun visitScopeFor(
+    building: AcademyBuildingConfig? = null,
+    unlock: AcademyUnlockableConfig? = null,
+  ): AcademyScheduleScope {
+    if (!schedule.isNullOrBlank()) return scheduleScope()
+    building?.visitSchedule?.takeIf { it.isNotBlank() }?.let { return building.visitScheduleScope() }
+    unlock?.visitSchedule?.takeIf { it.isNotBlank() }?.let { return unlock.visitScheduleScope() }
+    return AcademyScheduleScope.ALWAYS
+  }
+}
 
 @Serializable
 data class AcademyRandomEventConfig(

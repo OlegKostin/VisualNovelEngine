@@ -107,6 +107,10 @@ sealed interface EngineOutput {
   data class ShowAcademyHub(
     val background: String,
     val day: Int,
+    /** «Будний день» / «Выходной» */
+    val dayKindLabel: String = "",
+    /** «Будни 3/5» или «Выходные 1/2» */
+    val dayCycleLabel: String = "",
     val planning: Boolean,
     val resources: Int,
     val resourcesLabel: String = "Ресурсы",

@@ -7,12 +7,15 @@ import com.olegkos.vnengine.engine.EngineOutput.EndOfScene
 import com.olegkos.vnengine.engine.academy.AcademyBuildingConfig
 import com.olegkos.vnengine.engine.academy.AcademyBuildingLevelConfig
 import com.olegkos.vnengine.engine.academy.AcademyConfig
+import com.olegkos.vnengine.engine.academy.AcademyDayKind
 import com.olegkos.vnengine.engine.academy.AcademyHubPhase
 import com.olegkos.vnengine.engine.academy.AcademyRandomEventConfig
 import com.olegkos.vnengine.engine.academy.AcademyRequirementJson
 import com.olegkos.vnengine.engine.academy.AcademyPlaybackStep
 import com.olegkos.vnengine.engine.academy.AcademyLawOnEnactEffectJson
+import com.olegkos.vnengine.engine.academy.AcademyScheduleScope
 import com.olegkos.vnengine.engine.academy.AcademyState
+
 import com.olegkos.vnengine.engine.academy.formatAcademyStatNumber
 import com.olegkos.vnengine.engine.academy.formatLawDailyLine
 import com.olegkos.vnengine.engine.academy.formatLawOnEnactLine
@@ -57,6 +60,7 @@ fun VnEngine.academyBeginLawEnact(lawId: String, returnScenario: String): Engine
   val law = config.laws.firstOrNull { it.id == lawId } ?: return null
   if (isLawEnacted(law)) return null
   if (!meetsRequires(law.requires)) return null
+  if (!law.scheduleScope().availableOn(academyDayKind(config))) return null
   if (academyResources(config) < law.cost) return null
 
   spendAcademyResources(config, law.cost)
@@ -103,6 +107,7 @@ fun VnEngine.academyQueueUnlock(unlockId: String?) {
   val unlock = config.unlockableActions.firstOrNull { it.id == unlockId } ?: return
   if (unlock.id in gs.activeUnlockIds) return
   if (!meetsRequires(unlock.unlockRequires)) return
+  if (!unlock.queueScheduleScope().availableOn(academyDayKind(config))) return
   gs.pendingUnlockId = if (gs.pendingUnlockId == unlockId) null else unlockId
 }
 
@@ -476,6 +481,7 @@ internal data class ResolvedAcademyActivity(
   val scenarioFile: String,
   val phases: List<String>,
   val requires: List<AcademyRequirementJson>,
+  val scheduleScope: AcademyScheduleScope = AcademyScheduleScope.ALWAYS,
   val fromBuildingId: String? = null,
   val fromUnlockableId: String? = null,
 )
@@ -493,6 +499,7 @@ private fun VnEngine.collectAcademyActivities(
         scenarioFile = act.scenarioFile,
         phases = act.phases,
         requires = act.requires,
+        scheduleScope = act.visitScopeFor(),
       )
     )
   }
@@ -506,6 +513,7 @@ private fun VnEngine.collectAcademyActivities(
           scenarioFile = act.scenarioFile,
           phases = act.phases,
           requires = act.requires,
+          scheduleScope = act.visitScopeFor(building = building),
           fromBuildingId = building.id,
         )
       )
@@ -521,6 +529,7 @@ private fun VnEngine.collectAcademyActivities(
           scenarioFile = act.scenarioFile,
           phases = act.phases,
           requires = act.requires,
+          scheduleScope = act.visitScopeFor(unlock = unlock),
           fromUnlockableId = unlock.id,
         )
       )
@@ -538,6 +547,7 @@ private fun VnEngine.resolveAcademyActivity(
 }
 
 private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState): String? {
+  val dayKind = academyDayKind(config)
   for (phase in config.phases) {
     val activityId = gs.planByPhase[phase.id]
       ?: return "Выберите действие: ${phase.label}"
@@ -546,6 +556,10 @@ private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState
     if (activity.phases.isNotEmpty() && phase.id !in activity.phases) {
       return "${activity.label} недоступно в фазе ${phase.label}"
     }
+    if (!activity.scheduleScope.availableOn(dayKind)) {
+      return activity.scheduleScope.lockedReason(dayKind, "visit")
+        ?: "${activity.label} недоступно сегодня"
+    }
     if (!meetsRequires(activity.requires)) {
       return "${activity.label} пока недоступно"
     }
@@ -553,6 +567,9 @@ private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState
   gs.selectedBuildingId?.let { id ->
     val building = config.buildings.firstOrNull { it.id == id }
       ?: return "Неизвестная постройка"
+    if (!building.buildScheduleScope().availableOn(dayKind)) {
+      return "${building.label}: строить сегодня нельзя (${dayKind.shortLabel.lowercase()})"
+    }
     val next = building.levels.filter { it.level > buildingLevel(building) }.minByOrNull { it.level }
       ?: return "Постройка недоступна"
     if (!meetsRequires(next.requires)) return "Постройка недоступна"
@@ -602,10 +619,12 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     gs.buildUsedToday = false
   }
 
-  val day = when (val v = state.variables[config.dayVar]) {
-    is GameValue.IntVal -> v.value
-    is GameValue.FloatVal -> v.value.toInt()
-    else -> 0
+  val day = academyDay(config)
+  val dayKind = academyDayKind(config)
+  val week = config.weekSchedule
+  val dayCycleLabel = when (dayKind) {
+    AcademyDayKind.WEEKDAY -> "Будни ${week.dayIndexInBlock(day)}/${week.weekdays}"
+    AcademyDayKind.WEEKEND -> "Выходные ${week.dayIndexInBlock(day)}/${week.weekendDays}"
   }
 
   val validationError = if (gs.hubPhase == AcademyHubPhase.PLANNING) {
@@ -618,7 +637,7 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
       EngineOutput.AcademyBuildingGroupUi(
         id = groupId,
         label = groupLabel(groupId),
-        buildings = buildings.map { b -> buildingToUi(b, gs) },
+        buildings = buildings.map { b -> buildingToUi(b, gs, dayKind) },
       )
     }
 
@@ -631,7 +650,8 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
       selectedActivityId = selectedId,
       activities = collectAcademyActivities(config, gs)
         .filter { act ->
-          (act.phases.isEmpty() || phase.id in act.phases) &&
+          act.scheduleScope.availableOn(dayKind) &&
+            (act.phases.isEmpty() || phase.id in act.phases) &&
             meetsRequires(act.requires)
         }
         .map {
@@ -649,13 +669,13 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
   }
 
   val unlockableUi = config.unlockableActions.map { unlock ->
-    unlockableToUi(unlock, gs)
+    unlockableToUi(unlock, gs, dayKind)
   }
   val pendingUnlockLabel = gs.pendingUnlockId?.let { id ->
     config.unlockableActions.firstOrNull { it.id == id }?.label
   }
 
-  val lawUi = config.laws.map { lawToUi(it, config) }
+  val lawUi = config.laws.map { lawToUi(it, config, dayKind) }
 
   val statUi = config.stats.map { stat ->
     val value = readAcademyStatFloat(state.variables, stat.varName)
@@ -669,6 +689,8 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
   return ShowAcademyHub(
     background = config.background,
     day = day,
+    dayKindLabel = dayKind.label,
+    dayCycleLabel = dayCycleLabel,
     planning = gs.hubPhase == AcademyHubPhase.PLANNING,
     resources = academyResources(config),
     resourcesLabel = config.resourcesLabel,
@@ -704,11 +726,14 @@ private fun VnEngine.completeLawEnact(law: com.olegkos.vnengine.engine.academy.A
 private fun VnEngine.lawToUi(
   law: com.olegkos.vnengine.engine.academy.AcademyLawConfig,
   config: AcademyConfig,
+  dayKind: AcademyDayKind,
 ): EngineOutput.AcademyLawUi {
   val enacted = isLawEnacted(law)
   val resources = academyResources(config)
+  val scheduleOk = law.scheduleScope().availableOn(dayKind)
   val status = when {
     enacted -> EngineOutput.AcademyLawStatus.ENACTED
+    !scheduleOk -> EngineOutput.AcademyLawStatus.LOCKED
     !meetsRequires(law.requires) -> EngineOutput.AcademyLawStatus.LOCKED
     law.cost > 0 && resources < law.cost -> EngineOutput.AcademyLawStatus.LOCKED
     else -> EngineOutput.AcademyLawStatus.AVAILABLE
@@ -717,6 +742,7 @@ private fun VnEngine.lawToUi(
     EngineOutput.AcademyLawStatus.ENACTED -> "Принят"
     EngineOutput.AcademyLawStatus.AVAILABLE -> null
     EngineOutput.AcademyLawStatus.LOCKED -> when {
+      !scheduleOk -> law.scheduleScope().lockedReason(dayKind) ?: "Недоступно сегодня"
       !meetsRequires(law.requires) ->
         academyRequirementHint(law.requires, law.lockedHint, config)
       law.cost > 0 && resources < law.cost -> "Нужно ${law.cost} ресурсов"
@@ -843,15 +869,21 @@ private fun formatAcademyRequirement(
 private fun VnEngine.unlockableToUi(
   unlock: com.olegkos.vnengine.engine.academy.AcademyUnlockableConfig,
   gs: AcademyState,
+  dayKind: AcademyDayKind,
 ): EngineOutput.AcademyUnlockableUi {
+  val scheduleOk = unlock.queueScheduleScope().availableOn(dayKind)
   val status = when {
     unlock.id in gs.activeUnlockIds -> EngineOutput.AcademyUnlockableStatus.ACTIVE
     unlock.id == gs.pendingUnlockId -> EngineOutput.AcademyUnlockableStatus.PENDING
+    !scheduleOk -> EngineOutput.AcademyUnlockableStatus.LOCKED
     meetsRequires(unlock.unlockRequires) -> EngineOutput.AcademyUnlockableStatus.CAN_QUEUE
     else -> EngineOutput.AcademyUnlockableStatus.LOCKED
   }
   val lockedReason = when (status) {
-    EngineOutput.AcademyUnlockableStatus.LOCKED -> "Условия не выполнены"
+    EngineOutput.AcademyUnlockableStatus.LOCKED -> when {
+      !scheduleOk -> unlock.queueScheduleScope().lockedReason(dayKind) ?: "Недоступно сегодня"
+      else -> "Условия не выполнены"
+    }
     EngineOutput.AcademyUnlockableStatus.ACTIVE -> "Уже активно"
     EngineOutput.AcademyUnlockableStatus.PENDING -> "Будет активно завтра"
     EngineOutput.AcademyUnlockableStatus.CAN_QUEUE -> null
@@ -889,9 +921,13 @@ private fun VnEngine.unlockableToUi(
   )
 }
 
+private fun VnEngine.academyDayKind(config: AcademyConfig): AcademyDayKind =
+  config.weekSchedule.dayKind(academyDay(config))
+
 private fun VnEngine.buildingToUi(
   building: AcademyBuildingConfig,
   gs: AcademyState,
+  dayKind: AcademyDayKind,
 ): EngineOutput.AcademyBuildingUi {
   val level = buildingLevel(building)
   val next = building.levels.filter { it.level > level }.minByOrNull { it.level }
@@ -914,11 +950,13 @@ private fun VnEngine.buildingToUi(
   )
   val resources = academyResources(config)
   val currentDay = academyDay(config)
+  val scheduleOk = building.buildScheduleScope().availableOn(dayKind)
   val levelOk = next == null || meetsRequires(next.requires)
   val canAfford = next == null || resources >= next.cost
   val canBuildToday = gs.hubPhase == AcademyHubPhase.PLANNING &&
     !gs.buildUsedToday &&
     next != null &&
+    scheduleOk &&
     levelOk &&
     canAfford
   val statusLabel = when {
@@ -933,6 +971,8 @@ private fun VnEngine.buildingToUi(
     !canBuildToday && gs.buildUsedToday -> "Сегодня стройка уже запланирована"
     !canBuildToday && next == null && level > 0 -> null
     !canBuildToday && next == null -> "Недоступно"
+    !canBuildToday && !scheduleOk ->
+      building.buildScheduleScope().lockedReason(dayKind, "build") ?: "Недоступно сегодня"
     !canBuildToday && !levelOk -> "Условия не выполнены"
     !canBuildToday && !canAfford -> "Нужно ${next?.cost ?: 0} ресурсов"
     else -> null

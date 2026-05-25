@@ -63,8 +63,17 @@ fun AcademyHubScreen(
     }
     CompositionLocalProvider(LocalAcademyHubTypography provides typography) {
   Column(Modifier.fillMaxSize()) {
+    val dayHeaderText = buildString {
+      append("День ${output.day}")
+      if (output.dayKindLabel.isNotEmpty()) {
+        append(" · ${output.dayKindLabel}")
+      }
+      if (output.dayCycleLabel.isNotEmpty()) {
+        append(" (${output.dayCycleLabel})")
+      }
+    }
     SkikoSafeText(
-      text = "День ${output.day}",
+      text = dayHeaderText,
       fontSize = typography.dayHeader,
       color = Color.White,
       modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),

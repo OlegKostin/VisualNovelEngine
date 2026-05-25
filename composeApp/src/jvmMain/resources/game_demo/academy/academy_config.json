@@ -1,5 +1,6 @@
 {
   "background": "backgrounds/02prev_bath/02holl.png",
+  "weekSchedule": { "weekdays": 5, "weekendDays": 2 },
   "dayVar": "academy_day",
   "resourcesVar": "resources",
   "resourcesLabel": "Ресурсы",
@@ -12,6 +13,7 @@
     {
       "id": "library",
       "label": "Библиотека",
+      "visitSchedule": "weekday",
       "group": "study",
       "levelVar": "building_library_level",
       "xPercent": 18,
@@ -37,6 +39,8 @@
     {
       "id": "dorm",
       "label": "Общежитие",
+      "buildSchedule": "weekday",
+      "visitSchedule": "always",
       "group": "life",
       "levelVar": "building_dorm_level",
       "xPercent": 55,
@@ -83,13 +87,15 @@
       "id": "walk",
       "label": "Прогулка",
       "scenarioFile": "scenarios/academy/act_walk.json",
-      "phases": ["day", "evening"]
+      "phases": ["day", "evening"],
+      "schedule": "weekend"
     }
   ],
   "laws": [
     {
       "id": "candy",
       "label": "Раздать конфеты всем",
+      "schedule": "weekend",
       "description": "Праздничная раздача сладостей — студенты запомнят заботу.",
       "enactedVar": "law_candy",
       "cost": 20,
@@ -102,6 +108,7 @@
     {
       "id": "curfew",
       "label": "Комендантский час",
+      "schedule": "weekday",
       "description": "Строгий отбой: меньше беспорядков, но часть студентов недовольна.",
       "enactedVar": "law_curfew",
       "cost": 0,
