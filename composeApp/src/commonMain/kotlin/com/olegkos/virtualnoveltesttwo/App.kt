@@ -87,6 +87,13 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
     }
   }
 
+  LaunchedEffect(viewModel.sceneLayerResetToken) {
+    if (viewModel.sceneLayerResetToken > 0) {
+      image = null
+      cardImage = null
+    }
+  }
+
   LaunchedEffect(output) {
     if (advancing) return@LaunchedEffect
     advancing = true

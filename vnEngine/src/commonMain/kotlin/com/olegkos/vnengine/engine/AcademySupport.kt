@@ -200,7 +200,12 @@ private fun VnEngine.beginAcademyPlaybackStep(step: AcademyPlaybackStep): Engine
   return JumpScenarioOutput(step.scenarioFile)
 }
 
+fun VnEngine.clearSceneLayers() {
+  state.visibleCharacters = emptyList()
+}
+
 fun VnEngine.resetScenarioEntry(startSceneId: String) {
+  clearSceneLayers()
   state.pointer = NodePointer(startSceneId, 0)
   state.diceResult = null
   state.diceModifiedResult = null

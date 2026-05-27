@@ -368,10 +368,9 @@ class VnEngine(
           return ShowImage(node.image)
         }
         is SceneNode.JumpScenario -> {
-
+          clearSceneLayers()
           state.scenarioStack.addLast(state.pointer.copy())
           advance()
-
           return JumpScenarioOutput(node.scenarioFile)
         }
 

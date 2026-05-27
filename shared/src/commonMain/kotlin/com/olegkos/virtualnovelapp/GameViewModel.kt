@@ -37,6 +37,10 @@
     var currentNode by mutableStateOf<SceneNode?>(null)
       private set
 
+    /** Увеличивается при switchScenario — сброс overlay image/card в UI. */
+    var sceneLayerResetToken by mutableStateOf(0)
+      private set
+
     val visibleCharacters: List<VisibleCharacter>
       get() = controller.visibleCharactersInWorld()
 
@@ -60,9 +64,7 @@
 
         is EngineOutput.JumpScenarioOutput -> {
           viewModelScope.launch {
-            val (newOutput, node) =
-              controller.switchScenario(output.scenarioFile)
-
+            val (newOutput, node) = switchScenario(output.scenarioFile)
             currentOutput = newOutput
             currentNode = node
           }
@@ -160,7 +162,7 @@
     }
     fun jumpScenario(path: String) {
       viewModelScope.launch {
-        val (output, node) = controller.switchScenario(path)
+        val (output, node) = switchScenario(path)
         currentOutput = output
         currentNode = node
       }
@@ -302,7 +304,7 @@
       when (output) {
         is EngineOutput.JumpScenarioOutput -> {
           viewModelScope.launch {
-            val (newOutput, newNode) = controller.switchScenario(output.scenarioFile)
+            val (newOutput, newNode) = switchScenario(output.scenarioFile)
             currentOutput = newOutput
             currentNode = newNode
           }
@@ -312,6 +314,11 @@
           currentNode = node
         }
       }
+    }
+
+    private suspend fun switchScenario(path: String): Pair<EngineOutput, SceneNode?> {
+      sceneLayerResetToken++
+      return controller.switchScenario(path)
     }
 
     fun useCards(cardIds: List<String>) {
