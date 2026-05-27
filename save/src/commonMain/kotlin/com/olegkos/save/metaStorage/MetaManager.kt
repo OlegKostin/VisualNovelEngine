@@ -44,7 +44,17 @@ class MetaManager(
     storage.save(state)
   }
 
-  /** Сброс карт и зафиксированных бросков (новая игра / экран InitGame). */
+  fun getDrawCardResult(nodeId: String): CardInstance? =
+    state.drawCardNodes[nodeId]
+
+  /** Фиксирует выдачу карты с ноды drawCard (повторно не выдаётся за игру). */
+  fun saveDrawCardResult(nodeId: String, card: CardInstance) {
+    if (state.drawCardNodes.containsKey(nodeId)) return
+    state = state.copy(drawCardNodes = state.drawCardNodes + (nodeId to card))
+    storage.save(state)
+  }
+
+  /** Сброс карт, бросков и выданных drawCard (новая игра / экран InitGame). */
   fun resetToEmpty() {
     state = MetaState()
     storage.save(state)

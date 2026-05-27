@@ -218,6 +218,14 @@ class GameController(
       is EngineOutput.ShowCardGame -> enrichCardGameOutput(output) to engine.currentNode()
 
       is EngineOutput.DrawCardRequest -> {
+        val nodeId = buildNodeMetaId()
+        metaManager.getDrawCardResult(nodeId)?.let { existing ->
+          return EngineOutput.ShowCard(
+            image = existing.image,
+            id = existing.id,
+          ) to null
+        }
+
         val card = resolveCardPick(
           random = output.random,
           value = output.value,
@@ -227,6 +235,7 @@ class GameController(
         requireNotNull(card) { "Card not found: $output" }
 
         val instance = metaManager.addCard(card)
+        metaManager.saveDrawCardResult(nodeId, instance)
 
         EngineOutput.ShowCard(
           image = instance.image,
@@ -616,12 +625,13 @@ class GameController(
       parser.parse(raw)
     }
 
-  private fun buildDiceId(): String {
+  private fun buildNodeMetaId(): String {
     val engine = requireEngine
     val pointer = engine.state.pointer
-
     return "$currentScenario|${pointer.sceneId}|${pointer.nodeIndex}"
   }
+
+  private fun buildDiceId(): String = buildNodeMetaId()
 
   fun diceDuelRoll(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
