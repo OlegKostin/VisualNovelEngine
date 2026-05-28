@@ -82,9 +82,24 @@ fun VNTextBox(
 
     val visibleText = text.take(visibleCount)
 
+    val onScreenClick = {
+      when {
+        !isFullyShown && !isFastMode -> isFastMode = true
+        !isFullyShown && isFastMode -> skipRequested = true
+        else -> {
+          isFastMode = false
+          onNext()
+        }
+      }
+    }
+
     Column(
       modifier = Modifier
         .fillMaxSize()
+        .clickable(
+          indication = null,
+          interactionSource = remember { MutableInteractionSource() },
+        ) { onScreenClick() }
         .padding(16.dp),
       verticalArrangement = Arrangement.Bottom,
       horizontalAlignment = Alignment.Start
@@ -124,19 +139,6 @@ fun VNTextBox(
             shape = RoundedCornerShape(16.dp)
           )
           .background(textBoxBg)
-          .clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-          ) {
-            when {
-              !isFullyShown && !isFastMode -> isFastMode = true
-              !isFullyShown && isFastMode -> skipRequested = true
-              else -> {
-                isFastMode = false
-                onNext()
-              }
-            }
-          }
           .padding(horizontal = 12.dp, vertical = 10.dp)
       ) {
         Text(
