@@ -92,6 +92,69 @@ object CardGameLogic {
   }
 
   fun randomBattleTone(): String = TONE_TAGS.random()
+
+  /** Карта тона, совпадающая с [battleTone], может давать множитель; противоположная — нет. */
+  fun isBeneficialToneCard(tag: String, battleTone: String): Boolean =
+    tag !in TONE_TAGS || tag == battleTone
+
+  /**
+   * Скрытый выбор оппонента до хода игрока: [pool] → [handSize] → [clashSize].
+   * Оценка только по своим картам (без знания руки игрока и контров).
+   */
+  fun pickEnemyClash(
+    pool: List<HandCard>,
+    handSize: Int,
+    clashSize: Int,
+    battleTone: String,
+  ): List<HandCard> {
+    require(pool.size >= handSize && handSize >= clashSize)
+
+    fun scoreClash(clash: List<HandCard>): Int {
+      val tags = clash.map { it.toTagValue() }
+      val eff = effectiveValues(tags, emptyList())
+      return computeScore(tags, eff, battleTone).total
+    }
+
+    fun clashAllowed(clash: List<HandCard>): Boolean =
+      clash.all { isBeneficialToneCard(it.tag, battleTone) }
+
+    var best: List<HandCard>? = null
+    var bestScore = Int.MIN_VALUE
+
+    for (hand in combinations(pool, handSize)) {
+      for (clash in combinations(hand, clashSize)) {
+        if (!clashAllowed(clash)) continue
+        val score = scoreClash(clash)
+        if (score > bestScore) {
+          bestScore = score
+          best = clash
+        }
+      }
+    }
+
+    if (best == null) {
+      for (hand in combinations(pool, handSize)) {
+        for (clash in combinations(hand, clashSize)) {
+          val score = scoreClash(clash)
+          if (score > bestScore) {
+            bestScore = score
+            best = clash
+          }
+        }
+      }
+    }
+
+    return best ?: pool.take(clashSize)
+  }
+
+  private fun <T> combinations(items: List<T>, k: Int): List<List<T>> {
+    if (k <= 0) return listOf(emptyList())
+    if (items.size < k) return emptyList()
+    if (k == items.size) return listOf(items)
+    val head = items.first()
+    val tail = items.drop(1)
+    return combinations(tail, k - 1).map { listOf(head) + it } + combinations(tail, k)
+  }
 }
 
 data class CardTagValue(val tag: String, val value: Int)

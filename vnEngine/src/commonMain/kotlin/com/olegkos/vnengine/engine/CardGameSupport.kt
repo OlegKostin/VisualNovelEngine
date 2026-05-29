@@ -60,10 +60,25 @@ fun VnEngine.cardGameConfirmDraft(
   gs.hand = metaPicked + poolPicked
   gs.offerCards = emptyList()
   gs.phase = CardGamePhase.SELECT_CLASH
+  prepareEnemyClash(gs, node)
+}
+
+private fun VnEngine.prepareEnemyClash(gs: CardGameState, node: SceneNode.CardGame) {
+  if (gs.enemyClash.isNotEmpty()) return
+  val deck = cards ?: return
+  val draft = node.draft
+  val pool = deck.drawUniqueWeighted(draft.offerCount).map { HandCard.fromDeck(it) }
+  gs.enemyClash = CardGameLogic.pickEnemyClash(
+    pool = pool,
+    handSize = draft.handSize,
+    clashSize = 3,
+    battleTone = gs.battleTone,
+  )
 }
 
 fun VnEngine.cardGameConfirmClash(selectedIds: List<String>) {
   val gs = state.cardGame ?: return
+  val node = currentCardGameNode() ?: return
   if (gs.phase != CardGamePhase.SELECT_CLASH) return
   val picked = gs.hand.filter { it.instanceId in selectedIds.toSet() }
   if (picked.size != 3) return
@@ -73,8 +88,7 @@ fun VnEngine.cardGameConfirmClash(selectedIds: List<String>) {
   gs.discard = gs.discard + unused
   gs.hand = emptyList()
 
-  val deck = cards ?: return
-  gs.enemyClash = deck.drawWeighted(3).map { HandCard.fromDeck(it) }
+  prepareEnemyClash(gs, node)
   resolveClashAndShowBattle(gs)
 }
 
