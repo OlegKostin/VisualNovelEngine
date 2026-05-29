@@ -43,8 +43,8 @@ object CardGameLogic {
     var total = base
     if (matching.isNotEmpty()) {
       if (base > 0) {
-        val product = matching.fold(1) { acc, (_, v) -> acc * v.coerceAtLeast(0) }
-        val factorText = matching.joinToString(" × ") { "${it.second}" }
+        val product = matching.fold(1) { acc, (_, v) -> acc * (v + 1) }
+        val factorText = matching.joinToString(" × ") { "${it.second + 1}" }
         total = base * product
         steps.add(
           ScoreStep(
@@ -58,9 +58,8 @@ object CardGameLogic {
         steps.add(ScoreStep("Тон (база 0)", "0", 0))
       }
     }
-    nonMatching.forEach { (_, v) ->
-      total += v
-      steps.add(ScoreStep("Несовпадающий тон", "+$v", total))
+    if (nonMatching.isNotEmpty()) {
+      steps.add(ScoreStep("Противоположное течение", "0", total))
     }
 
     return ScoreBreakdown(
