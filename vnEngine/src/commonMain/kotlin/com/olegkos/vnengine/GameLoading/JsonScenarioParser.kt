@@ -73,6 +73,7 @@ class JsonScenarioParser : ScenarioParser {
 
     val json = Json {
       ignoreUnknownKeys = true
+      allowTrailingComma = true
       classDiscriminator = "type"
     }
 
@@ -89,9 +90,12 @@ class JsonScenarioParser : ScenarioParser {
             when (nodeJson) {
 
               is SceneNodeJson.Text ->
-                Text(speaker = nodeJson.speaker,
+                Text(
+                  speaker = nodeJson.speaker,
                   speakerVar = nodeJson.speakerVar,
-                  text = nodeJson.text)
+                  text = nodeJson.text,
+                  long = nodeJson.long,
+                )
 
               is SceneNodeJson.Choice ->
                 Choice(
@@ -449,7 +453,8 @@ sealed class SceneNodeJson {
   data class Text(
     val speaker: String? = null,
     val speakerVar: String? = null,
-    val text: String
+    val text: String,
+    val long: Boolean = false,
   ) : SceneNodeJson()
 
   @Serializable

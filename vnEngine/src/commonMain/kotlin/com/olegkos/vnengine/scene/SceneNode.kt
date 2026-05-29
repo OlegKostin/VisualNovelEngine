@@ -7,7 +7,9 @@ sealed interface SceneNode {
   data class Text(
     val speaker: String? = null,
     val speakerVar: String? = null,
-    val text: String
+    val text: String,
+    /** true — до 4 строк в текстбоксе; по умолчанию 2 */
+    val long: Boolean = false,
   ) : SceneNode
 
   data class Choice(val options: List<Option>) : SceneNode

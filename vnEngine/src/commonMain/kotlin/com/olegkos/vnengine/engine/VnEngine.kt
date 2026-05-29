@@ -180,7 +180,8 @@ class VnEngine(
           return ShowText(
             speaker = speakerName,
             speakerVar = node.speakerVar,
-            text = resolveTextVariables(node.text)
+            text = resolveTextVariables(node.text),
+            long = node.long,
           )
         }
 

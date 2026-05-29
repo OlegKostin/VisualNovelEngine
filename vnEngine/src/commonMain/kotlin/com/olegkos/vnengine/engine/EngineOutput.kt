@@ -15,7 +15,8 @@ sealed interface EngineOutput {
   data class ShowText(
     val speaker: String?,
     val speakerVar: String?,
-    val text: String
+    val text: String,
+    val long: Boolean = false,
   ) : EngineOutput
   data class ShowChoices(val options: List<Option>) : EngineOutput
   data class ShowDice(

@@ -335,6 +335,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           VNTextBox(
             speaker = o.speaker,
             text = o.text,
+            long = o.long,
             onNext = { viewModel.next() }
           )
         }

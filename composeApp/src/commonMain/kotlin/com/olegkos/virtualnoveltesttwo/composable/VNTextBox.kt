@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 fun VNTextBox(
   text: String,
   speaker: String? = null,
+  long: Boolean = false,
   onNext: () -> Unit
 ) {
   var visibleCount by remember { mutableIntStateOf(0) }
@@ -69,7 +70,7 @@ fun VNTextBox(
   BoxWithConstraints(
     modifier = Modifier.fillMaxSize()
   ) {
-    val maxLines = 2
+    val maxLines = if (long) 4 else 2
     val fontSize = (maxHeight.value * 0.038f).sp
     val lineHeight = (fontSize.value * 1.35f).sp
     val density = LocalDensity.current
