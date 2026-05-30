@@ -626,11 +626,9 @@ private fun CardRow(
   onCardClick: ((EngineOutput.CardGameUiCard) -> Unit)? = null
 ) {
   val scrollState = rememberScrollState()
-  val footerH = if (selectable) 26.dp else 22.dp
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .height(cardH + footerH)
       .padding(vertical = 8.dp)
       .horizontalWheelScroll(scrollState)
       .horizontalScroll(scrollState),
@@ -698,6 +696,9 @@ private fun GameCardTile(
       if (!card.faceDown) {
         CardTagBadge(tag = card.tag, iconSize = (cardW * 0.24f).coerceIn(18.dp, 26.dp))
       }
+      if (showTagAndValue && !card.faceDown) {
+        CardValueBadge(value = card.value)
+      }
     }
     when {
       showEffective && card.effectiveValue != null -> SkikoSafeText(
@@ -706,15 +707,32 @@ private fun GameCardTile(
         color = if (card.countered) Color(0xFFFF8A80) else Accent,
         modifier = Modifier.padding(top = 2.dp)
       )
-      showTagAndValue && !card.faceDown -> SkikoSafeText(
+      !showTagAndValue && !card.faceDown -> SkikoSafeText(
         "${card.value}",
-        fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = Color.White,
-        modifier = Modifier.padding(top = 2.dp)
+        fontSize = 12.sp,
+        color = Muted,
+        modifier = Modifier.padding(top = 2.dp),
       )
-      !card.faceDown -> SkikoSafeText("${card.value}", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(top = 2.dp))
     }
+  }
+}
+
+@Composable
+private fun BoxScope.CardValueBadge(value: Int) {
+  Box(
+    Modifier
+      .align(Alignment.BottomCenter)
+      .padding(4.dp)
+      .background(Color(0xE610141C), RoundedCornerShape(6.dp))
+      .padding(horizontal = 8.dp, vertical = 3.dp),
+    contentAlignment = Alignment.Center,
+  ) {
+    SkikoSafeText(
+      text = "$value",
+      fontSize = 14.sp,
+      fontWeight = FontWeight.Bold,
+      color = Color.White,
+    )
   }
 }
 
