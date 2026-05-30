@@ -113,7 +113,10 @@
     ) {
       val engine = controller.requireEngine
 
-      engine.variables.set(playerNameVar, GameValue.StringVal(playerName))
+      val nameVal = GameValue.StringVal(playerName.trim())
+      listOf("my_name", "player_name", playerNameVar).distinct().forEach { varName ->
+        engine.variables.set(varName, nameVal)
+      }
 
       if (selectedClass != null && classVar != null) {
         engine.variables.set(classVar, GameValue.StringVal(selectedClass.id))
