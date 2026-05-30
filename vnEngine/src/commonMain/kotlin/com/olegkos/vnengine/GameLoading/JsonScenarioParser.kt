@@ -26,7 +26,9 @@ import com.olegkos.vnengine.scene.SceneNode.EscapeConfig
 import com.olegkos.vnengine.scene.SceneNode.HideCharacter
 import com.olegkos.vnengine.scene.SceneNode.HideImage
 import com.olegkos.vnengine.scene.SceneNode.Hotspot
+import com.olegkos.vnengine.scene.SceneNode.If
 import com.olegkos.vnengine.scene.SceneNode.IfAll
+import com.olegkos.vnengine.scene.SceneNode.IfAny
 import com.olegkos.vnengine.scene.SceneNode.Image
 import com.olegkos.vnengine.scene.SceneNode.InitGame
 import com.olegkos.vnengine.scene.SceneNode.Jump
@@ -132,6 +134,18 @@ class JsonScenarioParser : ScenarioParser {
               )
 
               is SceneNodeJson.IfAll -> IfAll(
+                requires = nodeJson.requires.map { r ->
+                  SceneNode.WeightedRandomJump.Requirement(
+                    variable = r.variable,
+                    op = r.op.toWeightedOp(),
+                    value = r.value.toGameValue(),
+                  )
+                },
+                successScene = nodeJson.successScene,
+                failScene = nodeJson.failScene,
+              )
+
+              is SceneNodeJson.IfAny -> IfAny(
                 requires = nodeJson.requires.map { r ->
                   SceneNode.WeightedRandomJump.Requirement(
                     variable = r.variable,
@@ -579,6 +593,14 @@ sealed class SceneNodeJson {
   @Serializable
   @SerialName("ifAll")
   data class IfAll(
+    val requires: List<WeightedRandomJump.RequirementJson> = emptyList(),
+    val successScene: String,
+    val failScene: String,
+  ) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("ifAny")
+  data class IfAny(
     val requires: List<WeightedRandomJump.RequirementJson> = emptyList(),
     val successScene: String,
     val failScene: String,

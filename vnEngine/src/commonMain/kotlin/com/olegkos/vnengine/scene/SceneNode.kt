@@ -48,6 +48,13 @@ sealed interface SceneNode {
     val failScene: String,
   ) : SceneNode
 
+  /** Хотя бы одно из [requires] → [successScene], иначе [failScene]. */
+  data class IfAny(
+    val requires: List<WeightedRandomJump.Requirement>,
+    val successScene: String,
+    val failScene: String,
+  ) : SceneNode
+
   data class Switch(
     val variable: String,
     val cases: Map<String, String>,
