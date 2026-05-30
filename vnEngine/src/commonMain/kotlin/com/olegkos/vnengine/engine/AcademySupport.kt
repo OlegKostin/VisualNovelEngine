@@ -14,6 +14,7 @@ import com.olegkos.vnengine.engine.academy.AcademyRequirementJson
 import com.olegkos.vnengine.engine.academy.AcademyPlaybackStep
 import com.olegkos.vnengine.engine.academy.AcademyLawOnEnactEffectJson
 import com.olegkos.vnengine.engine.academy.AcademyScheduleScope
+import com.olegkos.vnengine.engine.academy.AcademyPlanMode
 import com.olegkos.vnengine.engine.academy.AcademyState
 
 import com.olegkos.vnengine.engine.academy.formatAcademyStatNumber
@@ -44,6 +45,7 @@ fun VnEngine.loadAcademyConfig(config: AcademyConfig) {
 fun VnEngine.academySelectBuilding(buildingId: String?) {
   val gs = state.academy ?: return
   if (gs.hubPhase != AcademyHubPhase.PLANNING || gs.buildUsedToday) return
+  if (gs.planMode == AcademyPlanMode.FULL_DAY) return
   gs.selectedBuildingId = buildingId
 }
 
@@ -111,9 +113,34 @@ fun VnEngine.academyQueueUnlock(unlockId: String?) {
   gs.pendingUnlockId = if (gs.pendingUnlockId == unlockId) null else unlockId
 }
 
+fun VnEngine.academySetPlanMode(mode: AcademyPlanMode) {
+  val gs = state.academy ?: return
+  if (gs.hubPhase != AcademyHubPhase.PLANNING) return
+  gs.planMode = mode
+  when (mode) {
+    AcademyPlanMode.NORMAL -> gs.fullDayActivityId = null
+    AcademyPlanMode.FULL_DAY -> {
+      gs.planByPhase.clear()
+      gs.selectedBuildingId = null
+    }
+  }
+}
+
+fun VnEngine.academySetFullDayActivity(activityId: String?) {
+  val gs = state.academy ?: return
+  if (gs.hubPhase != AcademyHubPhase.PLANNING) return
+  if (gs.planMode != AcademyPlanMode.FULL_DAY) return
+  gs.fullDayActivityId = when {
+    activityId == null -> null
+    activityId == gs.fullDayActivityId -> null
+    else -> activityId
+  }
+}
+
 fun VnEngine.academySetActivity(phaseId: String, activityId: String?) {
   val gs = state.academy ?: return
   if (gs.hubPhase != AcademyHubPhase.PLANNING) return
+  if (gs.planMode != AcademyPlanMode.NORMAL) return
   if (activityId == null) {
     gs.planByPhase.remove(phaseId)
   } else {
@@ -160,6 +187,8 @@ fun VnEngine.academyAdvanceAfterScenario(): EngineOutput? {
 
   academyFinishDay()
   gs.hubPhase = AcademyHubPhase.PLANNING
+  gs.planMode = AcademyPlanMode.NORMAL
+  gs.fullDayActivityId = null
   gs.selectedBuildingId = null
   gs.planByPhase.clear()
   gs.playbackQueue = emptyList()
@@ -259,27 +288,43 @@ private fun VnEngine.buildAcademyPlaybackQueue(
     }
   }
 
-  val random = gs.randomEventId?.let { id -> config.randomEvents.firstOrNull { it.id == id } }
+  val random = if (gs.planMode == AcademyPlanMode.NORMAL) {
+    gs.randomEventId?.let { id -> config.randomEvents.firstOrNull { it.id == id } }
+  } else {
+    null
+  }
 
-  for (phase in config.phases) {
-    val activityId = gs.planByPhase[phase.id] ?: continue
-    val activity = resolveAcademyActivity(config, activityId) ?: continue
+  if (gs.planMode == AcademyPlanMode.FULL_DAY) {
+    val activityId = gs.fullDayActivityId ?: return queue
+    val activity = resolveAcademyActivity(config, activityId) ?: return queue
     queue.add(
       AcademyPlaybackStep(
         scenarioFile = activity.scenarioFile,
-        phaseId = phase.id,
-        phaseLabel = phase.label,
+        phaseLabel = AcademyConfig.FULL_DAY_PANEL_LABEL,
         activityLabel = activity.label,
       )
     )
-    if (random != null && random.afterPhase == phase.id) {
+  } else {
+    for (phase in config.phases) {
+      val activityId = gs.planByPhase[phase.id] ?: continue
+      val activity = resolveAcademyActivity(config, activityId) ?: continue
       queue.add(
         AcademyPlaybackStep(
-          scenarioFile = random.scenarioFile,
-          phaseLabel = "Случайное событие",
-          activityLabel = random.id,
+          scenarioFile = activity.scenarioFile,
+          phaseId = phase.id,
+          phaseLabel = phase.label,
+          activityLabel = activity.label,
         )
       )
+      if (random != null && random.afterPhase == phase.id) {
+        queue.add(
+          AcademyPlaybackStep(
+            scenarioFile = random.scenarioFile,
+            phaseLabel = "Случайное событие",
+            activityLabel = random.id,
+          )
+        )
+      }
     }
   }
 
@@ -486,6 +531,7 @@ internal data class ResolvedAcademyActivity(
   val scenarioFile: String,
   val phases: List<String>,
   val requires: List<AcademyRequirementJson>,
+  val fullDay: Boolean = false,
   val scheduleScope: AcademyScheduleScope = AcademyScheduleScope.ALWAYS,
   val fromBuildingId: String? = null,
   val fromUnlockableId: String? = null,
@@ -504,6 +550,7 @@ private fun VnEngine.collectAcademyActivities(
         scenarioFile = act.scenarioFile,
         phases = act.phases,
         requires = act.requires,
+        fullDay = act.fullDay,
         scheduleScope = act.visitScopeFor(),
       )
     )
@@ -518,6 +565,7 @@ private fun VnEngine.collectAcademyActivities(
           scenarioFile = act.scenarioFile,
           phases = act.phases,
           requires = act.requires,
+          fullDay = act.fullDay,
           scheduleScope = act.visitScopeFor(building = building),
           fromBuildingId = building.id,
         )
@@ -534,6 +582,7 @@ private fun VnEngine.collectAcademyActivities(
           scenarioFile = act.scenarioFile,
           phases = act.phases,
           requires = act.requires,
+          fullDay = act.fullDay,
           scheduleScope = act.visitScopeFor(unlock = unlock),
           fromUnlockableId = unlock.id,
         )
@@ -553,6 +602,25 @@ private fun VnEngine.resolveAcademyActivity(
 
 private fun VnEngine.validateAcademyPlan(config: AcademyConfig, gs: AcademyState): String? {
   val dayKind = academyDayKind(config)
+  if (gs.planMode == AcademyPlanMode.FULL_DAY) {
+    val activityId = gs.fullDayActivityId
+      ?: return "Выберите: ${AcademyConfig.FULL_DAY_PANEL_LABEL}"
+    val activity = resolveAcademyActivity(config, activityId)
+      ?: return "Неизвестное действие"
+    if (!activity.fullDay) return "Недоступно в режиме «${AcademyConfig.FULL_DAY_PANEL_LABEL}»"
+    if (!activity.scheduleScope.availableOn(dayKind)) {
+      return activity.scheduleScope.lockedReason(dayKind, "visit")
+        ?: "${activity.label} недоступно сегодня"
+    }
+    if (!meetsRequires(activity.requires)) {
+      return "${activity.label} пока недоступно"
+    }
+    if (gs.selectedBuildingId != null) {
+      return "В этот день нельзя строить"
+    }
+    return null
+  }
+
   for (phase in config.phases) {
     val activityId = gs.planByPhase[phase.id]
       ?: return "Выберите действие: ${phase.label}"
@@ -647,31 +715,44 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     }
 
   val currentDay = academyDay(config)
+  val allActivities = collectAcademyActivities(config, gs)
+  val fullDayAvailable = allActivities.any { act ->
+    act.fullDay &&
+      act.scheduleScope.availableOn(dayKind) &&
+      meetsRequires(act.requires)
+  }
+  if (gs.planMode == AcademyPlanMode.FULL_DAY && !fullDayAvailable) {
+    gs.planMode = AcademyPlanMode.NORMAL
+    gs.fullDayActivityId = null
+  }
+  if (gs.fullDayActivityId != null && allActivities.none { it.id == gs.fullDayActivityId && it.fullDay }) {
+    gs.fullDayActivityId = null
+  }
+
   val phases = config.phases.map { phase ->
     val selectedId = gs.planByPhase[phase.id]
     EngineOutput.AcademyTimeSlotUi(
       phaseId = phase.id,
       label = phase.label,
       selectedActivityId = selectedId,
-      activities = collectAcademyActivities(config, gs)
+      activities = allActivities
         .filter { act ->
-          act.scheduleScope.availableOn(dayKind) &&
+          !act.fullDay &&
+            act.scheduleScope.availableOn(dayKind) &&
             (act.phases.isEmpty() || phase.id in act.phases) &&
             meetsRequires(act.requires)
         }
-        .map {
-          val buildingId = it.fromBuildingId
-          EngineOutput.AcademyActivityOptionUi(
-            id = it.id,
-            label = it.label,
-            fromBuilding = buildingId != null,
-            fromUnlockable = it.fromUnlockableId != null,
-            highlightBuilding = buildingId != null &&
-              gs.buildingHighlightDay[buildingId] == currentDay,
-          )
-        },
+        .map { activityToUi(it, currentDay) },
     )
   }
+
+  val fullDayActivities = allActivities
+    .filter { act ->
+      act.fullDay &&
+        act.scheduleScope.availableOn(dayKind) &&
+        meetsRequires(act.requires)
+    }
+    .map { activityToUi(it, currentDay) }
 
   val unlockableUi = config.unlockableActions.map { unlock ->
     unlockableToUi(unlock, gs, dayKind)
@@ -709,6 +790,30 @@ fun VnEngine.buildAcademyHubOutput(node: SceneNode.AcademyHub, gs: AcademyState)
     unlockableActions = unlockableUi,
     pendingUnlockLabel = pendingUnlockLabel,
     laws = lawUi,
+    planMode = gs.planMode.name,
+    fullDayModeAvailable = fullDayAvailable,
+    fullDayActivities = fullDayActivities,
+    selectedFullDayActivityId = gs.fullDayActivityId,
+    commitDayLabel = if (gs.planMode == AcademyPlanMode.FULL_DAY) {
+      "Начать день"
+    } else {
+      "Подтвердить день"
+    },
+  )
+}
+
+private fun VnEngine.activityToUi(
+  act: ResolvedAcademyActivity,
+  currentDay: Int,
+): EngineOutput.AcademyActivityOptionUi {
+  val buildingId = act.fromBuildingId
+  return EngineOutput.AcademyActivityOptionUi(
+    id = act.id,
+    label = act.label,
+    fromBuilding = buildingId != null,
+    fromUnlockable = act.fromUnlockableId != null,
+    highlightBuilding = buildingId != null &&
+      state.academy?.buildingHighlightDay?.get(buildingId) == currentDay,
   )
 }
 

@@ -89,6 +89,13 @@
       "scenarioFile": "scenarios/academy/act_walk.json",
       "phases": ["day", "evening"],
       "schedule": "weekend"
+    },
+    {
+      "id": "excursion",
+      "label": "Экскурсия",
+      "scenarioFile": "scenarios/academy/act_walk.json",
+      "fullDay": true,
+      "schedule": "weekday"
     }
   ],
   "laws": [

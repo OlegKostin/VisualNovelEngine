@@ -125,6 +125,13 @@ sealed interface EngineOutput {
     val unlockableActions: List<AcademyUnlockableUi> = emptyList(),
     val pendingUnlockLabel: String? = null,
     val laws: List<AcademyLawUi> = emptyList(),
+    /** NORMAL | FULL_DAY */
+    val planMode: String = "NORMAL",
+    /** Есть ли сегодня хотя бы одно fullDay-действие */
+    val fullDayModeAvailable: Boolean = false,
+    val fullDayActivities: List<AcademyActivityOptionUi> = emptyList(),
+    val selectedFullDayActivityId: String? = null,
+    val commitDayLabel: String = "Подтвердить день",
   ) : EngineOutput
 
   enum class AcademyLawStatus {

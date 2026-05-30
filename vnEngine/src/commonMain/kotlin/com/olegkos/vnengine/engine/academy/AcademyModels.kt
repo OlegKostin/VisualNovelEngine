@@ -30,6 +30,9 @@ data class AcademyConfig(
       AcademyPhaseConfig("evening", "Вечер"),
       AcademyPhaseConfig("night", "Ночь"),
     )
+
+    /** Подпись панели и шага проигрывания для [AcademyActivityConfig.fullDay]. */
+    const val FULL_DAY_PANEL_LABEL = "На весь день"
   }
 }
 
@@ -152,6 +155,8 @@ data class AcademyActivityConfig(
   val requires: List<AcademyRequirementJson> = emptyList(),
   /** Когда можно выбрать в фазах дня (посещение): always | weekday | weekend */
   val schedule: String? = null,
+  /** Одно действие на весь день (режим «На весь день» в хабе). [phases] не нужны. */
+  val fullDay: Boolean = false,
 ) {
   fun scheduleScope(): AcademyScheduleScope = AcademyScheduleScope.fromJson(schedule)
 
@@ -234,6 +239,11 @@ enum class AcademyHubPhase {
   PLAYBACK,
 }
 
+enum class AcademyPlanMode {
+  NORMAL,
+  FULL_DAY,
+}
+
 /** Один шаг проигрывания дня; отдельный шаг даже при том же scenarioFile. */
 data class AcademyPlaybackStep(
   val scenarioFile: String,
@@ -249,6 +259,8 @@ data class AcademyPlaybackStep(
 data class AcademyState(
   val configPath: String,
   var hubPhase: AcademyHubPhase = AcademyHubPhase.PLANNING,
+  var planMode: AcademyPlanMode = AcademyPlanMode.NORMAL,
+  var fullDayActivityId: String? = null,
   var selectedBuildingId: String? = null,
   val planByPhase: MutableMap<String, String> = mutableMapOf(),
   var playbackQueue: List<AcademyPlaybackStep> = emptyList(),

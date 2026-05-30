@@ -18,6 +18,7 @@ import com.olegkos.vnengine.engine.VisibleCharacter
 import com.olegkos.vnengine.engine.VnEngine
 import com.olegkos.vnengine.engine.academy.AcademyConfigLoader
 import com.olegkos.vnengine.engine.academy.AcademyHubPhase
+import com.olegkos.vnengine.engine.academy.AcademyPlanMode
 import com.olegkos.vnengine.engine.academy.AcademyState
 import com.olegkos.vnengine.engine.academyAdvanceAfterScenario
 import com.olegkos.vnengine.engine.academyBeginLawEnact
@@ -27,6 +28,8 @@ import com.olegkos.vnengine.engine.academyHubReturnPointer
 import com.olegkos.vnengine.engine.academyHubReturnScenario
 import com.olegkos.vnengine.engine.academyQueueUnlock
 import com.olegkos.vnengine.engine.academySelectBuilding
+import com.olegkos.vnengine.engine.academySetPlanMode
+import com.olegkos.vnengine.engine.academySetFullDayActivity
 import com.olegkos.vnengine.engine.academySetActivity
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.buildAcademyHubOutput
@@ -75,7 +78,7 @@ class GameController(
     private const val TRACE_ENGINE_STEPS = false
   }
 
-  private val basePath = "game/"
+  private val basePath = "game_demo/"
   private val gameConfigPath = basePath + "game.json"
 
   private var engine: VnEngine? = null
@@ -314,6 +317,20 @@ class GameController(
     ensureAcademyConfigForCurrentHub()
     val engine = requireEngine
     engine.academySelectBuilding(buildingId)
+    return academyHubPair(engine)
+  }
+
+  suspend fun academySetPlanMode(mode: AcademyPlanMode): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val engine = requireEngine
+    engine.academySetPlanMode(mode)
+    return academyHubPair(engine)
+  }
+
+  suspend fun academySetFullDayActivity(activityId: String?): Pair<EngineOutput, SceneNode?> {
+    ensureAcademyConfigForCurrentHub()
+    val engine = requireEngine
+    engine.academySetFullDayActivity(activityId)
     return academyHubPair(engine)
   }
 

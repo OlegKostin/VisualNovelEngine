@@ -42,6 +42,8 @@ import com.olegkos.virtualnoveltesttwo.theme.LocalAcademyHubTypography
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
 import com.olegkos.virtualnoveltesttwo.theme.VnButtonSurface
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
+import com.olegkos.vnengine.engine.academy.AcademyConfig
+import com.olegkos.vnengine.engine.academy.AcademyPlanMode
 import com.olegkos.vnengine.engine.EngineOutput
 
 private val Accent = Color(0xFFBBDEFB)
@@ -79,6 +81,17 @@ fun AcademyHubScreen(
       modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
     )
 
+    if (output.fullDayModeAvailable) {
+      PlanModeToggleRow(
+        planMode = output.planMode,
+        onSelectNormal = { viewModel.academySetPlanMode(AcademyPlanMode.NORMAL) },
+        onSelectFullDay = { viewModel.academySetPlanMode(AcademyPlanMode.FULL_DAY) },
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+      )
+    }
+
+    val isFullDay = output.planMode == AcademyPlanMode.FULL_DAY.name
+
     Row(
       Modifier
         .weight(1f)
@@ -86,17 +99,28 @@ fun AcademyHubScreen(
         .padding(horizontal = 8.dp, vertical = 4.dp),
       horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-      output.timeSlots.forEach { slot ->
-        PhaseColumn(
-          slot = slot,
-          modifier = Modifier.weight(1f),
-          onSelectActivity = { viewModel.academySetActivity(slot.phaseId, it) },
+      if (isFullDay) {
+        FullDayColumn(
+          label = AcademyConfig.FULL_DAY_PANEL_LABEL,
+          activities = output.fullDayActivities,
+          selectedActivityId = output.selectedFullDayActivityId,
+          modifier = Modifier.weight(4f),
+          onSelectActivity = { viewModel.academySetFullDayActivity(it) },
         )
+      } else {
+        output.timeSlots.forEach { slot ->
+          PhaseColumn(
+            slot = slot,
+            modifier = Modifier.weight(1f),
+            onSelectActivity = { viewModel.academySetActivity(slot.phaseId, it) },
+          )
+        }
       }
 
       ResourcesAndBuildColumn(
         modifier = Modifier.weight(1f),
         output = output,
+        isFullDay = isFullDay,
         onOpenBuildMenu = { buildMenuOpen = true },
         onCommitDay = { viewModel.academyCommitDay() },
       )
@@ -115,6 +139,109 @@ fun AcademyHubScreen(
         onEnactLaw = { viewModel.academyEnactLaw(it) },
       )
     }
+    }
+  }
+}
+
+@Composable
+private fun PlanModeToggleRow(
+  planMode: String,
+  onSelectNormal: () -> Unit,
+  onSelectFullDay: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val typography = LocalAcademyHubTypography.current
+  val isFullDay = planMode == AcademyPlanMode.FULL_DAY.name
+  Row(
+    modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    PlanModeToggleButton(
+      label = "Обычный день",
+      selected = !isFullDay,
+      onClick = onSelectNormal,
+      modifier = Modifier.weight(1f),
+      typography = typography,
+    )
+    PlanModeToggleButton(
+      label = AcademyConfig.FULL_DAY_PANEL_LABEL,
+      selected = isFullDay,
+      onClick = onSelectFullDay,
+      modifier = Modifier.weight(1f),
+      typography = typography,
+    )
+  }
+}
+
+@Composable
+private fun PlanModeToggleButton(
+  label: String,
+  selected: Boolean,
+  onClick: () -> Unit,
+  typography: AcademyHubTypography,
+  modifier: Modifier = Modifier,
+) {
+  VnOutlinedButton(
+    onClick = onClick,
+    selected = selected,
+    surface = VnButtonSurface.Dark,
+    modifier = modifier.fillMaxWidth(),
+  ) {
+    Text(
+      text = label,
+      fontSize = typography.button,
+      color = if (selected) Accent else Color.White,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.fillMaxWidth(),
+    )
+  }
+}
+
+@Composable
+private fun FullDayColumn(
+  label: String,
+  activities: List<EngineOutput.AcademyActivityOptionUi>,
+  selectedActivityId: String?,
+  onSelectActivity: (String) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val typography = LocalAcademyHubTypography.current
+  val hasSelection = selectedActivityId != null
+  val borderColor = if (hasSelection) Accent else Divider
+
+  Column(
+    modifier
+      .fillMaxHeight()
+      .background(Color(0xFF243044), RoundedCornerShape(10.dp))
+      .border(1.dp, borderColor, RoundedCornerShape(10.dp))
+      .padding(12.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    SkikoSafeText(
+      text = label,
+      fontSize = typography.phaseHeader,
+      color = Color.White,
+      modifier = Modifier.padding(bottom = 10.dp),
+    )
+
+    Column(
+      Modifier
+        .weight(1f)
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState()),
+      verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+      if (activities.isEmpty()) {
+        SkikoSafeText("Нет действий на сегодня", fontSize = typography.hint, color = Color(0x99FFFFFF))
+      } else {
+        activities.forEach { act ->
+          PhaseActivityButton(
+            act = act,
+            selected = act.id == selectedActivityId,
+            onClick = { onSelectActivity(act.id) },
+          )
+        }
+      }
     }
   }
 }
@@ -652,6 +779,7 @@ private fun ActionsMenuContent(
 private fun ResourcesAndBuildColumn(
   output: EngineOutput.ShowAcademyHub,
   modifier: Modifier = Modifier,
+  isFullDay: Boolean = false,
   onOpenBuildMenu: () -> Unit,
   onCommitDay: () -> Unit,
 ) {
@@ -703,11 +831,20 @@ private fun ResourcesAndBuildColumn(
 
     VnOutlinedButton(
       onClick = onOpenBuildMenu,
-      enabled = output.planning,
+      enabled = output.planning && !isFullDay,
       surface = VnButtonSurface.Dark,
       modifier = Modifier.fillMaxWidth(),
     ) {
       Text("Построить", fontSize = typography.button, color = Color.White)
+    }
+
+    if (isFullDay) {
+      SkikoSafeText(
+        "Строительство недоступно",
+        fontSize = typography.hint,
+        color = Color(0x99FFFFFF),
+        modifier = Modifier.padding(top = 6.dp),
+      )
     }
 
     output.commitBlockedReason?.let {
@@ -724,7 +861,7 @@ private fun ResourcesAndBuildColumn(
         .padding(top = 12.dp),
     ) {
       Text(
-        "Подтвердить день",
+        output.commitDayLabel,
         fontSize = typography.button,
         color = if (output.canCommit) Accent else Color(0xFF6B7588),
       )

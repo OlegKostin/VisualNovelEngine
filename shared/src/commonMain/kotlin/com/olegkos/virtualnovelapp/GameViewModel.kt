@@ -7,6 +7,7 @@
   import androidx.lifecycle.viewModelScope
   import com.olegkos.save.SaveManager
   import com.olegkos.vnengine.GameLoading.AssetReader
+  import com.olegkos.vnengine.engine.academy.AcademyPlanMode
   import com.olegkos.vnengine.engine.EngineOutput
   import com.olegkos.vnengine.engine.VisibleCharacter
   import com.olegkos.vnengine.engine.asserts.AssetPathResolver
@@ -275,6 +276,20 @@
     fun academySelectBuilding(buildingId: String?) {
       viewModelScope.launch {
         val (output, node) = controller.academySelectBuilding(buildingId)
+        applyOutput(output, node)
+      }
+    }
+
+    fun academySetPlanMode(mode: AcademyPlanMode) {
+      viewModelScope.launch {
+        val (output, node) = controller.academySetPlanMode(mode)
+        applyOutput(output, node)
+      }
+    }
+
+    fun academySetFullDayActivity(activityId: String?) {
+      viewModelScope.launch {
+        val (output, node) = controller.academySetFullDayActivity(activityId)
         applyOutput(output, node)
       }
     }
