@@ -141,6 +141,12 @@ class VnEngine(
           continue
         }
 
+        is SceneNode.IfAll -> {
+          val ok = node.requires.isNotEmpty() && node.requires.all { checkRequirement(it) }
+          jumpToScene(if (ok) node.successScene else node.failScene)
+          continue
+        }
+
         is SceneNode.Switch -> {
           val key = when (val value = state.variables[node.variable]) {
             is IntVal -> value.value.toString()
