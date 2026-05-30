@@ -106,45 +106,20 @@ fun VnEngine.cardGameBattleContinue() {
   val gs = state.cardGame ?: return
   if (gs.phase != CardGamePhase.BATTLE_REVEAL) return
   if (!cardGameVnPlaybackComplete(node, gs)) return
-  gs.breakdownSide = BreakdownSide.PLAYER
-  gs.breakdownStepIndex = 0
   gs.phase = CardGamePhase.SCORE_BREAKDOWN
 }
 
+/** Один шаг: весь разбор уже на экране → результат. */
 fun VnEngine.cardGameBreakdownNext() {
   val gs = state.cardGame ?: return
   if (gs.phase != CardGamePhase.SCORE_BREAKDOWN) return
   val resolution = gs.clashResolution ?: return
-
-  val playerSteps = resolution.playerScore.steps.size
-  val enemySteps = resolution.enemyScore.steps.size
-
-  when (gs.breakdownSide) {
-    BreakdownSide.PLAYER -> {
-      if (gs.breakdownStepIndex < playerSteps - 1) {
-        gs.breakdownStepIndex++
-      } else {
-        gs.breakdownSide = BreakdownSide.ENEMY
-        gs.breakdownStepIndex = 0
-      }
-    }
-    BreakdownSide.ENEMY -> {
-      if (gs.breakdownStepIndex < enemySteps - 1) {
-        gs.breakdownStepIndex++
-      } else {
-        gs.breakdownSide = BreakdownSide.COMPARE
-        gs.breakdownStepIndex = 0
-      }
-    }
-    BreakdownSide.COMPARE -> {
-      gs.outcome = when {
-        resolution.playerTotal > resolution.enemyTotal -> CardGameOutcome.WIN
-        resolution.playerTotal < resolution.enemyTotal -> CardGameOutcome.LOSE
-        else -> CardGameOutcome.DRAW
-      }
-      gs.phase = CardGamePhase.RESULT
-    }
+  gs.outcome = when {
+    resolution.playerTotal > resolution.enemyTotal -> CardGameOutcome.WIN
+    resolution.playerTotal < resolution.enemyTotal -> CardGameOutcome.LOSE
+    else -> CardGameOutcome.DRAW
   }
+  gs.phase = CardGamePhase.RESULT
 }
 
 fun VnEngine.cardGameVnNext() {

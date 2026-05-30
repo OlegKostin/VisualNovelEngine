@@ -203,6 +203,11 @@ private fun CardGameMainRow(
     CounterGuidePanel(
       battleTone = output.battleTone,
       showToneHint = output.phase != CardGamePhase.SELECT_CLASH,
+      clashResolution = if (output.phase == CardGamePhase.SCORE_BREAKDOWN) {
+        output.clashResolution
+      } else {
+        null
+      },
       modifier = Modifier
         .weight(0.36f)
         .fillMaxHeight()
@@ -350,10 +355,8 @@ private fun BattleArenaScreen(
     Spacer(Modifier.height(16.dp))
     CardGameAction("Разбор боя", onClick = onBattleContinue)
   } else if (output.phase == CardGamePhase.SCORE_BREAKDOWN) {
-    output.clashResolution?.let { resolution ->
-      Spacer(Modifier.height(12.dp))
-      ScoreBreakdownBlock(output, resolution, onBreakdownNext)
-    }
+    Spacer(Modifier.height(16.dp))
+    CardGameAction("К результату", onClick = onBreakdownNext)
   }
 }
 
@@ -406,6 +409,7 @@ private fun CardExpandedOverlay(
 private fun CounterGuidePanel(
   battleTone: String,
   showToneHint: Boolean,
+  clashResolution: ClashResolution? = null,
   modifier: Modifier = Modifier
 ) {
   Column(
@@ -450,7 +454,7 @@ private fun CounterGuidePanel(
         SkikoSafeText(toneStat?.title ?: battleTone, fontSize = 13.sp, color = Color.White)
       }
       SkikoSafeText(
-        "Карта тона = тону боя: множит базу.\nИначе тон просто +value.",
+        "Совпадающий тон: база × (value+1).\nПротивоположный тон: 0 очков.",
         fontSize = 11.sp,
         color = Color(0x99FFFFFF),
         modifier = Modifier.padding(bottom = 10.dp)
@@ -459,6 +463,27 @@ private fun CounterGuidePanel(
         ToneLegendChip(StatType.DARK)
         ToneLegendChip(StatType.LIGHT)
       }
+    }
+
+    clashResolution?.let { resolution ->
+      Spacer(Modifier.height(16.dp))
+      SkikoSafeText(
+        "Как получился итог",
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
+        color = Accent,
+        modifier = Modifier.padding(bottom = 10.dp),
+      )
+      ScoreSummaryBlock("Вы", resolution.playerScore, resolution.playerTotal)
+      Spacer(Modifier.height(12.dp))
+      ScoreSummaryBlock("Противник", resolution.enemyScore, resolution.enemyTotal)
+      Spacer(Modifier.height(12.dp))
+      SkikoSafeText(
+        text = "Счёт: ${resolution.playerTotal} — ${resolution.enemyTotal}",
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+      )
     }
   }
 }
@@ -549,38 +574,32 @@ private fun LabeledCardRow(
 }
 
 @Composable
-private fun ScoreBreakdownBlock(
-  output: EngineOutput.ShowCardGame,
-  resolution: ClashResolution,
-  onNext: () -> Unit
+private fun ScoreSummaryBlock(
+  sideLabel: String,
+  score: com.olegkos.vnengine.engine.cardgame.ScoreBreakdown,
+  total: Int,
 ) {
-  val side = output.breakdownSide
-  val step = output.breakdownStepIndex
-  val steps = when (side) {
-    "PLAYER" -> resolution.playerScore.steps
-    "ENEMY" -> resolution.enemyScore.steps
-    else -> emptyList()
-  }
-  steps.getOrNull(step)?.let { s ->
+  SkikoSafeText(
+    sideLabel,
+    fontSize = 13.sp,
+    fontWeight = FontWeight.Bold,
+    color = Color.White,
+    modifier = Modifier.padding(bottom = 4.dp),
+  )
+  score.steps.forEach { step ->
     SkikoSafeText(
-      "${s.label}: ${s.detail} → ${s.runningTotal}",
-      fontSize = 15.sp,
-      color = Accent,
-      modifier = Modifier.padding(vertical = 4.dp)
+      text = "${step.label}: ${step.detail} → ${step.runningTotal}",
+      fontSize = 11.sp,
+      color = Color(0xCCFFFFFF),
+      modifier = Modifier.padding(bottom = 3.dp),
     )
   }
-  if (side == "COMPARE") {
-    SkikoSafeText(
-      "Итог: вы ${resolution.playerTotal} — враг ${resolution.enemyTotal}",
-      fontSize = 18.sp,
-      fontWeight = FontWeight.Bold,
-      color = Color.White,
-      modifier = Modifier.padding(vertical = 8.dp)
-    )
-  }
-  CardGameAction(
-    text = if (side == "COMPARE") "К результату" else "Далее",
-    onClick = onNext
+  SkikoSafeText(
+    text = "Итого: $total",
+    fontSize = 12.sp,
+    fontWeight = FontWeight.SemiBold,
+    color = Accent,
+    modifier = Modifier.padding(top = 2.dp),
   )
 }
 
@@ -666,17 +685,24 @@ private fun GameCardTile(
   showEffective: Boolean,
   showTagAndValue: Boolean = false
 ) {
+  val highlightCountered = showEffective && card.countered
   val borderColor = when {
+    highlightCountered -> Color(0xFFFF5252)
     card.countered -> Color(0xFFFF5252)
     selected -> Color(0xFF64B5F6)
     else -> Color.Transparent
   }
   val shape = RoundedCornerShape(8.dp)
+  val cardBg = when {
+    highlightCountered -> Color(0xFF4A1515)
+    card.faceDown -> Color(0xFF1A237E)
+    else -> Color(0xFF263238)
+  }
   val artModifier = Modifier
     .width(cardW)
     .height(cardH)
-    .border(3.dp, borderColor, shape)
-    .background(if (card.faceDown) Color(0xFF1A237E) else Color(0xFF263238), shape)
+    .border(if (highlightCountered) 4.dp else 3.dp, borderColor, shape)
+    .background(cardBg, shape)
     .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
 
   Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -699,10 +725,26 @@ private fun GameCardTile(
       if (showTagAndValue && !card.faceDown) {
         CardValueBadge(value = card.value)
       }
+      if (highlightCountered) {
+        Box(
+          Modifier
+            .fillMaxSize()
+            .background(Color(0x66FF5252), shape),
+        )
+        Box(
+          Modifier
+            .align(Alignment.TopEnd)
+            .padding(4.dp)
+            .background(Color(0xE0B71C1C), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        ) {
+          SkikoSafeText("контр", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        }
+      }
     }
     when {
       showEffective && card.effectiveValue != null -> SkikoSafeText(
-        "→ ${card.effectiveValue}",
+        text = if (card.countered) "→ 0" else "→ ${card.effectiveValue}",
         fontSize = 12.sp,
         color = if (card.countered) Color(0xFFFF8A80) else Accent,
         modifier = Modifier.padding(top = 2.dp)
