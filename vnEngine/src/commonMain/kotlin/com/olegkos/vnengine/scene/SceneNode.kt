@@ -12,6 +12,13 @@ sealed interface SceneNode {
     val long: Boolean = false,
   ) : SceneNode
 
+  /** Краткое затемнение экрана — «прошло время». */
+  data class TimeSkip(
+    val durationMs: Long = 1200L,
+    /** Подпись на чёрном экране, например «Прошло несколько часов…» */
+    val text: String? = null,
+  ) : SceneNode
+
   data class Choice(val options: List<Option>) : SceneNode
 
   data class DiceRoll(

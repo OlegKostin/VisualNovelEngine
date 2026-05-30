@@ -18,6 +18,13 @@ sealed interface EngineOutput {
     val text: String,
     val long: Boolean = false,
   ) : EngineOutput
+
+  /** Затемнение экрана (нода [SceneNode.TimeSkip]). */
+  data class ShowTimeSkip(
+    val durationMs: Long,
+    val text: String? = null,
+  ) : EngineOutput
+
   data class ShowChoices(val options: List<Option>) : EngineOutput
   data class ShowDice(
     val name: String,

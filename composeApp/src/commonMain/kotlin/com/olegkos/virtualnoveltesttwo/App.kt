@@ -38,6 +38,7 @@ import com.olegkos.virtualnoveltesttwo.composable.PlayerStatsScreen
 import com.olegkos.virtualnoveltesttwo.composable.ShowVarScreen
 import com.olegkos.virtualnoveltesttwo.composable.PanImageScreen
 import com.olegkos.virtualnoveltesttwo.composable.SpriteSheetAnimationScreen
+import com.olegkos.virtualnoveltesttwo.composable.TimeSkipOverlay
 import com.olegkos.virtualnoveltesttwo.composable.rememberBitmapPainter
 import com.olegkos.virtualnoveltesttwo.composable.VisibleCharacterView
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
@@ -340,6 +341,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
 
+        is EngineOutput.ShowTimeSkip -> Unit
+
         is EngineOutput.ShowSpriteAnimation -> Unit
         is EngineOutput.ShowPanImage -> Unit
 
@@ -543,6 +546,14 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
       }
 
       GameMenu.None -> Unit
+    }
+
+    (output as? EngineOutput.ShowTimeSkip)?.let { skip ->
+      TimeSkipOverlay(
+        durationMs = skip.durationMs,
+        text = skip.text,
+        onComplete = { viewModel.next() },
+      )
     }
   }
 }

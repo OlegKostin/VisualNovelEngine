@@ -50,6 +50,7 @@ import com.olegkos.vnengine.scene.SpriteSheetScale
 import com.olegkos.vnengine.scene.SceneNode.Switch
 import com.olegkos.vnengine.scene.SceneNode.SwitchRange
 import com.olegkos.vnengine.scene.SceneNode.Text
+import com.olegkos.vnengine.scene.SceneNode.TimeSkip
 import com.olegkos.vnengine.scene.SubClass.ClassStartingCard
 import com.olegkos.vnengine.scene.SubClass.GameClass
 import com.olegkos.vnengine.scene.SubClass.RangeCase
@@ -98,6 +99,11 @@ class JsonScenarioParser : ScenarioParser {
                   text = nodeJson.text,
                   long = nodeJson.long,
                 )
+
+              is SceneNodeJson.TimeSkip -> TimeSkip(
+                durationMs = nodeJson.durationMs,
+                text = nodeJson.text,
+              )
 
               is SceneNodeJson.Choice ->
                 Choice(
@@ -481,6 +487,13 @@ sealed class SceneNodeJson {
     val speakerVar: String? = null,
     val text: String,
     val long: Boolean = false,
+  ) : SceneNodeJson()
+
+  @Serializable
+  @SerialName("timeSkip")
+  data class TimeSkip(
+    val durationMs: Long = 1200L,
+    val text: String? = null,
   ) : SceneNodeJson()
 
   @Serializable

@@ -78,7 +78,7 @@ class GameController(
     private const val TRACE_ENGINE_STEPS = false
   }
 
-  private val basePath = "game_demo/"
+  private val basePath = "game/"
   private val gameConfigPath = basePath + "game.json"
 
   private var engine: VnEngine? = null

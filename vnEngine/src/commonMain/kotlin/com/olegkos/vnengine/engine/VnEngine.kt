@@ -12,6 +12,7 @@ import com.olegkos.vnengine.engine.EngineOutput.ShowDiceDuel
 import com.olegkos.vnengine.engine.EngineOutput.ShowImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowPanImage
 import com.olegkos.vnengine.engine.EngineOutput.ShowText
+import com.olegkos.vnengine.engine.EngineOutput.ShowTimeSkip
 import com.olegkos.vnengine.engine.EngineOutput.ShowVar
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.engine.variables.GameValue.FloatVal
@@ -194,6 +195,13 @@ class VnEngine(
             speakerVar = node.speakerVar,
             text = resolveTextVariables(node.text),
             long = node.long,
+          )
+        }
+
+        is SceneNode.TimeSkip -> {
+          return ShowTimeSkip(
+            durationMs = node.durationMs.coerceIn(300L, 10_000L),
+            text = node.text?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables),
           )
         }
 
