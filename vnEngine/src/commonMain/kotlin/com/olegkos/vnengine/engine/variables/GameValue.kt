@@ -26,14 +26,23 @@ fun GameValue.resolve(): GameValue {
   }
 }
 
-/** Short text for UI (e.g. class selection stats block). */
+/** Short text for UI (e.g. class selection stats block, menu «Характеристики»). */
 fun GameValue.forStatPreview(): String {
   val r = resolve()
   return when (r) {
     is GameValue.Bool -> r.value.toString()
     is GameValue.IntVal -> r.value.toString()
     is GameValue.StringVal -> r.value
-    is GameValue.FloatVal -> r.value.toString()
+    is GameValue.FloatVal -> formatStatDisplayNumber(r.value)
     else -> r.toString()
   }
+}
+
+/** До 2 знаков после запятой; целые без «.0». */
+fun formatStatDisplayNumber(value: Float): String {
+  val rounded = value.round2()
+  if (rounded == rounded.toInt().toFloat()) {
+    return rounded.toInt().toString()
+  }
+  return "%.2f".format(rounded).trimEnd('0').trimEnd('.')
 }
