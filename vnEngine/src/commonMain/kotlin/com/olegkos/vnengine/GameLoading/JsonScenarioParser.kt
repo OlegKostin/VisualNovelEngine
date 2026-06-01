@@ -98,6 +98,7 @@ class JsonScenarioParser : ScenarioParser {
                   speakerVar = nodeJson.speakerVar,
                   text = nodeJson.text,
                   long = nodeJson.long,
+                  light = nodeJson.light,
                 )
 
               is SceneNodeJson.TimeSkip -> TimeSkip(
@@ -487,6 +488,7 @@ sealed class SceneNodeJson {
     val speakerVar: String? = null,
     val text: String,
     val long: Boolean = false,
+    val light: Boolean = false,
   ) : SceneNodeJson()
 
   @Serializable

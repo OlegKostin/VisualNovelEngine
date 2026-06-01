@@ -17,6 +17,7 @@ sealed interface EngineOutput {
     val speakerVar: String?,
     val text: String,
     val long: Boolean = false,
+    val light: Boolean = false,
   ) : EngineOutput
 
   /** Затемнение экрана (нода [SceneNode.TimeSkip]). */

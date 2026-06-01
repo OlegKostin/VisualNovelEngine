@@ -337,6 +337,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             speaker = o.speaker,
             text = o.text,
             long = o.long,
+            light = o.light,
             onNext = { viewModel.next() }
           )
         }

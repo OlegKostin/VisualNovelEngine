@@ -10,6 +10,8 @@ sealed interface SceneNode {
     val text: String,
     /** true — до 4 строк в текстбоксе; по умолчанию 2 */
     val long: Boolean = false,
+    /** true — светлый цвет текста (для тёмного фона) */
+    val light: Boolean = false,
   ) : SceneNode
 
   /** Краткое затемнение экрана — «прошло время». */

@@ -195,6 +195,7 @@ class VnEngine(
             speakerVar = node.speakerVar,
             text = resolveTextVariables(node.text),
             long = node.long,
+            light = node.light,
           )
         }
 

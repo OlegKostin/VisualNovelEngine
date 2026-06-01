@@ -24,6 +24,7 @@ fun VNTextBox(
   text: String,
   speaker: String? = null,
   long: Boolean = false,
+  light: Boolean = false,
   onNext: () -> Unit
 ) {
   var visibleCount by remember { mutableIntStateOf(0) }
@@ -80,6 +81,7 @@ fun VNTextBox(
     val arrowSize = (maxHeight.value * 0.05f).sp
     val textBoxBg = Color(0x55BBDEFB)
     val speakerBg = Color(0x88BBDDFF)
+    val textColor = if (light) Color(0xFFF0F0F0) else Color(0xFF111111)
 
     val visibleText = text.take(visibleCount)
 
@@ -116,7 +118,7 @@ fun VNTextBox(
           Text(
             text = it,
             fontSize = fontSize,
-            color = Color(0xFF111111),
+            color = textColor,
           )
         }
       }
@@ -146,7 +148,7 @@ fun VNTextBox(
           text = visibleText,
           fontSize = fontSize,
           lineHeight = lineHeight,
-          color = Color(0xFF111111),
+          color = textColor,
           maxLines = maxLines,
           overflow = TextOverflow.Ellipsis,
           modifier = Modifier
