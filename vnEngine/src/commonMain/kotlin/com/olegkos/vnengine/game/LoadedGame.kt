@@ -9,5 +9,6 @@ data class LoadedGame(
   val variables: String,
   val assetsRoot: String,
   val cards: String,
-  val assets: AssetPathResolver
+  val assets: AssetPathResolver,
+  val gameOver: GameOverConfig? = null,
 )

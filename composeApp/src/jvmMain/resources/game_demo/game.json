@@ -1,5 +1,13 @@
 {
   "startScenario": "scenarios/main.json",
   "assetsRoot": "game_demo/assets",
-  "variables": "variables/variables.json"
+  "variables": "variables/variables.json",
+  "gameOver": {
+    "healthVar": "health",
+    "sanityVar": "mental_health",
+    "scenarioFile": "scenarios/game_over.json",
+    "healthScene": "health_zero",
+    "sanityScene": "sanity_zero",
+    "scene": "defeat"
+  }
 }

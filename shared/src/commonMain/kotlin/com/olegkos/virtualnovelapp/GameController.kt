@@ -34,7 +34,8 @@ import com.olegkos.vnengine.engine.academySetActivity
 import com.olegkos.vnengine.engine.asserts.AssetPathResolver
 import com.olegkos.vnengine.engine.buildAcademyHubOutput
 import com.olegkos.vnengine.engine.loadAcademyConfig
-import com.olegkos.vnengine.engine.resetScenarioEntry
+import com.olegkos.vnengine.engine.clearMinigamesForGameOver
+import com.olegkos.vnengine.engine.resolveGlobalGameOverTarget
 import com.olegkos.vnengine.engine.cardGameBattleContinue
 import com.olegkos.vnengine.engine.cardGameBreakdownNext
 import com.olegkos.vnengine.engine.cardGameConfirmClash
@@ -47,6 +48,7 @@ import com.olegkos.vnengine.engine.cards.CardManager
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.engine.variables.forStatPreview
 import com.olegkos.vnengine.game.GameLoader
+import com.olegkos.vnengine.game.GameOverConfig
 import com.olegkos.vnengine.scene.Option
 import com.olegkos.vnengine.scene.SceneNode
 import com.olegkos.vnengine.scene.SubClass.ClassStartingCard
@@ -85,6 +87,8 @@ class GameController(
   val requireEngine: VnEngine
     get() = engine ?: error("Engine not initialized")
   private var currentScenario: String = ""
+
+  private var gameOverConfig: GameOverConfig? = null
 
   private val startingCardPickCache = mutableMapOf<String, CardData>()
 
@@ -169,9 +173,12 @@ class GameController(
 
     cardManager.setCards(cardsList)
 
+    gameOverConfig = game.gameOver
+
     engine = VnEngine(state, dice, cardManager).apply {
       addScenes(game.scenario.scenes)
     }
+    runBlocking(ioDispatcher) { mergeGameOverScenes(requireEngine) }
 
     return step()
   }
@@ -198,8 +205,9 @@ class GameController(
   private fun nextInternal(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
 
-    val output = engine.step()
+    var output = engine.step()
     purgeSavesAndMetaIfInitGame(output)
+    output = runGlobalGameOverIfNeeded(output)
 
     if (TRACE_ENGINE_STEPS) {
       println("👉 ENGINE OUTPUT = $output")
@@ -393,11 +401,37 @@ class GameController(
     val engine = engine ?: return EngineOutput.Loading to null
 
     engine.addScenes(scenario.scenes)
+    mergeGameOverScenes(engine)
     engine.resetScenarioEntry(scenario.startSceneId)
 
     currentScenario = path
 
     return step()
+  }
+
+  private suspend fun mergeGameOverScenes(engine: VnEngine) {
+    val file = gameOverConfig?.scenarioFile ?: return
+    val scenario = loadScenario(file)
+    engine.addScenes(scenario.scenes)
+  }
+
+  /** После шага: если HP/рассудок ≤ 0 вне боя — переход на game over. */
+  private fun runGlobalGameOverIfNeeded(previous: EngineOutput): EngineOutput {
+    if (previous is EngineOutput.ShowInitGame) return previous
+    if (!applyGlobalGameOverIfNeeded()) return previous
+    val engine = requireEngine
+    var output = engine.step()
+    purgeSavesAndMetaIfInitGame(output)
+    return output
+  }
+
+  private fun applyGlobalGameOverIfNeeded(): Boolean {
+    val config = gameOverConfig ?: return false
+    val engine = requireEngine
+    val target = engine.resolveGlobalGameOverTarget(config) ?: return false
+    engine.clearMinigamesForGameOver()
+    engine.jumpToScene(target.sceneId)
+    return true
   }
 
   fun getPlayerCards(): List<UiCard> {
@@ -627,6 +661,7 @@ class GameController(
     engine = VnEngine(loaded.state, dice, cardManager).apply {
       addScenes(scenario.scenes)
     }
+    runBlocking(ioDispatcher) { mergeGameOverScenes(requireEngine) }
 
     suppressInitGameSaveMetaPurge = true
     return try {

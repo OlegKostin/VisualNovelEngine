@@ -1,0 +1,34 @@
+{
+  "startSceneId": "defeat",
+  "scenes": {
+    "health_zero": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Силы покидают тело. Мир уходит в темноту.",
+          "light": true,
+          "long": true
+        }
+      ]
+    },
+    "sanity_zero": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Рассудок не выдерживает. Границы реальности рассыпаются.",
+          "light": true,
+          "long": true
+        }
+      ]
+    },
+    "defeat": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "История обрывается здесь.",
+          "light": true
+        }
+      ]
+    }
+  }
+}
