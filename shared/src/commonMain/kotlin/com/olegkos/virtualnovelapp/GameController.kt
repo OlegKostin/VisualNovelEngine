@@ -45,6 +45,7 @@ import com.olegkos.vnengine.engine.cardGameVnNext
 import com.olegkos.vnengine.engine.cards.CardConfig
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
+import com.olegkos.vnengine.engine.resetScenarioEntry
 import com.olegkos.vnengine.engine.variables.GameValue
 import com.olegkos.vnengine.engine.variables.forStatPreview
 import com.olegkos.vnengine.game.GameLoader

@@ -1,6 +1,7 @@
 {
   "opt_str": 1.0,
   "opt_wisdom": 0,
+  "opt_will": 1,
   "opt_luck": 0,
   "academy_day": 1,
   "resources": 100,
@@ -10,5 +11,11 @@
   "law_candy": false,
   "law_curfew": false,
   "building_library_level": 0,
-  "building_dorm_level": 0
+  "building_dorm_level": 0,
+  "health": 10,
+  "mental_health": 10,
+  "player_name": "Юта",
+  "my_name": "Юта",
+  "fiona_name": "Фиона",
+  "fiona_fantasy_bond": false
 }
