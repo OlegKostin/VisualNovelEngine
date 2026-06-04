@@ -319,4 +319,31 @@ sealed interface SceneNode {
     val configFile: String,
   ) : SceneNode
 
+  /**
+   * Мини-игра «поймай цель»: затемнённый экран, уменьшающиеся картинки из [images].
+   * Победа — все [targetCount] пойманы; промах — исчезла без клика ([maxMisses] попыток).
+   */
+  data class TargetTap(
+    val id: String,
+    /** Пул картинок; для каждой цели выбирается случайная. */
+    val images: List<String>,
+    val targetCount: Int = 5,
+    /** Сколько целей одновременно на экране (1 — по одной). */
+    val simultaneous: Int = 1,
+    /** Допустимо промахов; 1 — мгновенный fail на первом промахе. */
+    val maxMisses: Int = 1,
+    val lifetimeMs: Long = 2200L,
+    val spawnDelayMs: Long = 300L,
+    val overlayDarkness: Float = 0.75f,
+    val startScale: Float = 1f,
+    val endScale: Float = 0.15f,
+    /** Радиус клика в % от меньшей стороны экрана. */
+    val hitRadiusPercent: Float = 12f,
+    val modifierVar: String? = null,
+    val modifierLifetimeMsPerPoint: Long = 50L,
+    val prompt: String? = null,
+    val successScene: String,
+    val failScene: String,
+  ) : SceneNode
+
 }

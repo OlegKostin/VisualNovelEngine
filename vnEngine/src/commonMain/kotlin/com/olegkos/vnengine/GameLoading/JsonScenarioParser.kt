@@ -41,6 +41,7 @@ import com.olegkos.vnengine.scene.SceneNode.PlayerRefs
 import com.olegkos.vnengine.scene.SceneNode.SceneView
 import com.olegkos.vnengine.scene.SceneNode.SetVar
 import com.olegkos.vnengine.scene.SceneNode.AcademyHub
+import com.olegkos.vnengine.scene.SceneNode.TargetTap
 import com.olegkos.vnengine.scene.SceneNode.ShowCharacter
 import com.olegkos.vnengine.scene.SceneNode.PanImage
 import com.olegkos.vnengine.scene.SceneNode.SpriteAnimation
@@ -360,6 +361,30 @@ class JsonScenarioParser : ScenarioParser {
                   drawScene = nodeJson.transitions.drawScene
                 )
               )
+
+              is TargetTapNode -> {
+                require(nodeJson.images.isNotEmpty()) {
+                  "targetTap '${nodeJson.id}': images must not be empty"
+                }
+                TargetTap(
+                id = nodeJson.id,
+                images = nodeJson.images,
+                targetCount = nodeJson.targetCount,
+                simultaneous = nodeJson.simultaneous.coerceAtLeast(1),
+                maxMisses = nodeJson.maxMisses.coerceAtLeast(1),
+                lifetimeMs = nodeJson.lifetimeMs,
+                spawnDelayMs = nodeJson.spawnDelayMs,
+                overlayDarkness = nodeJson.overlayDarkness,
+                startScale = nodeJson.startScale,
+                endScale = nodeJson.endScale,
+                hitRadiusPercent = nodeJson.hitRadiusPercent,
+                modifierVar = nodeJson.modifierVar,
+                modifierLifetimeMsPerPoint = nodeJson.modifierLifetimeMsPerPoint,
+                prompt = nodeJson.prompt,
+                successScene = nodeJson.successScene,
+                failScene = nodeJson.failScene,
+                )
+              }
 
               is WeightedRandomJump -> SceneNode.WeightedRandomJump(
                 entries = nodeJson.entries.map { e ->
@@ -847,6 +872,27 @@ data class CardGameTransitionsJson(
   val loseScene: String,
   val drawScene: String
 )
+
+@Serializable
+@SerialName("targetTap")
+data class TargetTapNode(
+  val id: String,
+  val images: List<String>,
+  val targetCount: Int = 5,
+  val simultaneous: Int = 1,
+  val maxMisses: Int = 1,
+  val lifetimeMs: Long = 2200L,
+  val spawnDelayMs: Long = 300L,
+  val overlayDarkness: Float = 0.75f,
+  val startScale: Float = 1f,
+  val endScale: Float = 0.15f,
+  val hitRadiusPercent: Float = 12f,
+  val modifierVar: String? = null,
+  val modifierLifetimeMsPerPoint: Long = 50L,
+  val prompt: String? = null,
+  val successScene: String,
+  val failScene: String,
+) : SceneNodeJson()
 
 @Serializable
 @SerialName("academyHub")

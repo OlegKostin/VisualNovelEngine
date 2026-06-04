@@ -42,6 +42,9 @@ import com.olegkos.vnengine.engine.cardGameConfirmClash
 import com.olegkos.vnengine.engine.cardGameConfirmDraft
 import com.olegkos.vnengine.engine.cardGameFinish
 import com.olegkos.vnengine.engine.cardGameVnNext
+import com.olegkos.vnengine.engine.processTargetTapContinueSpawn
+import com.olegkos.vnengine.engine.processTargetTapHit
+import com.olegkos.vnengine.engine.processTargetTapMiss
 import com.olegkos.vnengine.engine.cards.CardConfig
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
@@ -764,6 +767,21 @@ class GameController(
       )
     }
     return step()
+  }
+
+  fun targetTapHit(targetId: String): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    return engine.processTargetTapHit(targetId) to engine.currentNode()
+  }
+
+  fun targetTapMiss(targetId: String): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    return engine.processTargetTapMiss(targetId) to engine.currentNode()
+  }
+
+  fun targetTapContinueSpawn(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    return engine.processTargetTapContinueSpawn() to engine.currentNode()
   }
 
   private fun getMetaHandCards(): List<HandCard> =

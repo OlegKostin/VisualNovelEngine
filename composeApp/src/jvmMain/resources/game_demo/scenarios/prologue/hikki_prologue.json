@@ -1,0 +1,421 @@
+{
+  "startSceneId": "room_morning",
+  "scenes": {
+    "room_morning": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/hikki/bedroom_day.png"
+        },
+        {
+          "type": "text",
+          "text": "Утро. Занавески плотно сдвинуты — в комнату не попадает солнце. Только монитор и зарядка телефона.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "text",
+          "text": "Третий месяц ты почти не выходишь за дверь. Еда — доставка. Мир — экран.",
+          "light": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Ещё один день… хотя бы никто не трогает."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "fiona_news"
+        }
+      ]
+    },
+
+    "fiona_news": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/hikki/bedroom_monitor.png"
+        },
+        {
+          "type": "text",
+          "text": "В ленте всплывает срочная новость: пропала студентка колледжа — {fiona_name}. Фото: светлые волосы, улыбка, взгляд прямо в камеру.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Фиона… Мы когда-то сидели за одной партой. Я так и не решился пригласить её на кофе."
+        },
+        {
+          "type": "text",
+          "text": "Сердце сжимается. Кто-то забрал её — а ты сидишь в четырёх стенах.",
+          "light": true
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "text": "Закрыть новость и забыть",
+              "nextSceneId": "room_refuse"
+            },
+            {
+              "text": "Закрыть глаза и представить, что ты успеваешь",
+              "nextSceneId": "fantasy_start"
+            }
+          ]
+        }
+      ]
+    },
+
+    "room_refuse": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты гасишь вкладку. В комнате снова тихо. Но имя {fiona_name} не отпускает.",
+          "light": true
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "text": "Всё же представить спасение",
+              "nextSceneId": "fantasy_start"
+            },
+            {
+              "text": "Лечь спать",
+              "nextSceneId": "room_end"
+            }
+          ]
+        }
+      ]
+    },
+
+    "fantasy_start": {
+      "nodes": [
+        {
+          "type": "timeSkip",
+          "durationMs": 1200,
+          "text": "Глаза закрыты…"
+        },
+        {
+          "type": "background",
+          "image": "backgrounds/hikki/fantasy_warehouse.png"
+        },
+        {
+          "type": "text",
+          "text": "Воображение рисует склад у окраины: сырой воздух, тусклая лампа, металлический скрип.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "character",
+          "id": "fiona",
+          "image": "characters/fiona/tied_worried.png",
+          "position": "pos4",
+          "scale": 0.9
+        },
+        {
+          "type": "text",
+          "speakerVar": "fiona_name",
+          "text": "Пожалуйста… кто-нибудь…",
+          "light": true
+        },
+        {
+          "type": "character",
+          "id": "kidnapper",
+          "image": "characters/villain/kidnapper_shadow.png",
+          "position": "pos7",
+          "scale": 0.95
+        },
+        {
+          "type": "text",
+          "text": "Мужчина в капюшоне заслоняет ей свет. В фантазии ты — не наблюдатель из комнаты, а тот, кто врывается в дверь.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Отпусти её. Сейчас."
+        },
+        {
+          "type": "text",
+          "speakerVar": "fiona_name",
+          "text": "{player_name}?! Ты… ты пришёл за мной?",
+          "light": true
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "fantasy_battle_scene"
+        }
+      ]
+    },
+
+    "fantasy_battle_scene": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "В голове всё ускоряется: удар, отступление, ещё удар. Тело в кровати дёргается, будто ты правда сражаешься.",
+          "light": true
+        },
+        {
+          "type": "battle",
+          "id": "fantasy_kidnapper_fight",
+          "title": "Фантазия: против похитителя",
+          "monster": {
+            "name": "Похититель",
+            "image": "characters/villain/kidnapper_fight.png",
+            "health": 3,
+            "horrorDamage": 0,
+            "combatDamage": 1
+          },
+          "player": {
+            "healthVar": "health",
+            "sanityVar": "mental_health",
+            "playerNameVar": "player_name"
+          },
+          "phases": {
+            "horror": {
+              "enabled": true,
+              "name": "Страх выйти из комнаты",
+              "sides": 20,
+              "difficulty": 10,
+              "modifierVar": "opt_will",
+              "onFailSanityDamage": 1
+            },
+            "combat": {
+              "name": "Удар ради неё",
+              "sides": 20,
+              "difficulty": 9,
+              "modifierVar": "opt_str",
+              "damageOnSuccess": 1,
+              "damageOnCritSuccess": 2,
+              "damageToPlayerOnFail": 1,
+              "vnAfterMonsterHit": {
+                "2": {
+                  "0": {
+                    "text": "Похититель хватает тебя за плечо — в фантазии боль острая, как наяву.",
+                    "speaker": "Похититель"
+                  }
+                }
+              },
+              "vnAfterPlayerHit": {
+                "8": {
+                  "0": {
+                    "text": "Ты отшатываешься мысленно — в спальне холодеет ладонь на простыне.",
+                    "speaker": "{player_name}"
+                  }
+                }
+              }
+            }
+          },
+          "transitions": {
+            "winScene": "fantasy_rescue",
+            "loseScene": "fantasy_defeat"
+          },
+          "escape": {
+            "allowed": false,
+            "name": "Бегство",
+            "sides": 20,
+            "difficulty": 15,
+            "modifierVar": "opt_luck",
+            "onFailPlayerDamage": 0
+          }
+        }
+      ]
+    },
+
+    "fantasy_defeat": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/hikki/bedroom_dark.png"
+        },
+        {
+          "type": "text",
+          "text": "В воображении похититель давит тебя на пол. {fiona_name} кричит твоё имя — и картинка рвётся.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "…не смог. Даже во сне я слабый."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "mental_health",
+          "value": { "type": "int", "value": -1 }
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "room_wake"
+        }
+      ]
+    },
+
+    "fantasy_rescue": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/hikki/fantasy_warehouse_win.png"
+        },
+        {
+          "type": "character",
+          "id": "fiona",
+          "image": "characters/fiona/released_relief.png",
+          "position": "pos5",
+          "scale": 0.9
+        },
+        {
+          "type": "text",
+          "text": "Последний удар — и мужчина падает. {fiona_name} рвёт верёвки, встаёт на дрожащих ногах и бросается к тебе.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "fiona_name",
+          "text": "Ты пришёл… Ты правда пришёл за мной, {player_name}.",
+          "light": true
+        },
+        {
+          "type": "text",
+          "text": "Она прижимается к твоей груди — тёплая, живая, пахнет дождём и страхом, который отпускает. Ты обнимаешь её крепче, чем когда-либо кого-либо.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "fiona_name",
+          "text": "Я так хотела, чтобы это был ты… мужчина, которому я могу довериться.",
+          "light": true
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "text": "Провести ладонью по её щеке",
+              "nextSceneId": "fantasy_romance"
+            },
+            {
+              "text": "Только крепко обнять",
+              "nextSceneId": "fantasy_hug"
+            }
+          ]
+        }
+      ]
+    },
+
+    "fantasy_romance": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты касаешься её щеки — кожа горячая. {fiona_name} смотрит снизу вверх, губы на расстоянии вдоха.",
+          "light": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "fiona_name",
+          "text": "Если это сон — не буди меня. Останься со мной, {player_name}."
+        },
+        {
+          "type": "text",
+          "text": "В фантазии она целует тебя первой — нежно, уверенно, как будто выбирала тебя давно.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "setVar",
+          "varName": "fiona_fantasy_bond",
+          "value": { "type": "bool", "value": true }
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "room_wake"
+        }
+      ]
+    },
+
+    "fantasy_hug": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Вы стоите, переплетённые руками. Её голова у твоего плеча. Ты чувствуешь, как она доверяет именно тебе — мужчине, который не сбежал.",
+          "light": true,
+          "long": true
+        },
+        {
+          "type": "setVar",
+          "varName": "fiona_fantasy_bond",
+          "value": { "type": "bool", "value": true }
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "room_wake"
+        }
+      ]
+    },
+
+    "room_wake": {
+      "nodes": [
+        {
+          "type": "timeSkip",
+          "durationMs": 1000,
+          "text": "…"
+        },
+        {
+          "type": "background",
+          "image": "backgrounds/hikki/bedroom_day.png"
+        },
+        {
+          "type": "text",
+          "text": "Ты открываешь глаза. Потолок своей комнаты. Пульс ещё бьётся от воображаемого подвига.",
+          "light": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Фиона… в новостях её всё ещё нет. Но если я хоть раз смог победить в голове — может, однажды выйду за дверь по-настоящему."
+        },
+        {
+          "type": "if",
+          "variable": "fiona_fantasy_bond",
+          "equals": { "type": "bool", "value": true },
+          "successScene": "room_hope",
+          "failScene": "room_end"
+        }
+      ]
+    },
+
+    "room_hope": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "На телефоне — старое фото: она смеётся на перемене. Ты сохраняешь его на главный экран.",
+          "light": true
+        },
+        {
+          "type": "text",
+          "text": "Пролог закончен. Дальше — решать, станет ли фантазия первым шагом к реальности.",
+          "long": true
+        }
+      ]
+    },
+
+    "room_end": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ты отворачиваешься к стене. Комната снова безопасна — и снова тесна.",
+          "light": true
+        },
+        {
+          "type": "text",
+          "text": "Пролог закончен."
+        }
+      ]
+    }
+  }
+}

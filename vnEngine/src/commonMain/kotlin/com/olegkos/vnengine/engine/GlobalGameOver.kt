@@ -16,6 +16,7 @@ fun VnEngine.resolveGlobalGameOverTarget(config: GameOverConfig): GlobalGameOver
   if (state.battle != null) return null
   if (state.diceDuel != null) return null
   if (state.cardGame != null) return null
+  if (state.targetTap != null) return null
   if (config.isGameOverScene(state.pointer.sceneId)) return null
 
   val health = variables.getModifier(config.healthVar).toInt()
@@ -34,5 +35,6 @@ fun VnEngine.clearMinigamesForGameOver() {
   state.battle = null
   state.diceDuel = null
   state.cardGame = null
+  state.targetTap = null
   state.pendingDiceJumpScene = null
 }

@@ -408,6 +408,10 @@ class VnEngine(
           return handleCardGameNode(node)
         }
 
+        is SceneNode.TargetTap -> {
+          return handleTargetTapNode(node)
+        }
+
         is SceneNode.AcademyHub -> {
           return handleAcademyHubNode(node)
         }
@@ -756,6 +760,7 @@ class VnEngine(
       is SceneNode.Battle,
       is SceneNode.DiceDuel,
       is SceneNode.CardGame,
+      is SceneNode.TargetTap,
       is SceneNode.AcademyHub -> {
         return
       }
@@ -775,6 +780,7 @@ class VnEngine(
     state.diceModifiedResult = null
     state.diceDuel = null
     state.cardGame = null
+    state.targetTap = null
     state.pendingDiceJumpScene = null
     // academy сохраняем между jumpScenario
   }

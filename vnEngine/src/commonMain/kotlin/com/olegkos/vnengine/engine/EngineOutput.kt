@@ -303,6 +303,30 @@ sealed interface EngineOutput {
     val faceDown: Boolean = false
   )
 
+  data class ShowTargetTap(
+    val gameId: String,
+    val overlayDarkness: Float,
+    val prompt: String?,
+    val lifetimeMs: Long,
+    val startScale: Float,
+    val endScale: Float,
+    val hitRadiusPercent: Float,
+    val spawnDelayMs: Long,
+    val targetCount: Int,
+    val caughtCount: Int,
+    val missCount: Int,
+    val maxMisses: Int,
+    val awaitingSpawn: Boolean,
+    val activeTargets: List<TargetTapTargetUi> = emptyList(),
+  ) : EngineOutput
+
+  data class TargetTapTargetUi(
+    val id: String,
+    val image: String,
+    val xPercent: Float,
+    val yPercent: Float,
+  )
+
   data class ShowBattle(
     val battleId: String,
     val title: String,

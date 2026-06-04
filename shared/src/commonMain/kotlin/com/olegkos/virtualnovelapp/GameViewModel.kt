@@ -262,6 +262,24 @@
       currentNode = node
     }
 
+    fun targetTapHit(targetId: String) {
+      val (output, node) = controller.targetTapHit(targetId)
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun targetTapMiss(targetId: String) {
+      val (output, node) = controller.targetTapMiss(targetId)
+      currentOutput = output
+      currentNode = node
+    }
+
+    fun targetTapContinueSpawn() {
+      val (output, node) = controller.targetTapContinueSpawn()
+      currentOutput = output
+      currentNode = node
+    }
+
     fun academyEnactLaw(lawId: String) {
       viewModelScope.launch {
         val (output, node) = controller.academyEnactLaw(lawId)

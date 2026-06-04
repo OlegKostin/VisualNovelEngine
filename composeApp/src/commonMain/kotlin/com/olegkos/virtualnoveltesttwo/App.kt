@@ -98,43 +98,44 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
   LaunchedEffect(output) {
     if (advancing) return@LaunchedEffect
     advancing = true
+    try {
+      if (output !is EngineOutput.ShowSceneView) {
+        sceneView = null
+      }
 
-    if (output !is EngineOutput.ShowSceneView) {
-      sceneView = null
+      when (val o = output) {
+
+        is EngineOutput.ShowBackground -> {
+          image = null
+          cardImage = null
+          background = o.image
+          viewModel.setSceneBackground(o.image)
+          viewModel.next()
+        }
+
+        is EngineOutput.ShowImage -> {
+          image = o.image
+          viewModel.next()
+        }
+
+        is EngineOutput.HideImage -> {
+          image = null
+          viewModel.next()
+        }
+
+        is EngineOutput.ShowCard -> {
+          cardImage = o.image
+        }
+
+        is EngineOutput.ShowSceneView -> {
+          sceneView = o
+        }
+
+        else -> Unit
+      }
+    } finally {
+      advancing = false
     }
-
-    when (val o = output) {
-
-      is EngineOutput.ShowBackground -> {
-        image = null
-        cardImage = null
-        background = o.image
-        viewModel.setSceneBackground(o.image)
-        viewModel.next()
-      }
-
-      is EngineOutput.ShowImage -> {
-        image = o.image
-        viewModel.next()
-      }
-
-      is EngineOutput.HideImage -> {
-        image = null
-        viewModel.next()
-      }
-
-      is EngineOutput.ShowCard -> {
-        cardImage = o.image
-      }
-
-      is EngineOutput.ShowSceneView -> {
-        sceneView = o
-      }
-
-      else -> Unit
-    }
-
-    advancing = false
   }
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -411,6 +412,8 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
           )
         }
 
+        is EngineOutput.ShowTargetTap -> Unit
+
         is EngineOutput.ShowAcademyHub -> {
           if (viewModel.isReady) {
             AcademyHubScreen(output = o, viewModel = viewModel)
@@ -554,6 +557,16 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         durationMs = skip.durationMs,
         text = skip.text,
         onComplete = { viewModel.next() },
+      )
+    }
+
+    (output as? EngineOutput.ShowTargetTap)?.let { tap ->
+      TargetTapScreen(
+        output = tap,
+        viewModel = viewModel,
+        imagePainter = { path ->
+          rememberPainter(viewModel.assets.image(path), viewModel.reader)
+        },
       )
     }
   }

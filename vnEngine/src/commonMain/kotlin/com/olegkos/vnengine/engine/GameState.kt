@@ -3,6 +3,7 @@ package com.olegkos.vnengine.engine
 import com.olegkos.vnengine.engine.academy.AcademyConfig
 import com.olegkos.vnengine.engine.academy.AcademyState
 import com.olegkos.vnengine.engine.cardgame.CardGameState
+import com.olegkos.vnengine.engine.targettap.TargetTapState
 import com.olegkos.vnengine.scene.SceneNode.BattleVnLine
 import com.olegkos.vnengine.engine.variables.GameValue
 import kotlinx.serialization.Serializable
@@ -29,6 +30,7 @@ data class GameState(
   var diceDuel: DiceDuelState? = null,
   var battle: BattleState? = null,
   var cardGame: CardGameState? = null,
+  var targetTap: TargetTapState? = null,
   var academy: AcademyState? = null,
   var academyConfig: AcademyConfig? = null,
   /** Макс. целые значения для переменных после InitGame (сейчас: health, mental_health). */
