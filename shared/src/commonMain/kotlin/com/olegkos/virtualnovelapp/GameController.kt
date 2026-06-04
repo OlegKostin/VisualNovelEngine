@@ -45,6 +45,7 @@ import com.olegkos.vnengine.engine.cardGameVnNext
 import com.olegkos.vnengine.engine.processTargetTapContinueSpawn
 import com.olegkos.vnengine.engine.processTargetTapHit
 import com.olegkos.vnengine.engine.processTargetTapMiss
+import com.olegkos.vnengine.engine.processTargetTapStart
 import com.olegkos.vnengine.engine.cards.CardConfig
 import com.olegkos.vnengine.engine.cards.CardData
 import com.olegkos.vnengine.engine.cards.CardManager
@@ -767,6 +768,11 @@ class GameController(
       )
     }
     return step()
+  }
+
+  fun targetTapStart(): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    return engine.processTargetTapStart() to engine.currentNode()
   }
 
   fun targetTapHit(targetId: String): Pair<EngineOutput, SceneNode?> {

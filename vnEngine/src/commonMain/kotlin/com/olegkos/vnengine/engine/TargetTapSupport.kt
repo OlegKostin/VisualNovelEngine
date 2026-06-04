@@ -10,16 +10,29 @@ import kotlin.random.Random
 internal fun VnEngine.handleTargetTapNode(node: SceneNode.TargetTap): EngineOutput {
   val ts = state.targetTap ?: TargetTapState(gameId = node.id).also { state.targetTap = it }
 
-  if (!ts.awaitingSpawn && ts.activeTargets.isEmpty() && canSpawnMoreTargets(ts, node)) {
+  if (node.autoStart && !ts.started) {
+    beginTargetTapRound(node, ts)
+  } else if (ts.started && !ts.awaitingSpawn && ts.activeTargets.isEmpty() && canSpawnMoreTargets(ts, node)) {
     fillTargetTapSpawns(node, ts)
   }
 
   return buildTargetTapOutput(node, ts)
 }
 
+fun VnEngine.processTargetTapStart(): EngineOutput {
+  val node = currentTargetTapNode() ?: return tick()
+  val ts = state.targetTap ?: return tick()
+  if (ts.started) {
+    return buildTargetTapOutput(node, ts)
+  }
+  beginTargetTapRound(node, ts)
+  return buildTargetTapOutput(node, ts)
+}
+
 fun VnEngine.processTargetTapHit(targetId: String): EngineOutput {
   val node = currentTargetTapNode() ?: return tick()
   val ts = state.targetTap ?: return tick()
+  if (!ts.started) return buildTargetTapOutput(node, ts)
   if (!ts.activeTargets.removeAll { it.id == targetId }) {
     return buildTargetTapOutput(node, ts)
   }
@@ -36,6 +49,7 @@ fun VnEngine.processTargetTapHit(targetId: String): EngineOutput {
 fun VnEngine.processTargetTapMiss(targetId: String): EngineOutput {
   val node = currentTargetTapNode() ?: return tick()
   val ts = state.targetTap ?: return tick()
+  if (!ts.started) return buildTargetTapOutput(node, ts)
   if (!ts.activeTargets.removeAll { it.id == targetId }) {
     return buildTargetTapOutput(node, ts)
   }
@@ -56,6 +70,7 @@ fun VnEngine.processTargetTapMiss(targetId: String): EngineOutput {
 fun VnEngine.processTargetTapContinueSpawn(): EngineOutput {
   val node = currentTargetTapNode() ?: return tick()
   val ts = state.targetTap ?: return tick()
+  if (!ts.started) return buildTargetTapOutput(node, ts)
   ts.awaitingSpawn = false
   if (canSpawnMoreTargets(ts, node)) {
     fillTargetTapSpawns(node, ts)
@@ -65,6 +80,15 @@ fun VnEngine.processTargetTapContinueSpawn(): EngineOutput {
 
 fun VnEngine.currentTargetTapNode(): SceneNode.TargetTap? =
   currentNode() as? SceneNode.TargetTap
+
+private fun VnEngine.beginTargetTapRound(node: SceneNode.TargetTap, ts: TargetTapState) {
+  ts.started = true
+  ts.awaitingSpawn = false
+  ts.activeTargets.clear()
+  if (canSpawnMoreTargets(ts, node)) {
+    fillTargetTapSpawns(node, ts)
+  }
+}
 
 private fun VnEngine.finishTargetTap(
   node: SceneNode.TargetTap,
@@ -77,7 +101,7 @@ private fun VnEngine.finishTargetTap(
 }
 
 private fun canSpawnMoreTargets(ts: TargetTapState, node: SceneNode.TargetTap): Boolean {
-  if (ts.caughtTotal >= node.targetCount) return false
+  if (!ts.started || ts.caughtTotal >= node.targetCount) return false
   return ts.caughtTotal + ts.activeTargets.size < node.targetCount
 }
 
@@ -122,6 +146,8 @@ private fun VnEngine.buildTargetTapOutput(
   ts: TargetTapState,
 ): ShowTargetTap {
   val prompt = node.prompt?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables)
+  val startPrompt = node.startPrompt?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables)
+    ?: DEFAULT_TARGET_TAP_START_PROMPT
   val modifierBonus = node.modifierVar
     ?.trim()
     ?.takeIf { it.isNotEmpty() }
@@ -144,6 +170,8 @@ private fun VnEngine.buildTargetTapOutput(
     missCount = ts.missCount,
     maxMisses = node.maxMisses,
     awaitingSpawn = ts.awaitingSpawn,
+    started = ts.started,
+    startPrompt = startPrompt,
     activeTargets = ts.activeTargets.map {
       TargetTapTargetUi(
         id = it.id,
@@ -154,3 +182,5 @@ private fun VnEngine.buildTargetTapOutput(
     },
   )
 }
+
+private const val DEFAULT_TARGET_TAP_START_PROMPT = "Нажми, чтобы начать"

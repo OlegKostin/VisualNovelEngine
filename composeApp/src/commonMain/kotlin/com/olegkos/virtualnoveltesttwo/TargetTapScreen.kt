@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
+import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.EngineOutput
 import kotlinx.coroutines.delay
 
@@ -39,18 +40,20 @@ fun TargetTapScreen(
 ) {
   val resolvedIds = remember(output.gameId) { mutableSetOf<String>() }
 
-  LaunchedEffect(output.awaitingSpawn, output.caughtCount, output.missCount, output.activeTargets.size) {
-    if (output.awaitingSpawn) {
-      delay(output.spawnDelayMs.coerceAtLeast(0L))
-      viewModel.targetTapContinueSpawn()
-      return@LaunchedEffect
-    }
-    if (
-      output.caughtCount < output.targetCount &&
-      output.activeTargets.isEmpty()
-    ) {
-      delay(output.spawnDelayMs.coerceAtLeast(0L))
-      viewModel.targetTapContinueSpawn()
+  if (output.started) {
+    LaunchedEffect(output.awaitingSpawn, output.caughtCount, output.missCount, output.activeTargets.size) {
+      if (output.awaitingSpawn) {
+        delay(output.spawnDelayMs.coerceAtLeast(0L))
+        viewModel.targetTapContinueSpawn()
+        return@LaunchedEffect
+      }
+      if (
+        output.caughtCount < output.targetCount &&
+        output.activeTargets.isEmpty()
+      ) {
+        delay(output.spawnDelayMs.coerceAtLeast(0L))
+        viewModel.targetTapContinueSpawn()
+      }
     }
   }
 
@@ -64,55 +67,82 @@ fun TargetTapScreen(
         .background(Color.Black.copy(alpha = output.overlayDarkness.coerceIn(0f, 1f))),
     )
 
-    Column(
-      modifier = Modifier
-        .align(Alignment.TopCenter)
-        .padding(top = 24.dp, start = 16.dp, end = 16.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-      output.prompt?.let { caption ->
-        SkikoSafeText(
-          text = caption,
-          fontSize = 20.sp,
-          color = Color.White,
-          modifier = Modifier.padding(bottom = 8.dp),
-        )
+    if (!output.started) {
+      Box(
+        modifier = Modifier
+          .fillMaxSize()
+          .clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() },
+          ) { viewModel.targetTapStart() },
+        contentAlignment = Alignment.Center,
+      ) {
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.padding(32.dp),
+        ) {
+          SkikoSafeText(
+            text = output.startPrompt ?: "Нажми, чтобы начать",
+            fontSize = 22.sp,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 24.dp),
+          )
+          VnOutlinedButton(onClick = { viewModel.targetTapStart() }) {
+            SkikoSafeText(text = "Готов", fontSize = 18.sp, color = Color.White)
+          }
+        }
       }
-      SkikoSafeText(
-        text = "${output.caughtCount} / ${output.targetCount}",
-        fontSize = 16.sp,
-        color = Color.White.copy(alpha = 0.85f),
-      )
-      if (output.maxMisses > 1) {
-        val livesLeft = (output.maxMisses - output.missCount).coerceAtLeast(0)
+    } else {
+      Column(
+        modifier = Modifier
+          .align(Alignment.TopCenter)
+          .padding(top = 24.dp, start = 16.dp, end = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+      ) {
+        output.prompt?.let { caption ->
+          SkikoSafeText(
+            text = caption,
+            fontSize = 20.sp,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 8.dp),
+          )
+        }
         SkikoSafeText(
-          text = "Жизни: $livesLeft",
-          fontSize = 14.sp,
-          color = Color(0xFFFFAB91),
-          modifier = Modifier.padding(top = 4.dp),
+          text = "${output.caughtCount} / ${output.targetCount}",
+          fontSize = 16.sp,
+          color = Color.White.copy(alpha = 0.85f),
         )
+        if (output.maxMisses > 1) {
+          val livesLeft = (output.maxMisses - output.missCount).coerceAtLeast(0)
+          SkikoSafeText(
+            text = "Жизни: $livesLeft",
+            fontSize = 14.sp,
+            color = Color(0xFFFFAB91),
+            modifier = Modifier.padding(top = 4.dp),
+          )
+        }
       }
-    }
 
-    output.activeTargets.forEach { target ->
-      key(target.id) {
-        TargetTapTarget(
-          targetId = target.id,
-          imagePath = target.image,
-          xPercent = target.xPercent,
-          yPercent = target.yPercent,
-          lifetimeMs = output.lifetimeMs,
-          startScale = output.startScale,
-          endScale = output.endScale,
-          hitRadius = hitRadius,
-          maxWidth = maxWidth,
-          maxHeight = maxHeight,
-          imagePainter = imagePainter(target.image),
-          alreadyResolved = target.id in resolvedIds,
-          onResolved = { resolvedIds.add(target.id) },
-          onHit = { viewModel.targetTapHit(target.id) },
-          onMiss = { viewModel.targetTapMiss(target.id) },
-        )
+      output.activeTargets.forEach { target ->
+        key(target.id) {
+          TargetTapTarget(
+            targetId = target.id,
+            imagePath = target.image,
+            xPercent = target.xPercent,
+            yPercent = target.yPercent,
+            lifetimeMs = output.lifetimeMs,
+            startScale = output.startScale,
+            endScale = output.endScale,
+            hitRadius = hitRadius,
+            maxWidth = maxWidth,
+            maxHeight = maxHeight,
+            imagePainter = imagePainter(target.image),
+            alreadyResolved = target.id in resolvedIds,
+            onResolved = { resolvedIds.add(target.id) },
+            onHit = { viewModel.targetTapHit(target.id) },
+            onMiss = { viewModel.targetTapMiss(target.id) },
+          )
+        }
       }
     }
   }

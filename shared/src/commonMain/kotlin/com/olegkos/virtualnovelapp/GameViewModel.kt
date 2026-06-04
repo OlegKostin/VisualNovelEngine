@@ -262,6 +262,12 @@
       currentNode = node
     }
 
+    fun targetTapStart() {
+      val (output, node) = controller.targetTapStart()
+      currentOutput = output
+      currentNode = node
+    }
+
     fun targetTapHit(targetId: String) {
       val (output, node) = controller.targetTapHit(targetId)
       currentOutput = output

@@ -317,6 +317,8 @@ sealed interface EngineOutput {
     val missCount: Int,
     val maxMisses: Int,
     val awaitingSpawn: Boolean,
+    val started: Boolean = false,
+    val startPrompt: String? = null,
     val activeTargets: List<TargetTapTargetUi> = emptyList(),
   ) : EngineOutput
 

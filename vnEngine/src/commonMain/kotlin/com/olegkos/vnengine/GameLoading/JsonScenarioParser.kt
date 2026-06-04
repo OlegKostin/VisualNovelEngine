@@ -381,6 +381,8 @@ class JsonScenarioParser : ScenarioParser {
                 modifierVar = nodeJson.modifierVar,
                 modifierLifetimeMsPerPoint = nodeJson.modifierLifetimeMsPerPoint,
                 prompt = nodeJson.prompt,
+                startPrompt = nodeJson.startPrompt,
+                autoStart = nodeJson.autoStart,
                 successScene = nodeJson.successScene,
                 failScene = nodeJson.failScene,
                 )
@@ -890,6 +892,8 @@ data class TargetTapNode(
   val modifierVar: String? = null,
   val modifierLifetimeMsPerPoint: Long = 50L,
   val prompt: String? = null,
+  val startPrompt: String? = null,
+  val autoStart: Boolean = false,
   val successScene: String,
   val failScene: String,
 ) : SceneNodeJson()

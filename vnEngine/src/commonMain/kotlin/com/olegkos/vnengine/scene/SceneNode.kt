@@ -342,6 +342,10 @@ sealed interface SceneNode {
     val modifierVar: String? = null,
     val modifierLifetimeMsPerPoint: Long = 50L,
     val prompt: String? = null,
+    /** Подпись до старта; клик по экрану запускает раунд. */
+    val startPrompt: String? = null,
+    /** true — цели сразу, без экрана подготовки. */
+    val autoStart: Boolean = false,
     val successScene: String,
     val failScene: String,
   ) : SceneNode

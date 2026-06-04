@@ -9,6 +9,7 @@ data class TargetTapActiveTarget(
 
 data class TargetTapState(
   val gameId: String,
+  var started: Boolean = false,
   var spawnedTotal: Int = 0,
   var caughtTotal: Int = 0,
   var missCount: Int = 0,
