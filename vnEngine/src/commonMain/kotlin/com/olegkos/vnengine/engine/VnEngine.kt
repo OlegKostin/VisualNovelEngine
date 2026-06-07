@@ -943,21 +943,30 @@ class VnEngine(
   private fun pickWeightedRandomJump(node: SceneNode.WeightedRandomJump): String {
     val eligible = node.entries
       .filter { entry -> entry.requires.all { req -> checkRequirement(req) } }
-      .map { it.copy(weight = it.weight.coerceAtLeast(0)) }
-      .filter { it.weight > 0 }
+      .map { it.scene to it.weight.coerceAtLeast(0) }
+      .filter { it.second > 0 }
 
     if (eligible.isEmpty()) return node.defaultScene
 
-    val total = eligible.sumOf { it.weight }
-    val roll = (1..total).random()
-
-    var acc = 0
-    for (e in eligible) {
-      acc += e.weight
-      if (roll <= acc) return e.scene
+    val defaultChance = node.defaultChance.coerceIn(0f, 1f)
+    if (defaultChance > 0f && kotlin.random.Random.nextFloat() < defaultChance) {
+      return node.defaultScene
     }
 
-    return eligible.last().scene
+    return pickWeightedScene(eligible)
+  }
+
+  private fun pickWeightedScene(pool: List<Pair<String, Int>>): String {
+    val total = pool.sumOf { it.second }
+    if (total <= 0) return pool.last().first
+
+    val roll = (1..total).random()
+    var acc = 0
+    for ((scene, weight) in pool) {
+      acc += weight
+      if (roll <= acc) return scene
+    }
+    return pool.last().first
   }
 
   private fun checkRequirement(req: SceneNode.WeightedRandomJump.Requirement): Boolean {

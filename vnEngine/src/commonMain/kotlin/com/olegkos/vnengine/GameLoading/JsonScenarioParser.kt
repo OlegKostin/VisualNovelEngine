@@ -404,7 +404,8 @@ class JsonScenarioParser : ScenarioParser {
                     }
                   )
                 },
-                defaultScene = nodeJson.defaultScene
+                defaultScene = nodeJson.defaultScene,
+                defaultChance = nodeJson.defaultChance,
               )
 
               is AcademyHubNode -> AcademyHub(configFile = nodeJson.configFile)
@@ -484,7 +485,8 @@ data class JumpScenarioJson(
 @SerialName("weightedRandomJump")
 data class WeightedRandomJump(
   val entries: List<EntryJson>,
-  val defaultScene: String
+  val defaultScene: String,
+  val defaultChance: Float = 0f,
 ) : SceneNodeJson() {
   @Serializable
   data class EntryJson(

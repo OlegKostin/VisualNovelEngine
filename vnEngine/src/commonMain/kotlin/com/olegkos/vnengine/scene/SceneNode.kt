@@ -113,7 +113,13 @@ sealed interface SceneNode {
 
   data class WeightedRandomJump(
     val entries: List<Entry>,
-    val defaultScene: String
+    val defaultScene: String,
+    /**
+     * 0 — defaultScene только если entries пусты (старое поведение).
+     * (0, 1] — фиксированная доля default; остальное делится между доступными entries по weight.
+     * Если entries нет — default всегда (100%).
+     */
+    val defaultChance: Float = 0f,
   ) : SceneNode {
     data class Entry(
       val scene: String,
