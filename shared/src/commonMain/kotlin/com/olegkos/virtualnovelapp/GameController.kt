@@ -236,11 +236,9 @@ class GameController(
       is EngineOutput.DrawCardRequest -> {
         if (output.addToMeta) {
           val nodeId = buildNodeMetaId()
-          metaManager.getDrawCardResult(nodeId)?.let { existing ->
-            return EngineOutput.ShowCard(
-              image = existing.image,
-              id = existing.id,
-            ) to null
+          if (metaManager.getDrawCardResult(nodeId) != null) {
+            engine.advanceExternal(null)
+            return nextInternal()
           }
 
           val card = resolveCardPick(
