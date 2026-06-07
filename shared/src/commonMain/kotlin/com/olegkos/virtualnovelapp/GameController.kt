@@ -240,34 +240,25 @@ class GameController(
             engine.advanceExternal(null)
             return nextInternal()
           }
-
-          val card = resolveCardPick(
-            random = output.random,
-            value = output.value,
-            image = output.image
-          )
-
-          requireNotNull(card) { "Card not found: $output" }
-
-          val instance = metaManager.addCard(card)
-          metaManager.saveDrawCardResult(nodeId, instance)
-
-          return EngineOutput.ShowCard(
-            image = instance.image,
-            id = instance.id
-          ) to null
         }
 
-        val previewCard = resolveCardPick(
+        val card = resolveCardPick(
           random = output.random,
           value = output.value,
           image = output.image
         )
-        requireNotNull(previewCard) { "Card not found: $output" }
+
+        requireNotNull(card) { "Card not found: $output" }
+
+        val instance = metaManager.addCard(card)
+
+        if (output.addToMeta) {
+          metaManager.saveDrawCardResult(buildNodeMetaId(), instance)
+        }
 
         return EngineOutput.ShowCard(
-          image = previewCard.image,
-          id = "",
+          image = instance.image,
+          id = instance.id
         ) to null
       }
 

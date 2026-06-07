@@ -41,7 +41,7 @@ sealed interface SceneNode {
     val random: Boolean? = null,
     val value: Int? = null,
     val image: String? = null,
-    /** false — только показать карту, не класть в meta и не запоминать ноду. */
+    /** false — не запоминать ноду (каждый проход заново), но карта всё равно добавляется в инвентарь. */
     val addToMeta: Boolean = true,
   ) : SceneNode
 
