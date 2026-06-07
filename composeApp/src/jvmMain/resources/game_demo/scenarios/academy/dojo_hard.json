@@ -1,16 +1,465 @@
 {
-  "startSceneId": "main",
+  "startSceneId": "ring",
   "scenes": {
-    "main": {
+    "ring": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/02prev_bath/02holl.png"
+        },
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: додзё пустое. Только вы, {friend_name} и ковёр, пропитанный чужим потом. Зеркало на стене отражает двух избитых призраков ещё до начала.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "{player_name}. Полный контакт. Без перчаток. До падения — или пока я не скажу «хватит»."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Ты всегда так начинаешь разговоры? Мне кажется, ректор бы не одобрил."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Ректор не слышит, как хрустят ребра. Зато ты услышишь. Проверим, на что ты годишься."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "health_gate"
+        }
+      ]
+    },
+
+    "health_gate": {
+      "nodes": [
+        {
+          "type": "ifAll",
+          "requires": [
+            {
+              "variable": "health",
+              "op": "LTE",
+              "value": { "type": "int", "value": 1 }
+            }
+          ],
+          "successScene": "too_hurt",
+          "failScene": "pre_spar"
+        }
+      ]
+    },
+
+    "too_hurt": {
       "nodes": [
         {
           "type": "text",
-          "text": "{academy_phase_label}: жёсткая тренировка — выход из захватов на скорость, мышцы горят."
+          "text": "{friend_name} смотрит на вас, потом на ваши руки, и резко опускает кулаки."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Стой. Ты еле держишься на ногах, {player_name}. Я люблю жёсткий спаринг, но не похороны в додзё."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Я… могу ещё."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Нет. Сначала лазарет, вода, повязка. Кровью и потом — завтра, когда ты снова сможешь поднять руки выше пояса."
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "text": "Согласиться и пойти подлечиться",
+              "nextSceneId": "heal_rest"
+            },
+            {
+              "text": "«Я не слабак. Давай хотя бы один раунд!»",
+              "nextSceneId": "pre_spar_desperate"
+            }
+          ]
+        }
+      ]
+    },
+
+    "heal_rest": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{friend_name} хватает вас под локоть и тащит в коридор. Медсестра качает головой, но молча даёт бинт и тёплый чай."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Живи. Завтра вернёшься — и тогда я тебя не жалю."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "health",
+          "value": { "type": "int", "value": 2 }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "loyalty",
+          "value": { "type": "float", "value": 0.2 }
+        }
+      ]
+    },
+
+    "pre_spar_desperate": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Упрямый идиот… Ладно. Один раунд. Но если упадёшь — я сам тебя вынесу в лазарет."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "pre_spar"
+        }
+      ]
+    },
+
+    "pre_spar": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Вы обматываете кисти бинтом. {friend_name} стягивает кимоно и остаётся в потёртом rashguard — на плече старый шрам от ножа."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Правила ещё раз. Бьём по корпусу и захватам. Кровь — не повод останавливаться, пока кто-то не сдастся."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "А если с тебя хватит — я сам останавливаю бой. Даже если ты ещё пытаешься встать."
+        },
+        {
+          "type": "timeSkip",
+          "text": "Поклон. Шаг в центр. Воздух становится тесным.",
+          "durationMs": 1600
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Начали!"
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "spar_battle"
+        }
+      ]
+    },
+
+    "spar_battle": {
+      "nodes": [
+        {
+          "type": "battle",
+          "id": "dojo_spar_ren",
+          "title": "Жёсткий спаринг",
+          "monster": {
+            "name": "Рен",
+            "image": "characters/villain/kidnapper_fight.png",
+            "health": 4,
+            "horrorDamage": 0,
+            "combatDamage": 1
+          },
+          "player": {
+            "healthVar": "health",
+            "sanityVar": "mental_health",
+            "playerNameVar": "player_name"
+          },
+          "phases": {
+            "horror": {
+              "enabled": false,
+              "name": "",
+              "sides": 20,
+              "difficulty": 10,
+              "modifierVar": "opt_will"
+            },
+            "combat": {
+              "name": "Обмен ударами",
+              "sides": 20,
+              "difficulty": 11,
+              "modifierVar": "opt_str",
+              "damageOnSuccess": 1,
+              "damageOnCritSuccess": 2,
+              "damageToPlayerOnFail": 1,
+              "vnAfterMonsterHit": {
+                "3": {
+                  "0": {
+                    "text": "{friend_name} сплёвывает кровь на ковёр и улыбается: «Ещё!»",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "2": {
+                  "0": {
+                    "text": "У {friend_name} рассыпается защита — вы слышите, как выдыхается его терпение.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Хороший удар… но я ещё не сдаюсь, {player_name}!",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "1": {
+                  "0": {
+                    "text": "{friend_name} держится на одном колене. Губа разбита, но взгляд — как у загнанного зверя.",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "0": {
+                  "0": {
+                    "text": "{friend_name} поднимает ладонь. «Хватит. Я сдаюсь — ты победил сегодня.»",
+                    "speaker": "{friend_name}"
+                  }
+                }
+              },
+              "vnAfterPlayerHit": {
+                "9": {
+                  "0": {
+                    "text": "Первый жёсткий удар в печень — воздух вырывается из лёгких.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Не зевай, {player_name}! В бою на улице уже лежал бы!",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "8": {
+                  "0": {
+                    "text": "Локоть скользит мимо блока — боль вспыхивает под рёбрами.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "7": {
+                  "0": {
+                    "text": "Вкус крови. Не знаете, ваша она или его.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Вот так! Кровью и потом — запомни этот вкус!",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "6": {
+                  "0": {
+                    "text": "Бросок — вы бьётесь спиной о татами, зрение плывёт.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "5": {
+                  "0": {
+                    "text": "Колено в бедро. Нога подкашивается, но вы остаётесь стоять.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Держись! Ещё немного — и ты поймёшь, где твой предел!",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "4": {
+                  "0": {
+                    "text": "Удар в челюсть — звон в ушах, как колокол на вышке.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "3": {
+                  "0": {
+                    "text": "Мир сужается до крови на ковре и тяжёлого дыхания {friend_name}.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Ты ещё дышишь. Значит, не конец.",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "2": {
+                  "0": {
+                    "text": "На грани. Ещё один промах — и вы потеряете сознание.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Стой! Хватит — дальше не бью, слышишь?!",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "1": {
+                  "0": {
+                    "text": "На последнем дыхании. Сердце бьётся так, будто хочет вырваться из груди.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Хватит! Ни шагу дальше — ты на нитке!",
+                    "speaker": "{friend_name}"
+                  }
+                }
+              }
+            }
+          },
+          "transitions": {
+            "winScene": "spar_win",
+            "loseScene": "spar_knockout"
+          },
+          "escape": {
+            "allowed": false,
+            "name": "Отступить",
+            "sides": 20,
+            "difficulty": 15,
+            "modifierVar": "opt_will",
+            "onFailPlayerDamage": 0
+          }
+        }
+      ]
+    },
+
+    "spar_win": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Вы оба лежите на спине, глядя в потолок. Кровь и пот смешались на ковре тёмным узором.",
+          "long": true
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "aftermath_router"
+        }
+      ]
+    },
+
+    "spar_knockout": {
+      "nodes": [
+        {
+          "type": "setVar",
+          "varName": "health",
+          "value": { "type": "int", "value": 1 }
+        },
+        {
+          "type": "text",
+          "text": "Удар в висок — и мир гаснет. Последнее, что вы слышите: «Чёрт, {player_name}, я переборщил!»"
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Держись… Медик! МЕДИК!"
+        },
+        {
+          "type": "timeSkip",
+          "text": "Лазарет. Холодная вода на лбу.",
+          "durationMs": 2000
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Прости. Я увлёкся. Больше так не буду — пока ты снова не попросишь."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "mental_health",
+          "value": { "type": "int", "value": -1 }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 0.2 }
+        }
+      ]
+    },
+
+    "aftermath_router": {
+      "nodes": [
+        {
+          "type": "switchRange",
+          "variable": "health",
+          "ranges": [
+            { "min": 1, "max": 1, "scene": "aftermath_one_hp" },
+            { "min": 2, "max": 4, "scene": "aftermath_low_hp" }
+          ],
+          "default": "aftermath_high_hp"
+        }
+      ]
+    },
+
+    "aftermath_one_hp": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Ещё один удар — и конец. Кровью и потом — да. Но ты жив."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Ты… остановился вовремя. Спасибо."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "aftermath_rewards"
+        }
+      ]
+    },
+
+    "aftermath_low_hp": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Ты держался, пока не осталось почти ничего. Вот это уважаю, {player_name}."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "А ты всё ещё улыбаешься с разбитой губой. Мы оба сумасшедшие."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "aftermath_rewards"
+        }
+      ]
+    },
+
+    "aftermath_high_hp": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Ты выиграл слишком легко. В следующий раз не буду сдерживаться — без шуток."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Попробуй. Я уже знаю, как ты дышишь перед бросом."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "aftermath_rewards"
+        }
+      ]
+    },
+
+    "aftermath_rewards": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Вы вместе протираете ковёр. Кровь не отмывается полностью — останется напоминанием до следующей тренировки."
         },
         {
           "type": "modifyVar",
           "varName": "blood_sweat",
           "value": { "type": "float", "value": 1.0 }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "loyalty",
+          "value": { "type": "float", "value": 0.4 }
         }
       ]
     }

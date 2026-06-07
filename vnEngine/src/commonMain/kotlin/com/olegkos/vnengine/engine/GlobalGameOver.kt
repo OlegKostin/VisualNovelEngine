@@ -1,5 +1,6 @@
 package com.olegkos.vnengine.engine
 
+import com.olegkos.vnengine.engine.academy.AcademyHubPhase
 import com.olegkos.vnengine.game.GameOverConfig
 
 data class GlobalGameOverTarget(
@@ -17,6 +18,8 @@ fun VnEngine.resolveGlobalGameOverTarget(config: GameOverConfig): GlobalGameOver
   if (state.diceDuel != null) return null
   if (state.cardGame != null) return null
   if (state.targetTap != null) return null
+  /** Микро-сценарии дня академии сами обрабатывают 0 HP (loseScene, setVar и т.д.). */
+  if (state.academy?.hubPhase == AcademyHubPhase.PLAYBACK) return null
   if (config.isGameOverScene(state.pointer.sceneId)) return null
 
   val health = variables.getModifier(config.healthVar).toInt()
