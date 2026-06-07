@@ -6,22 +6,23 @@
         {
           "type": "weightedRandomJump",
           "defaultScene": "dojo_quiet",
-          "defaultChance": 0.35,
+          "defaultChance": 0.1,
           "entries": [
-            { "scene": "dojo_basics", "weight": 4 },
-            { "scene": "dojo_sparring", "weight": 2 },
+            { "scene": "dojo_basics", "weight": 1 },
+            { "scene": "dojo_sparring", "weight": 1 },
             {
-              "scene": "dojo_hard",
-              "weight": 1,
-              "requires": [
-                {
-                  "variable": "blood_sweat",
-                  "op": "GTE",
-                  "value": { "type": "float", "value": 1.0 }
-                }
-              ]
+              "scene": "goto_hard",
+              "weight": 155
             }
           ]
+        }
+      ]
+    },
+    "goto_hard": {
+      "nodes": [
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "scenarios/academy/dojo_hard.json"
         }
       ]
     },
@@ -56,19 +57,6 @@
           "type": "modifyVar",
           "varName": "blood_sweat",
           "value": { "type": "float", "value": 0.7 }
-        }
-      ]
-    },
-    "dojo_hard": {
-      "nodes": [
-        {
-          "type": "text",
-          "text": "{academy_phase_label}: жёсткая тренировка — выход из захватов на скорость, мышцы горят."
-        },
-        {
-          "type": "modifyVar",
-          "varName": "blood_sweat",
-          "value": { "type": "float", "value": 1.0 }
         }
       ]
     }

@@ -1,0 +1,18 @@
+{
+  "startSceneId": "main",
+  "scenes": {
+    "main": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: жёсткая тренировка — выход из захватов на скорость, мышцы горят."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 1.0 }
+        }
+      ]
+    }
+  }
+}
