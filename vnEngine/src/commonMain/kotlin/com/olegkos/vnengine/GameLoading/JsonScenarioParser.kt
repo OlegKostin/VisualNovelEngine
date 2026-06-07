@@ -131,7 +131,8 @@ class JsonScenarioParser : ScenarioParser {
                   successScene = nodeJson.successScene,
                   failScene = nodeJson.failScene,
                   critSuccessScene = nodeJson.critSuccessScene,
-                  critFailScene = nodeJson.critFailScene
+                  critFailScene = nodeJson.critFailScene,
+                  addToMeta = nodeJson.addToMeta,
                 )
 
               is SceneNodeJson.If -> If(
@@ -683,7 +684,8 @@ sealed class SceneNodeJson {
     val successScene: String,
     val failScene: String,
     val critSuccessScene: String? = null,
-    val critFailScene: String? = null
+    val critFailScene: String? = null,
+    val addToMeta: Boolean = true,
   ) : SceneNodeJson()
 }
 @Serializable

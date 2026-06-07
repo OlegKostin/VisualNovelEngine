@@ -31,7 +31,9 @@ sealed interface SceneNode {
     val successScene: String,
     val failScene: String,
     val critSuccessScene: String?,
-    val critFailScene: String?
+    val critFailScene: String?,
+    /** false — не сохранять бросок в meta; при повторном проходе снова показывается UI. */
+    val addToMeta: Boolean = true,
   ) : SceneNode
 
   data class SetVar(val varName: String, val value: GameValue) : SceneNode

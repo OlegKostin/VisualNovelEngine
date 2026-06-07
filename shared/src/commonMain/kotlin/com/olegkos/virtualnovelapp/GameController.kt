@@ -532,19 +532,22 @@ class GameController(
 
     val diceId = buildDiceId()
 
-    val saved = metaManager.getDiceResult(diceId)
-
-    val result = if (saved != null) {
-      saved
+    val result = if (node.addToMeta) {
+      val saved = metaManager.getDiceResult(diceId)
+      if (saved != null) {
+        saved
+      } else {
+        val roll = engine.dice.roll(node.sides)
+        metaManager.saveDiceResult(diceId, roll)
+        roll
+      }
     } else {
-      val roll = engine.dice.roll(node.sides)
-      metaManager.saveDiceResult(diceId, roll)
-      roll
+      engine.dice.roll(node.sides)
     }
 
     engine.state.diceResult = result
     engine.state.diceModifiedResult = null
-    println("DICE ID: $diceId RESULT: $result (saved=${saved != null})")
+    println("DICE ID: $diceId RESULT: $result addToMeta=${node.addToMeta}")
     return step()
   }
 
