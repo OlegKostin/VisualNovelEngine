@@ -515,6 +515,7 @@ private val CardZoneTitleBg = Color(0xFF2A3A52)
 private val CardZoneReqBg = Color(0xFF232D3F)
 private val CardZoneDescBg = Color(0xFF1E2836)
 private val CardZoneActionBg = Color(0xFF1A2230)
+private val CardActionZoneShape = RoundedCornerShape(8.dp)
 
 @Composable
 private fun AcademyMenuItemCard(
@@ -619,8 +620,9 @@ private fun AcademyMenuItemCard(
           Modifier
             .width(buttonWidth)
             .fillMaxHeight()
-            .background(if (completed) LawDoneBg else CardZoneActionBg)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp)
+            .clip(CardActionZoneShape)
+            .background(if (completed) LawDoneBg else CardZoneActionBg, CardActionZoneShape),
           contentAlignment = Alignment.Center,
         ) {
           VnOutlinedButton(
