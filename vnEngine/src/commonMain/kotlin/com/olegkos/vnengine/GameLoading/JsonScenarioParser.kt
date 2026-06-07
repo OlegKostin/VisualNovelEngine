@@ -260,7 +260,8 @@ class JsonScenarioParser : ScenarioParser {
               is SceneNodeJson.DrawCard -> DrawCard(
                 random = nodeJson.random,
                 value = nodeJson.value,
-                image = nodeJson.image
+                image = nodeJson.image,
+                addToMeta = nodeJson.addToMeta,
               )
 
               is SceneNodeJson.BattleNode -> Battle(
@@ -613,7 +614,8 @@ sealed class SceneNodeJson {
   data class DrawCard(
     val random: Boolean? = null,
     val value: Int? = null,
-    val image: String? = null
+    val image: String? = null,
+    val addToMeta: Boolean = true,
   ) : SceneNodeJson()
 
   @Serializable

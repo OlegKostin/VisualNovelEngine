@@ -234,28 +234,42 @@ class GameController(
       is EngineOutput.ShowCardGame -> enrichCardGameOutput(output) to engine.currentNode()
 
       is EngineOutput.DrawCardRequest -> {
-        val nodeId = buildNodeMetaId()
-        metaManager.getDrawCardResult(nodeId)?.let { existing ->
+        if (output.addToMeta) {
+          val nodeId = buildNodeMetaId()
+          metaManager.getDrawCardResult(nodeId)?.let { existing ->
+            return EngineOutput.ShowCard(
+              image = existing.image,
+              id = existing.id,
+            ) to null
+          }
+
+          val card = resolveCardPick(
+            random = output.random,
+            value = output.value,
+            image = output.image
+          )
+
+          requireNotNull(card) { "Card not found: $output" }
+
+          val instance = metaManager.addCard(card)
+          metaManager.saveDrawCardResult(nodeId, instance)
+
           return EngineOutput.ShowCard(
-            image = existing.image,
-            id = existing.id,
+            image = instance.image,
+            id = instance.id
           ) to null
         }
 
-        val card = resolveCardPick(
+        val previewCard = resolveCardPick(
           random = output.random,
           value = output.value,
           image = output.image
         )
+        requireNotNull(previewCard) { "Card not found: $output" }
 
-        requireNotNull(card) { "Card not found: $output" }
-
-        val instance = metaManager.addCard(card)
-        metaManager.saveDrawCardResult(nodeId, instance)
-
-        EngineOutput.ShowCard(
-          image = instance.image,
-          id = instance.id
+        return EngineOutput.ShowCard(
+          image = previewCard.image,
+          id = "",
         ) to null
       }
 

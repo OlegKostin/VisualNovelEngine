@@ -38,7 +38,9 @@ sealed interface SceneNode {
   data class DrawCard(
     val random: Boolean? = null,
     val value: Int? = null,
-    val image: String? = null
+    val image: String? = null,
+    /** false — только показать карту, не класть в meta и не запоминать ноду. */
+    val addToMeta: Boolean = true,
   ) : SceneNode
 
   data class ModifyVar(val varName: String, val value: GameValue, val text: String? = null) : SceneNode

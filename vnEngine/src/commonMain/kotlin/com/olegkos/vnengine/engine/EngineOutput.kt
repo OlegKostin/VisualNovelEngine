@@ -84,7 +84,8 @@ sealed interface EngineOutput {
   data class DrawCardRequest(
     val random: Boolean?,
     val value: Int?,
-    val image: String?
+    val image: String?,
+    val addToMeta: Boolean = true,
   ) : EngineOutput
   data class ShowSceneView(
     val background: String,

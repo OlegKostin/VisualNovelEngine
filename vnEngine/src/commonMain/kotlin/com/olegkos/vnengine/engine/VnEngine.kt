@@ -357,7 +357,8 @@ class VnEngine(
           return DrawCardRequest(
             random = node.random,
             value = node.value,
-            image = node.image
+            image = node.image,
+            addToMeta = node.addToMeta,
           )
         }
 
