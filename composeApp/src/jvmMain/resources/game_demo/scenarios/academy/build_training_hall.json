@@ -1,0 +1,18 @@
+{
+  "startSceneId": "build",
+  "scenes": {
+    "build": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Вы оборудуете додзё: ковры, груши, стойки с защитой. Пахнет потом и новой резиной."
+        },
+        {
+          "type": "setVar",
+          "varName": "building_training_hall_level",
+          "value": { "type": "int", "value": 1 }
+        }
+      ]
+    }
+  }
+}

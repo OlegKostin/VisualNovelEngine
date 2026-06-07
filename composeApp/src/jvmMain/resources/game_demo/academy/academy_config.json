@@ -7,7 +7,8 @@
   "stats": [
     { "varName": "loyalty", "label": "Лояльность", "type": "float" },
     { "varName": "corruption", "label": "Коррупция", "type": "int" },
-    { "varName": "students", "label": "Студенты", "type": "int" }
+    { "varName": "students", "label": "Студенты", "type": "int" },
+    { "varName": "blood_sweat", "label": "Кровью и потом", "type": "float" }
   ],
   "buildings": [
     {
@@ -64,6 +65,30 @@
               "label": "Общежитие",
               "scenarioFile": "scenarios/academy/act_dorm.json",
               "phases": ["evening", "night"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "training_hall",
+      "label": "Додзё",
+      "visitSchedule": "weekday",
+      "group": "training",
+      "levelVar": "building_training_hall_level",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 35,
+          "description": "Ковры, груши и защитная экипировка. После постройки откроются тренировки в додзё днём и вечером — растёт показатель «Кровью и потом».",
+          "scenarioFile": "scenarios/academy/build_training_hall.json",
+          "visitScenarioFile": "scenarios/academy/dojo_visit.json",
+          "visitPhases": ["day", "evening"],
+          "requires": [
+            {
+              "variable": "academy_day",
+              "op": "GTE",
+              "value": { "type": "int", "value": 1 }
             }
           ]
         }

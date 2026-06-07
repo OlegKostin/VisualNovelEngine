@@ -1,0 +1,76 @@
+{
+  "startSceneId": "pick",
+  "scenes": {
+    "pick": {
+      "nodes": [
+        {
+          "type": "weightedRandomJump",
+          "defaultScene": "dojo_quiet",
+          "defaultChance": 0.35,
+          "entries": [
+            { "scene": "dojo_basics", "weight": 4 },
+            { "scene": "dojo_sparring", "weight": 2 },
+            {
+              "scene": "dojo_hard",
+              "weight": 1,
+              "requires": [
+                {
+                  "variable": "blood_sweat",
+                  "op": "GTE",
+                  "value": { "type": "float", "value": 1.0 }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "dojo_quiet": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: в додзё тихо — кто-то протирает ковры, но полноценной тренировки сегодня не вышло."
+        }
+      ]
+    },
+    "dojo_basics": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: в додзё вы отрабатываете стойку, блоки и простые захваты."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 0.5 }
+        }
+      ]
+    },
+    "dojo_sparring": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: лёгкий спарринг с напарником — удары в защиту, без фанатизма."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 0.7 }
+        }
+      ]
+    },
+    "dojo_hard": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: жёсткая тренировка — выход из захватов на скорость, мышцы горят."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 1.0 }
+        }
+      ]
+    }
+  }
+}

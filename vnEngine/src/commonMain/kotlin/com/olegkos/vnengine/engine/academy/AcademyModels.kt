@@ -80,6 +80,10 @@ data class AcademyBuildingLevelConfig(
   val cost: Int = 0,
   val description: String? = null,
   val requires: List<AcademyRequirementJson> = emptyList(),
+  /** Сценарий посещения здания (может начинаться с weightedRandomJump). Без отдельного activity в JSON. */
+  val visitScenarioFile: String? = null,
+  /** Фазы дня для посещения; пусто — все фазы. */
+  val visitPhases: List<String> = emptyList(),
   /** Действия в хабе после этого уровня; при апгрейде заменяют список предыдущего уровня. */
   val activities: List<AcademyActivityConfig> = emptyList(),
 )

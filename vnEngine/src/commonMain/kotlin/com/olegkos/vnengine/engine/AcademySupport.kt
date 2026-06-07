@@ -557,6 +557,19 @@ private fun VnEngine.collectAcademyActivities(
   }
   for (building in config.buildings) {
     val levelCfg = effectiveBuildingLevelConfig(building, buildingLevel(building)) ?: continue
+    levelCfg.visitScenarioFile?.trim()?.takeIf { it.isNotEmpty() }?.let { visitFile ->
+      list.add(
+        ResolvedAcademyActivity(
+          id = "${building.id}:visit",
+          label = building.label,
+          scenarioFile = visitFile,
+          phases = levelCfg.visitPhases,
+          requires = emptyList(),
+          scheduleScope = building.visitScheduleScope(),
+          fromBuildingId = building.id,
+        )
+      )
+    }
     for (act in levelCfg.activities) {
       list.add(
         ResolvedAcademyActivity(
@@ -1132,6 +1145,7 @@ private fun VnEngine.buildingToUi(
 private fun groupLabel(groupId: String): String = when (groupId) {
   "study" -> "Учёба"
   "life" -> "Быт"
+  "training" -> "Тренировки"
   else -> groupId.replaceFirstChar { it.uppercase() }
 }
 
