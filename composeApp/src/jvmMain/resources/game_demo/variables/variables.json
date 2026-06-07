@@ -19,6 +19,12 @@
   "player_name": "Юта",
   "my_name": "Юта",
   "friend_name": "Рен",
+  "dojo_rival_name": "Ая",
+  "dojo_spar_boy_name": "Сора",
+  "dojo_spar_girl_name": "Мио",
+  "dojo_striker_a_name": "Хина",
+  "dojo_striker_b_name": "Рин",
+  "dojo_watch_girls_strike_done": false,
   "fiona_name": "Фиона",
   "fiona_fantasy_bond": false
 }

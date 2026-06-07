@@ -1,0 +1,234 @@
+{
+  "startSceneId": "gate",
+  "scenes": {
+    "gate": {
+      "nodes": [
+        {
+          "type": "ifAll",
+          "requires": [
+            {
+              "variable": "dojo_watch_girls_strike_done",
+              "op": "EQ",
+              "value": { "type": "bool", "value": true }
+            }
+          ],
+          "successScene": "hide",
+          "failScene": "blocked"
+        }
+      ]
+    },
+
+    "blocked": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: додзё пустое. Тех двух сегодня нет — только запах ковра и чужие следы на татами."
+        }
+      ]
+    },
+
+    "hide": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/02prev_bath/02holl.png"
+        },
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: все ушли — кроме нас с {friend_name}. Мы затаились за стеллажом с кимоно: забыли сумку, не хотели выходить под дождь. Додзё пустое, свет приглушён, ковёр ещё пахнет кровью с дневного боя.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Тихо… Кто-то идёт."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "return"
+        }
+      ]
+    },
+
+    "return": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Дверь. {dojo_striker_a_name} и {dojo_striker_b_name} — бинты не сняты, на плечах только спортивные топы под расстёгнутыми кимоно. Щёлкнул замок."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_b_name",
+          "text": "Никого. Я проверила."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_a_name",
+          "text": "Тогда снимай. Здесь — только мы."
+        },
+        {
+          "type": "text",
+          "text": "Кимоно падают на пол. Остаются обёртки на кистях и короткие шорты — пот, синяки, ещё не смытая кровь у {dojo_striker_a_name} на ключице. {friend_name} замирает рядом — плечо к моему, горячее."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "clinch"
+        }
+      ]
+    },
+
+    "clinch": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Они не бьют. Сходятся в центр — лбы касаются, носами скользят друг по другу, дыхание смешивается. {dojo_striker_b_name} кладёт ладони {dojo_striker_a_name} на талию, под кромку топа — пальцы на коже.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_a_name",
+          "text": "Здесь… можно без зрителей."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_b_name",
+          "text": "Тогда не говори. Покажи."
+        },
+        {
+          "type": "text",
+          "text": "Поцелуй — медленный, потом жадный. Я слышу, как {friend_name} сглатывает. У меня стягивает живот, кимоно на стеллаже кажется тесным."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "mat"
+        }
+      ]
+    },
+
+    "mat": {
+      "nodes": [
+        {
+          "type": "timeSkip",
+          "text": "Они опускаются на ковёр…",
+          "durationMs": 1200
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_b_name} сверху — не бой, другое. Колено между бёдер, ладонь под топом, губы у шеи {dojo_striker_a_name}. Та тянет её за волосы — не больно, глубже. Стон, приглушённый, отдаётся от стен.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "…"
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_a_name} переворачивает её — теперь она сверху. Бёдра двигаются в ритме, который я не должен знать по додзё. Пальцы {dojo_striker_b_name} скользят под пояс {dojo_striker_a_name}; та выгибается, когти оставляют красные полосы на спине."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "{player_name}…"
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Не. Дыши."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "peak"
+        }
+      ]
+    },
+
+    "peak": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Они не раздеваются до конца — но границы стёрты. {dojo_striker_b_name} прижимает {dojo_striker_a_name} к ковру, целует грудь через мокрый топ, рука между ног — движения короткие, настойчивые. {dojo_striker_a_name} кусает её плечо, чтобы не закричать.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "text": "Шаги в коридоре. Обе замирают, не отрываясь. Сердце бьётся так, что, кажется, услышат и нас. Шаги проходят мимо. {dojo_striker_b_name} выдыхает в её шею и продолжает — тише, злее, голоднее."
+        },
+        {
+          "type": "text",
+          "text": "Я сжимаю край полки — дерево впивается в ладонь. Рядом {friend_name} дрожит. Мне хочется отвернуться и не могу. В додзё пахнет потом, кровью с утра и тем, что они делают сейчас."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "finish"
+        }
+      ]
+    },
+
+    "finish": {
+      "nodes": [
+        {
+          "type": "timeSkip",
+          "text": "…",
+          "durationMs": 1800
+        },
+        {
+          "type": "text",
+          "text": "Тишина. Потом — сбивчивое дыхание, смех без звука. {dojo_striker_a_name} лежит на боку, {dojo_striker_b_name} обнимает сзади, лицо в её волосах. Пальцы переплетены. На ковре — влажное пятно, не только от пота.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_b_name",
+          "text": "Завтра снова бей меня. Я хочу твою кровь на губах."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_a_name",
+          "text": "А потом — снова здесь."
+        },
+        {
+          "type": "text",
+          "text": "Они одеваются, не включая свет ярче. Замок щёлкает снаружи. Мы с {friend_name} ещё минуту не шевелимся."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "exit"
+        }
+      ]
+    },
+
+    "exit": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Выбираемся через боковую дверь. Коридор холодный — контраст с тем, что осталось на ковре. Ни я, ни {friend_name} не смотрим друг на друга."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "…"
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Молчи. Просто молчи."
+        },
+        {
+          "type": "text",
+          "text": "Но тело помнит. Каждый шаг — как после спаринга, только хуже. Додзё за спиной снова пустое — а в голове там всё ещё они."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 0.25 }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "corruption",
+          "value": { "type": "int", "value": 1 }
+        }
+      ]
+    }
+  }
+}

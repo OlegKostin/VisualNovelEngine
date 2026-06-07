@@ -1,0 +1,261 @@
+{
+  "startSceneId": "tribune",
+  "scenes": {
+    "tribune": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/02prev_bath/02holl.png"
+        },
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: в додзё осталась только старшая смена и мы с {friend_name} — зрители у стены. На ковре двое девушек в одинаковых чёрных кимоно. Инструктор постукивает палкой о бок: «Только удары. Любые. Без захватов, без бросков. До нокдауна или стопа.»",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Они в прошлый раз чуть не снесли друг другу челюсти… Говорят, после такого у них свои правила."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Заткнись."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "faceoff"
+        }
+      ]
+    },
+
+    "faceoff": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{dojo_striker_a_name} и {dojo_striker_b_name} встают друг напротив друга — близко, на расстоянии вытянутой руки. Обе без перчаток, бинты серые от старых пятен. Смотрят друг на друга слишком долго — не как на соперниц, как на что-то своё."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_a_name",
+          "text": "Бей."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_b_name",
+          "text": "С удовольствием."
+        },
+        {
+          "type": "text",
+          "text": "Голос у {dojo_striker_b_name} низкий — не боевой клич, а что-то другое. У меня пересыхает во рту. {friend_name} кашляет."
+        },
+        {
+          "type": "text",
+          "text": "Сигнал. Первая же секунда — не разведка, а сразу в лицо."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "fight_open"
+        }
+      ]
+    },
+
+    "fight_open": {
+      "nodes": [
+        {
+          "type": "timeSkip",
+          "text": "Костяшки, локти, колени — без пауз…",
+          "durationMs": 1300
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_a_name} лезет прямой в челюсть — {dojo_striker_b_name} уходит, отвечает хуком. Сухой звук. Губа {dojo_striker_a_name} лопается, кровь брызжет на подбородок и на губы соперницы — {dojo_striker_b_name} облизывает уголок, не отводя глаз.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "…"
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_a_name} не моргает — врезает локтем в скулу. {dojo_striker_b_name} качается, из носа тянет. Они не хватают друг друга. Только бьют — но каждый шаг вплотную, будто им мало расстояния между телами."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "…"
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "fight_mid"
+        }
+      ]
+    },
+
+    "fight_mid": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Обмен ускоряется. Удар в солнечное сплетение — {dojo_striker_b_name} согнулась, но не упала: ответила коленом в ребра. Хруст? Или так кажется. На ковре уже капли — мелкие, как дождь.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_a_name} бьёт с разворота — пятка по плечу, потом кулак в висок. {dojo_striker_b_name} сплёвывает розовое, шагает вперёд вплотную и всаживает серию в корпус — три, четыре, пятый под подбородок, почти в губы."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Мне дурно. И жарко. Не понимаю от чего."
+        },
+        {
+          "type": "text",
+          "text": "Лицо {dojo_striker_a_name} — маска из крови и пота. Глаз припух, но она снова поднимает руки и на секунду проводит языком по разбитой губе, не отрывая взгляда от {dojo_striker_b_name}. {dojo_striker_b_name} дышит ртом, зубы в крови."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "fight_blood"
+        }
+      ]
+    },
+
+    "fight_blood": {
+      "nodes": [
+        {
+          "type": "timeSkip",
+          "text": "Ни одна не отступает…",
+          "durationMs": 1500
+        },
+        {
+          "type": "text",
+          "text": "Удар на удар. {dojo_striker_b_name} ловит локоть в переносицу — кровь хлынет сразу, не каплями. {dojo_striker_a_name} отвечает апперкотом — {dojo_striker_b_name} отлетает к краю ковра, но не падает: упирается в колено, встаёт.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "text": "Инструктор не вмешивается. На трибуне кто-то смеётся нервно. {friend_name} белый как стена."
+        },
+        {
+          "type": "text",
+          "text": "Снова в центр. {dojo_striker_a_name} — серия по голове, {dojo_striker_b_name} — по телу, но каждый удар сопровождает короткий выдох, почти стон. Кимоно обеих тёмное от пота и крови, ткань липнет к груди и бёдрам. Запах — железо, мокрая ткань и что-то ещё, от чего {friend_name} смотрит в пол."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "fight_end"
+        }
+      ]
+    },
+
+    "fight_end": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "{dojo_striker_b_name} пропускает блок — прямой в челюсть. Голова {dojo_striker_a_name} дёргается. Она делает шаг, второй… колени подгибаются. Она падает на бок, не пытаясь поймать соперницу.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "text": "Инструктор: «Стоп. Нокдаун.»"
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_b_name} стоит, едва держась — кровь из носа и уголка рта, глаз почти закрыт. Победила. Едва. Ноги дрожат. Смотрит не на инструктора — на {dojo_striker_a_name} на полу."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "…чёрт."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "aftermath"
+        }
+      ]
+    },
+
+    "aftermath": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Медик тянется с ваткой — {dojo_striker_b_name} отмахивается. Подходит к {dojo_striker_a_name}, опускается на колени на мокрый ковёр."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_b_name",
+          "text": "…вставай."
+        },
+        {
+          "type": "text",
+          "text": "{dojo_striker_a_name} шевелит пальцами, поднимается на локтях. Лицо в крови, губы опухшие. {dojo_striker_b_name} проводит большим пальцем по её подбородку — смазывает кровь, не стирает."
+        },
+        {
+          "type": "text",
+          "text": "Они смотрят друг на друга. Долго. Додзё молчит. Потом {dojo_striker_b_name} наклоняется — медленно, как перед ударом, только без кулака — и целует её в губы. Не осторожно. Весь рот в крови, солёный, горячий; {dojo_striker_a_name} отвечает, хватая её за затылок окровавленной ладонью.",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "…"
+        },
+        {
+          "type": "text",
+          "text": "Поцелуй длится дольше, чем нужно для «после боя». Кровь на их подбородках смешивается. Кто-то на трибуне отворачивается, кто-то не отводит глаз. Я — тоже не отвожу."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_a_name",
+          "text": "Ещё… раз. Скоро."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_striker_b_name",
+          "text": "Скоро."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "exit"
+        }
+      ]
+    },
+
+    "exit": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Медики заливают ковёр — вода мгновенно грязнеет. Мы выходим. У {friend_name} дрожат руки, у меня — пусто во рту и что-то тянет вниз живота, не от страха."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Я бы… не выдержал и минуты."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Я тоже. …Заткнись."
+        },
+        {
+          "type": "text",
+          "text": "За спиной хлопает дверь додзё. Запах крови и их поцелуя всё равно липнет — к одежде, к коже."
+        },
+        {
+          "type": "setVar",
+          "varName": "dojo_watch_girls_strike_done",
+          "value": { "type": "bool", "value": true }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 0.35 }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "loyalty",
+          "value": { "type": "float", "value": 0.08 }
+        }
+      ]
+    }
+  }
+}

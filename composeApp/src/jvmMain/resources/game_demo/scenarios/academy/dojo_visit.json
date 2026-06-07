@@ -10,11 +10,33 @@
           "entries": [
             { "scene": "dojo_basics", "weight": 1 },
             { "scene": "dojo_sparring", "weight": 1 },
+            { "scene": "goto_group", "weight": 2 },
+            { "scene": "goto_watch", "weight": 2 },
+            { "scene": "goto_watch_girls", "weight": 2 },
+            {
+              "scene": "goto_after_hours",
+              "weight": 2,
+              "requires": [
+                {
+                  "variable": "dojo_watch_girls_strike_done",
+                  "op": "EQ",
+                  "value": { "type": "bool", "value": true }
+                }
+              ]
+            },
             {
               "scene": "goto_hard",
               "weight": 155
             }
           ]
+        }
+      ]
+    },
+    "goto_group": {
+      "nodes": [
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "scenarios/academy/dojo_group_training.json"
         }
       ]
     },
@@ -26,11 +48,35 @@
         }
       ]
     },
+    "goto_watch": {
+      "nodes": [
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "scenarios/academy/dojo_watch_spar.json"
+        }
+      ]
+    },
+    "goto_watch_girls": {
+      "nodes": [
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "scenarios/academy/dojo_watch_girls_strike.json"
+        }
+      ]
+    },
+    "goto_after_hours": {
+      "nodes": [
+        {
+          "type": "jumpScenario",
+          "scenarioFile": "scenarios/academy/dojo_after_hours.json"
+        }
+      ]
+    },
     "dojo_quiet": {
       "nodes": [
         {
           "type": "text",
-          "text": "{academy_phase_label}: в додзё тихо — кто-то протирает ковры, но полноценной тренировки сегодня не вышло."
+          "text": "{academy_phase_label}: вы так и не дошли до додзё — снова отложили «на завтра». В коридоре слышны чужие крики на ковре. Стыдно даже проходить мимо."
         }
       ]
     },
@@ -38,12 +84,17 @@
       "nodes": [
         {
           "type": "text",
-          "text": "{academy_phase_label}: в додзё вы отрабатываете стойку, блоки и простые захваты."
+          "text": "{academy_phase_label}: вы один на ковре, повторяете базовую стойку по памяти. Колени дрожат. После пяти минут уже хочется лечь и не вставать."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Пропустил три занятия… неудивительно, что ничего не помню."
         },
         {
           "type": "modifyVar",
           "varName": "blood_sweat",
-          "value": { "type": "float", "value": 0.5 }
+          "value": { "type": "float", "value": 0.3 }
         }
       ]
     },
@@ -51,12 +102,17 @@
       "nodes": [
         {
           "type": "text",
-          "text": "{academy_phase_label}: лёгкий спарринг с напарником — удары в защиту, без фанатизма."
+          "text": "{academy_phase_label}: {friend_name} бьёт мягко — но вам всё равно больно. Вы ловите удар один раз из пяти и удивляетесь, что это случилось."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Ты смотришь на пол, {player_name}. Подними глаза — или снова пропустишь месяц."
         },
         {
           "type": "modifyVar",
           "varName": "blood_sweat",
-          "value": { "type": "float", "value": 0.7 }
+          "value": { "type": "float", "value": 0.4 }
         }
       ]
     }

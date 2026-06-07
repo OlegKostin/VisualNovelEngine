@@ -1,0 +1,337 @@
+{
+  "startSceneId": "hall",
+  "scenes": {
+    "hall": {
+      "nodes": [
+        {
+          "type": "background",
+          "image": "backgrounds/02prev_bath/02holl.png"
+        },
+        {
+          "type": "text",
+          "text": "{academy_phase_label}: групповая в додзё. Я на занятии каждый раз — разминку знаю наизусть, но в парном спаринге всё ещё путаюсь. Инструктор хлопает в ладони: «Пары. Учебный поединок — лёгкий контакт».",
+          "long": true
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Хочу научиться держать удар… Пусть будет больно — лучше здесь, чем потом, когда некому остановить."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "pairing"
+        }
+      ]
+    },
+
+    "pairing": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Ко мне подходит {dojo_rival_name} — невысокая, с аккуратно обмотанными кистями. Стойка ровная, без лишних слов."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_rival_name",
+          "text": "Ты {player_name}? Я слышала, ты недавно в секции. Учебный бой — не значит «игра». Бей по делу, принимай удары — так учатся."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Она сильнее тебя сейчас — это нормально. Ты же сам просил настоящий контакт. Не сгибайся после первого."
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "text": "Поклониться: «Я ещё слаб, но хочу научиться»",
+              "nextSceneId": "spar_humble"
+            },
+            {
+              "text": "Молча занять стойку — страшно, но я остаюсь",
+              "nextSceneId": "spar_scared"
+            },
+            {
+              "text": "Спросить: «С чего лучше начать?»",
+              "nextSceneId": "spar_ask"
+            }
+          ]
+        }
+      ]
+    },
+
+    "spar_humble": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "dojo_rival_name",
+          "text": "Честно — уже плюс. Смотри мне в глаза, не в пол. Блок поднимай раньше, чем думаешь."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "spar_battle"
+        }
+      ]
+    },
+
+    "spar_scared": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "…"
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_rival_name",
+          "text": "Боишься? Я тоже когда-то. Стоять и принимать — часть тренировки. Поехали."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "spar_battle"
+        }
+      ]
+    },
+
+    "spar_ask": {
+      "nodes": [
+        {
+          "type": "text",
+          "speakerVar": "dojo_rival_name",
+          "text": "Дыши. Ноги шире плеч. Первый удар — не в лицо, в корпус, если открылся. Остальное — на ковре."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Запомню… надеюсь, тело успеет раньше, чем я испугаюсь."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "spar_battle"
+        }
+      ]
+    },
+
+    "spar_battle": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Мы в центре ковра. Вокруг — шёпот других пар. У {dojo_rival_name} стойка увереннее моей, но я не отступаю."
+        },
+        {
+          "type": "timeSkip",
+          "text": "Сигнал. Поединок…",
+          "durationMs": 1200
+        },
+        {
+          "type": "battle",
+          "id": "dojo_spar_aya",
+          "title": "Учебный поединок",
+          "monster": {
+            "name": "Ая",
+            "image": "characters/villain/kidnapper_fight.png",
+            "health": 3,
+            "horrorDamage": 0,
+            "combatDamage": 0
+          },
+          "player": {
+            "healthVar": "health",
+            "sanityVar": "mental_health",
+            "playerNameVar": "player_name"
+          },
+          "phases": {
+            "horror": {
+              "enabled": false,
+              "name": "",
+              "sides": 20,
+              "difficulty": 10,
+              "modifierVar": "opt_will"
+            },
+            "combat": {
+              "name": "Обмен с {dojo_rival_name}",
+              "sides": 20,
+              "difficulty": 12,
+              "modifierVar": "opt_str",
+              "damageOnSuccess": 1,
+              "damageOnCritSuccess": 1,
+              "damageToPlayerOnFail": 1,
+              "vnAfterMonsterHit": {
+                "2": {
+                  "0": {
+                    "text": "Я задел её плечо — сам не понял, как. {dojo_rival_name} на секунду удивлена.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "1": {
+                  "0": {
+                    "text": "Ещё одно касание… Скорее везение, чем техника — но я не сдаюсь.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "0": {
+                  "0": {
+                    "text": "«Хватит», — {dojo_rival_name} отступает. — Ты еле дышишь, но стоял до конца. На сегодня достаточно.»",
+                    "speaker": "{dojo_rival_name}"
+                  }
+                }
+              },
+              "vnAfterPlayerHit": {
+                "9": {
+                  "0": {
+                    "text": "Она быстрее — удар в корпус, я не успел закрыться.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Блок выше! Ты же хочешь учиться — покажи!",
+                    "speaker": "{dojo_rival_name}"
+                  }
+                },
+                "8": {
+                  "0": {
+                    "text": "Нога подскальзывает. {dojo_rival_name} не добивает — ждёт, пока я встану. Больно, но я поднимаюсь.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "7": {
+                  "0": {
+                    "text": "Захват за запястье — больно, я хромаю на месте и не отпускаю её руку.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "6": {
+                  "0": {
+                    "text": "Щека горит. Слёзы сжимаю зубами — показывать нельзя, но я остаюсь на ногах.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Не плачь на ковре. Дыши. Ты держишься.",
+                    "speaker": "{friend_name}"
+                  }
+                },
+                "5": {
+                  "0": {
+                    "text": "Мир плывёт. Я не понимаю, сколько ещё выдержу — но с места не схожу.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "3": {
+                  "0": {
+                    "text": "Колени дрожат. {dojo_rival_name} бьёт мягче — мне всё равно больно, и я всё равно стою.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Сдавайся словом, если совсем нет сил. Или вставай — ты почти научился не падать с первого.",
+                    "speaker": "{dojo_rival_name}"
+                  }
+                },
+                "2": {
+                  "0": {
+                    "text": "Ещё немного — и упаду при всех. Нет. Ещё один вдох.",
+                    "speaker": "{player_name}"
+                  }
+                },
+                "1": {
+                  "0": {
+                    "text": "На последнем дыхании. Боль и злость на себя — но я не прошу остановить.",
+                    "speaker": "{player_name}"
+                  },
+                  "1": {
+                    "text": "Стой! Дальше не бью — ты и так держался дольше, чем многие новички.",
+                    "speaker": "{dojo_rival_name}"
+                  }
+                }
+              }
+            }
+          },
+          "transitions": {
+            "winScene": "spar_end_stop",
+            "loseScene": "spar_end_ko"
+          },
+          "escape": {
+            "allowed": false,
+            "name": "Сбежать",
+            "sides": 20,
+            "difficulty": 15,
+            "modifierVar": "opt_will",
+            "onFailPlayerDamage": 0
+          }
+        }
+      ]
+    },
+
+    "spar_end_stop": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Поединок окончен. Я стою, едва держась. {dojo_rival_name} протягивает руку — поднять, не поздравить."
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_rival_name",
+          "text": "Ты слабее меня — пока. Но не согнулся. Приходи на следующую групповую — отработаем блок вместе."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Спасибо… Я хочу ещё. Пусть снова будет больно — иначе не научусь."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "finish_spar"
+        }
+      ]
+    },
+
+    "spar_end_ko": {
+      "nodes": [
+        {
+          "type": "setVar",
+          "varName": "health",
+          "value": { "type": "int", "value": 1 }
+        },
+        {
+          "type": "text",
+          "text": "Пол. Потолок. Гул в ушах — смех на трибунах или просто кровь в голове. {dojo_rival_name} склоняется: «Жив?»"
+        },
+        {
+          "type": "text",
+          "speakerVar": "dojo_rival_name",
+          "text": "Вставай. Падать — нормально. Лежать и не вставать — нет. Ты же сам хотел учиться."
+        },
+        {
+          "type": "text",
+          "speakerVar": "friend_name",
+          "text": "Медленно. Я помогу. Ты держался до конца — это и есть тренировка."
+        },
+        {
+          "type": "text",
+          "speakerVar": "player_name",
+          "text": "Я… встану. Ещё раз. Пока не научусь не падать с первого удара."
+        },
+        {
+          "type": "jump",
+          "nextSceneId": "finish_spar"
+        }
+      ]
+    },
+
+    "finish_spar": {
+      "nodes": [
+        {
+          "type": "text",
+          "text": "Группа расходится. Я медленно разматываю бинты — руки дрожат, тело ноет, но внутри что-то сдвинулось. Хочется снова на ковёр."
+        },
+        {
+          "type": "modifyVar",
+          "varName": "blood_sweat",
+          "value": { "type": "float", "value": 0.4 }
+        },
+        {
+          "type": "modifyVar",
+          "varName": "loyalty",
+          "value": { "type": "float", "value": 0.15 }
+        }
+      ]
+    }
+  }
+}
