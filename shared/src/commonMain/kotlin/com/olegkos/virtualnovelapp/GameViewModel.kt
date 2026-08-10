@@ -52,30 +52,15 @@
     init {
       viewModelScope.launch {
         val (output, node) = controller.init()
-        currentOutput = output
-        currentNode = node
+        val (resolved, resolvedNode) = resolveJumpChain(output, node)
+        currentOutput = resolved
+        currentNode = resolvedNode
       }
     }
 
     fun next(option: Option? = null) {
       val result = controller.next(option)
-      val output = result.first
-
-      when (output) {
-
-        is EngineOutput.JumpScenarioOutput -> {
-          viewModelScope.launch {
-            val (newOutput, node) = switchScenario(output.scenarioFile)
-            currentOutput = newOutput
-            currentNode = node
-          }
-        }
-
-        else -> {
-          currentOutput = output
-          currentNode = result.second
-        }
-      }
+      applyOutput(result.first, result.second)
     }
     fun rollDice() {
       val (output, node) = controller.rollDice()
@@ -100,8 +85,9 @@
     fun loadSave(slot: String) {
       viewModelScope.launch {
         val (output, node) = controller.loadSave(slot)
-        currentOutput = output
-        currentNode = node
+        val (resolved, resolvedNode) = resolveJumpChain(output, node)
+        currentOutput = resolved
+        currentNode = resolvedNode
       }
     }
 
@@ -167,8 +153,9 @@
     fun jumpScenario(path: String) {
       viewModelScope.launch {
         val (output, node) = switchScenario(path)
-        currentOutput = output
-        currentNode = node
+        val (resolved, resolvedNode) = resolveJumpChain(output, node)
+        currentOutput = resolved
+        currentNode = resolvedNode
       }
     }
     fun getCards() = controller.getPlayerCards()
@@ -343,19 +330,34 @@
     }
 
     private fun applyOutput(output: EngineOutput, node: SceneNode?) {
-      when (output) {
-        is EngineOutput.JumpScenarioOutput -> {
-          viewModelScope.launch {
-            val (newOutput, newNode) = switchScenario(output.scenarioFile)
-            currentOutput = newOutput
-            currentNode = newNode
-          }
+      if (output is EngineOutput.JumpScenarioOutput) {
+        viewModelScope.launch {
+          val (resolved, resolvedNode) = resolveJumpChain(output, node)
+          currentOutput = resolved
+          currentNode = resolvedNode
         }
-        else -> {
-          currentOutput = output
-          currentNode = node
-        }
+      } else {
+        currentOutput = output
+        currentNode = node
       }
+    }
+
+    /**
+     * Если сценарий начинается с weightedRandomJump/jumpScenario (или цепочкой jump),
+     * первый output может снова быть JumpScenarioOutput. Без разворота UI залипает на «Загрузка...».
+     */
+    private suspend fun resolveJumpChain(
+      output: EngineOutput,
+      node: SceneNode?
+    ): Pair<EngineOutput, SceneNode?> {
+      var out = output
+      var n = node
+      while (out is EngineOutput.JumpScenarioOutput) {
+        val pair = switchScenario(out.scenarioFile)
+        out = pair.first
+        n = pair.second
+      }
+      return out to n
     }
 
     private suspend fun switchScenario(path: String): Pair<EngineOutput, SceneNode?> {
