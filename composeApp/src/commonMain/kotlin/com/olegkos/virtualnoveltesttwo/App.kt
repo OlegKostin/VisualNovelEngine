@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
@@ -372,6 +374,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             val screenH = maxHeight
             val optionHeight = screenH * 0.055f
             val choiceFontSize = (screenH * 0.035f).value.sp
+            val promptFontSize = (screenH * 0.04f).value.sp
             val choiceHighlightFill = Color(0xFFBBDEFB).copy(alpha = 0.40f)
             val choiceIdleFill = Color(0xFFBBDEFB).copy(alpha = 0.14f)
 
@@ -380,6 +383,28 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
               verticalArrangement = Arrangement.spacedBy(screenH * 0.01f),
               horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+              val promptText = o.prompt?.trim()?.takeIf { it.isNotEmpty() }
+              if (promptText != null) {
+                Box(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .height(optionHeight)
+                    .clip(RoundedCornerShape(50))
+                    .background(choiceHighlightFill)
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                  contentAlignment = Alignment.Center,
+                ) {
+                  Text(
+                    text = promptText,
+                    fontSize = promptFontSize,
+                    color = Color(0xFF1A2433),
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth(),
+                  )
+                }
+              }
               o.options.forEach { option ->
                 VnOutlinedButton(
                   onClick = { viewModel.next(option) },

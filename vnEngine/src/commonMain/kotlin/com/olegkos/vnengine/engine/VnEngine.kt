@@ -207,7 +207,10 @@ class VnEngine(
         }
 
         is SceneNode.Choice -> {
-          return ShowChoices(node.options)
+          return ShowChoices(
+            options = node.options,
+            prompt = node.prompt?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables),
+          )
         }
 
         is SceneNode.Background -> {

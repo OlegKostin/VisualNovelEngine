@@ -21,7 +21,10 @@ sealed interface SceneNode {
     val text: String? = null,
   ) : SceneNode
 
-  data class Choice(val options: List<Option>) : SceneNode
+  data class Choice(
+    val options: List<Option>,
+    val prompt: String? = null,
+  ) : SceneNode
 
   data class DiceRoll(
     val name: String,

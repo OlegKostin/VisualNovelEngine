@@ -114,7 +114,8 @@ class JsonScenarioParser : ScenarioParser {
                       text = it.text,
                       nextSceneId = it.nextSceneId
                     )
-                  }
+                  },
+                  prompt = nodeJson.prompt,
                 )
               is SceneNodeJson.SetVar ->
                 SetVar(nodeJson.varName, nodeJson.value.toGameValue())
@@ -532,7 +533,8 @@ sealed class SceneNodeJson {
   @Serializable
   @SerialName("choice")
   data class Choice(
-    val options: List<OptionJson>
+    val options: List<OptionJson>,
+    val prompt: String? = null,
   ) : SceneNodeJson()
 
   @Serializable

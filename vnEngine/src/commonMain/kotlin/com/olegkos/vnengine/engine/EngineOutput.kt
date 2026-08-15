@@ -26,7 +26,10 @@ sealed interface EngineOutput {
     val text: String? = null,
   ) : EngineOutput
 
-  data class ShowChoices(val options: List<Option>) : EngineOutput
+  data class ShowChoices(
+    val options: List<Option>,
+    val prompt: String? = null,
+  ) : EngineOutput
   data class ShowDice(
     val name: String,
     val sides: Int,
