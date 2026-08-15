@@ -3,6 +3,7 @@ package com.olegkos.virtualnoveltesttwo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -27,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -42,6 +45,7 @@ import com.olegkos.virtualnoveltesttwo.composable.TimeSkipOverlay
 import com.olegkos.virtualnoveltesttwo.composable.rememberBitmapPainter
 import com.olegkos.virtualnoveltesttwo.composable.VisibleCharacterView
 import com.olegkos.virtualnoveltesttwo.composable.VNTextBox
+import com.olegkos.virtualnoveltesttwo.theme.VnButtonSurface
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.GameLoading.AssetReader
 import com.olegkos.vnengine.engine.EngineOutput
@@ -361,19 +365,40 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
         }
 
         is EngineOutput.ShowChoices -> {
-          Box(
-            modifier = Modifier.fillMaxWidth(),
+          BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
           ) {
-            Column(modifier = Modifier.fillMaxWidth(0.4f)) {
+            val screenH = maxHeight
+            val optionHeight = screenH * 0.055f
+            val choiceFontSize = (screenH * 0.035f).value.sp
+            val choiceHighlightFill = Color(0xFFBBDEFB).copy(alpha = 0.40f)
+            val choiceIdleFill = Color(0xFFBBDEFB).copy(alpha = 0.14f)
+
+            Column(
+              modifier = Modifier.fillMaxWidth(0.72f),
+              verticalArrangement = Arrangement.spacedBy(screenH * 0.01f),
+              horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
               o.options.forEach { option ->
                 VnOutlinedButton(
                   onClick = { viewModel.next(option) },
+                  surface = VnButtonSurface.Light,
+                  idleFill = choiceIdleFill,
+                  hoverFill = choiceHighlightFill,
                   modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .height(optionHeight),
+                  contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 ) {
-                  Text(option.text)
+                  Text(
+                    text = option.text,
+                    fontSize = choiceFontSize,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth(),
+                  )
                 }
               }
             }

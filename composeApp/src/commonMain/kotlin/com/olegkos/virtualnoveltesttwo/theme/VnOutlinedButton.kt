@@ -32,6 +32,13 @@ fun VnOutlinedButton(
   enabled: Boolean = true,
   selected: Boolean = false,
   surface: VnButtonSurface = VnButtonSurface.Light,
+  /**
+   * Подложка без наведения/выделения.
+   * По умолчанию прозрачная; для choices задаём цвет с alpha = половина от hover/selected.
+   */
+  idleFill: Color? = null,
+  /** Переопределение заливки при наведении (иначе из palette). */
+  hoverFill: Color? = null,
   colors: ButtonColors? = null,
   contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -70,6 +77,9 @@ fun VnOutlinedButton(
     )
   }
 
+  val idleContainer = idleFill ?: Color.Transparent
+  val hoverContainer = hoverFill ?: palette.hoverFill
+
   val resolvedColors = colors ?: ButtonDefaults.outlinedButtonColors(
     contentColor = when {
       !enabled -> palette.labelDisabled
@@ -80,8 +90,8 @@ fun VnOutlinedButton(
     containerColor = when {
       !enabled -> Color.Transparent
       selected -> palette.selectedFill
-      isHovered -> palette.hoverFill
-      else -> Color.Transparent
+      isHovered -> hoverContainer
+      else -> idleContainer
     },
     disabledContainerColor = Color.Transparent,
     disabledContentColor = palette.labelDisabled,
