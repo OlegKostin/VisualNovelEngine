@@ -112,7 +112,14 @@ class JsonScenarioParser : ScenarioParser {
                   options = nodeJson.options.map {
                     Option(
                       text = it.text,
-                      nextSceneId = it.nextSceneId
+                      nextSceneId = it.nextSceneId,
+                      requires = it.requires.map { r ->
+                        SceneNode.WeightedRandomJump.Requirement(
+                          variable = r.variable,
+                          op = r.op.toWeightedOp(),
+                          value = r.value.toGameValue(),
+                        )
+                      },
                     )
                   },
                   prompt = nodeJson.prompt,
@@ -733,7 +740,8 @@ sealed class GameValueJson {
 @Serializable
 data class OptionJson(
   val text: String,
-  val nextSceneId: String
+  val nextSceneId: String,
+  val requires: List<WeightedRandomJump.RequirementJson> = emptyList(),
 )
 @Serializable
 @SerialName("background")

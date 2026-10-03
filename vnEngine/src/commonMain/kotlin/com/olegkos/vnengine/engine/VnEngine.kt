@@ -207,8 +207,11 @@ class VnEngine(
         }
 
         is SceneNode.Choice -> {
+          val visible = node.options.filter { opt ->
+            opt.requires.isEmpty() || opt.requires.all { checkRequirement(it) }
+          }
           return ShowChoices(
-            options = node.options,
+            options = visible,
             prompt = node.prompt?.trim()?.takeIf { it.isNotEmpty() }?.let(::resolveTextVariables),
           )
         }
