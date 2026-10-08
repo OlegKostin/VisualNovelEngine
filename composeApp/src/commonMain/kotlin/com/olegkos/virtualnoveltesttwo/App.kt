@@ -201,6 +201,7 @@ fun App(viewModel: GameViewModel = koinViewModel()) {
             character = char,
             isSpeaking = activeSpeakerId != null && char.id == activeSpeakerId,
             positionOffset = positionOffsetFromString(char.position, boxWidth),
+            screenHeight = maxHeight,
             assets = assets,
             reader = reader,
             modifier = Modifier.align(Alignment.BottomStart),
