@@ -30,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
@@ -51,6 +53,22 @@ private val Bg = Color(0xE610141C)
 private val Accent = Color(0xFFBBDEFB)
 private val Muted = Color(0xCCFFFFFF)
 private val PanelBg = Color(0xFF1A2438)
+
+/** Запасной аспект, если картинка ещё не загружена / face-down (середина 1050–1250 × 800). */
+private const val CARD_ART_ASPECT_FALLBACK = 1150f / 800f
+
+/** Высота карты = доля экрана; ширина-заглушка до измерения арта. */
+private fun cardGameTileSizeByHeight(maxHeight: Dp, heightFraction: Float = 0.40f): Pair<Dp, Dp> {
+  val cardH = maxHeight * heightFraction
+  val cardW = cardH * CARD_ART_ASPECT_FALLBACK
+  return cardW to cardH
+}
+
+private fun painterAspectRatio(painter: BitmapPainter?, fallback: Float = CARD_ART_ASPECT_FALLBACK): Float {
+  val size = painter?.intrinsicSize ?: return fallback
+  if (size == Size.Unspecified || size.width <= 0f || size.height <= 0f) return fallback
+  return size.width / size.height
+}
 
 /** Кольцо контра: кто кого бьёт (основные теги). */
 private val COUNTER_CHAIN = listOf(
@@ -103,8 +121,7 @@ fun CardGameScreen(
     }
 
     CardGamePhase.DRAFT -> BoxWithConstraints(Modifier.fillMaxSize().background(Bg)) {
-      val cardW = maxOf(maxWidth * 0.14f, 72.dp)
-      val cardH = cardW * 1.38f
+      val (cardW, cardH) = cardGameTileSizeByHeight(maxHeight, heightFraction = 0.40f)
       Column(
         Modifier.fillMaxSize().padding(12.dp).verticalScroll(rememberScrollState())
       ) {
@@ -169,8 +186,7 @@ private fun CardGameMainRow(
         .fillMaxHeight()
         .padding(start = 12.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
     ) {
-      val cardW = maxOf(maxWidth * 0.2f, 68.dp)
-      val cardH = cardW * 1.38f
+      val (cardW, cardH) = cardGameTileSizeByHeight(maxHeight, heightFraction = 0.40f)
       Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         CardGameHeader(output, showBattleTone = true)
         if (output.phase == CardGamePhase.SELECT_CLASH) {
@@ -378,7 +394,8 @@ private fun CardExpandedOverlay(
     val footerH = if (showEffective && card.effectiveValue != null) 28.dp else 24.dp
     val totalH = maxHeight * 0.96f
     val previewH = (totalH - footerH).coerceAtLeast(72.dp)
-    val previewW = previewH / 1.38f
+    val painter = if (card.faceDown) null else cardPainter(card.image)
+    val previewW = (previewH * painterAspectRatio(painter)).coerceAtMost(maxWidth * 0.96f)
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier = Modifier.height(totalH)
@@ -388,7 +405,7 @@ private fun CardExpandedOverlay(
         selected = false,
         cardW = previewW,
         cardH = previewH,
-        painter = if (card.faceDown) null else cardPainter(card.image),
+        painter = painter,
         onClick = onDismiss,
         showEffective = showEffective,
         showTagAndValue = false
@@ -698,9 +715,12 @@ private fun GameCardTile(
     card.faceDown -> Color(0xFF1A237E)
     else -> Color(0xFF263238)
   }
+  // Ширина слота = ширина картинки при заданной высоте (без пустых боков).
+  val resolvedW = if (painter != null) cardH * painterAspectRatio(painter) else cardW
   val artModifier = Modifier
-    .width(cardW)
+    .width(resolvedW)
     .height(cardH)
+    .clip(shape)
     .border(if (highlightCountered) 4.dp else 3.dp, borderColor, shape)
     .background(cardBg, shape)
     .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
@@ -716,11 +736,11 @@ private fun GameCardTile(
           painter = painter,
           contentDescription = null,
           modifier = Modifier.fillMaxSize(),
-          contentScale = ContentScale.Crop
+          contentScale = ContentScale.FillBounds
         )
       }
       if (!card.faceDown) {
-        CardTagBadge(tag = card.tag, iconSize = (cardW * 0.24f).coerceIn(18.dp, 26.dp))
+        CardTagBadge(tag = card.tag, iconSize = (resolvedW * 0.24f).coerceIn(18.dp, 26.dp))
       }
       if (showTagAndValue && !card.faceDown) {
         CardValueBadge(value = card.value)
