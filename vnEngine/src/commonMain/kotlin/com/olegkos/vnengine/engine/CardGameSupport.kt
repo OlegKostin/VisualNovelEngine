@@ -126,13 +126,27 @@ fun VnEngine.cardGameVnNext() {
   val node = currentCardGameNode() ?: return
   val gs = state.cardGame ?: return
   if (gs.phase != CardGamePhase.BATTLE_REVEAL) return
-  if (node.vnAfterClash.isEmpty()) return
-  if (gs.vnIndex >= node.vnAfterClash.size) return
+  val lines = node.vnLinesAfterClash(gs)
+  if (lines.isEmpty()) return
+  if (gs.vnIndex >= lines.size) return
   gs.vnIndex++
 }
 
-private fun cardGameVnPlaybackComplete(node: SceneNode.CardGame, gs: CardGameState): Boolean =
-  node.vnAfterClash.isEmpty() || gs.vnIndex >= node.vnAfterClash.size
+private fun cardGameVnPlaybackComplete(node: SceneNode.CardGame, gs: CardGameState): Boolean {
+  val lines = node.vnLinesAfterClash(gs)
+  return lines.isEmpty() || gs.vnIndex >= lines.size
+}
+
+/** Реплики после clash: win/lose/draw, иначе общий [SceneNode.CardGame.vnAfterClash]. */
+private fun SceneNode.CardGame.vnLinesAfterClash(gs: CardGameState): List<SceneNode.BattleVnLine> {
+  val res = gs.clashResolution ?: return vnAfterClash
+  val specific = when {
+    res.playerTotal > res.enemyTotal -> vnAfterClashWin
+    res.playerTotal < res.enemyTotal -> vnAfterClashLose
+    else -> vnAfterClashDraw
+  }
+  return specific.ifEmpty { vnAfterClash }
+}
 
 fun VnEngine.cardGameFinish(): CardGameFinishResult? {
   val node = currentCardGameNode() ?: return null
@@ -192,11 +206,12 @@ fun VnEngine.buildCardGameOutput(node: SceneNode.CardGame, gs: CardGameState): S
     )
   }
 
+  val vnLines = node.vnLinesAfterClash(gs)
   val vnLine = if (
     gs.phase == CardGamePhase.BATTLE_REVEAL &&
-    gs.vnIndex < node.vnAfterClash.size
+    gs.vnIndex < vnLines.size
   ) {
-    node.vnAfterClash[gs.vnIndex]
+    vnLines[gs.vnIndex]
   } else {
     null
   }

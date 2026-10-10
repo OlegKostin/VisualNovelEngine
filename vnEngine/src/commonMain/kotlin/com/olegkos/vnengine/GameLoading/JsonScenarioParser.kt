@@ -365,6 +365,15 @@ class JsonScenarioParser : ScenarioParser {
                 vnAfterClash = nodeJson.vnAfterClash.map {
                   BattleVnLine(text = it.text, speaker = it.speaker)
                 },
+                vnAfterClashWin = nodeJson.vnAfterClashWin.map {
+                  BattleVnLine(text = it.text, speaker = it.speaker)
+                },
+                vnAfterClashLose = nodeJson.vnAfterClashLose.map {
+                  BattleVnLine(text = it.text, speaker = it.speaker)
+                },
+                vnAfterClashDraw = nodeJson.vnAfterClashDraw.map {
+                  BattleVnLine(text = it.text, speaker = it.speaker)
+                },
                 transitions = CardGameTransitions(
                   winScene = nodeJson.transitions.winScene,
                   loseScene = nodeJson.transitions.loseScene,
@@ -863,7 +872,11 @@ data class CardGameNode(
   val speaker: String? = null,
   val opponent: CardGameOpponentJson,
   val draft: CardGameDraftJson = CardGameDraftJson(),
+  /** Общий fallback; лучше задавать win/lose/draw отдельно. */
   val vnAfterClash: List<BattleVnLineJson> = emptyList(),
+  val vnAfterClashWin: List<BattleVnLineJson> = emptyList(),
+  val vnAfterClashLose: List<BattleVnLineJson> = emptyList(),
+  val vnAfterClashDraw: List<BattleVnLineJson> = emptyList(),
   val transitions: CardGameTransitionsJson
 ) : SceneNodeJson()
 

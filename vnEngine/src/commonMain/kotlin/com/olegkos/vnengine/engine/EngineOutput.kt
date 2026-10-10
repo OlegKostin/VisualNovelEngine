@@ -291,7 +291,7 @@ sealed interface EngineOutput {
     val breakdownStepIndex: Int = 0,
     val vnSpeaker: String? = null,
     val vnText: String? = null,
-    /** Все реплики vnAfterClash показаны (фаза BATTLE_REVEAL). */
+    /** Все реплики после clash (win/lose/draw) показаны (фаза BATTLE_REVEAL). */
     val vnPlaybackComplete: Boolean = true,
     val outcome: CardGameOutcome? = null,
     val resultText: String? = null

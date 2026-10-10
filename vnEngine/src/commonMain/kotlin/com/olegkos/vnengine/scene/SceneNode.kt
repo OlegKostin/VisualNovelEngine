@@ -303,7 +303,14 @@ sealed interface SceneNode {
     val speaker: String? = null,
     val opponent: CardGameOpponent,
     val draft: CardGameDraftConfig = CardGameDraftConfig(),
+    /**
+     * Устаревшее: общие реплики после clash, если нет outcome-specific списков.
+     * Предпочтительно [vnAfterClashWin] / [vnAfterClashLose] / [vnAfterClashDraw].
+     */
     val vnAfterClash: List<BattleVnLine> = emptyList(),
+    val vnAfterClashWin: List<BattleVnLine> = emptyList(),
+    val vnAfterClashLose: List<BattleVnLine> = emptyList(),
+    val vnAfterClashDraw: List<BattleVnLine> = emptyList(),
     val transitions: CardGameTransitions
   ) : SceneNode
 

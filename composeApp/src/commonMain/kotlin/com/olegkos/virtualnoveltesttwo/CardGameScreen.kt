@@ -43,6 +43,7 @@ import com.olegkos.virtualnovelapp.GameViewModel
 import com.olegkos.virtualnoveltesttwo.composable.horizontalWheelScroll
 import com.olegkos.virtualnoveltesttwo.mappers.StatType
 import com.olegkos.virtualnoveltesttwo.theme.SkikoSafeText
+import com.olegkos.virtualnoveltesttwo.theme.VnButtonSurface
 import com.olegkos.virtualnoveltesttwo.theme.VnOutlinedButton
 import com.olegkos.vnengine.engine.EngineOutput
 import com.olegkos.vnengine.engine.cardgame.CardGamePhase
@@ -209,8 +210,6 @@ private fun CardGameMainRow(
             cardH = cardH,
             cardPainter = cardPainter,
             onCardClick = { expandedCard = it },
-            onBattleContinue = onBattleContinue,
-            onBreakdownNext = onBreakdownNext
           )
         }
       }
@@ -223,6 +222,13 @@ private fun CardGameMainRow(
         output.clashResolution
       } else {
         null
+      },
+      footerAction = when {
+        output.phase == CardGamePhase.BATTLE_REVEAL && output.vnPlaybackComplete ->
+          "Разбор боя" to onBattleContinue
+        output.phase == CardGamePhase.SCORE_BREAKDOWN ->
+          "К результату" to onBreakdownNext
+        else -> null
       },
       modifier = Modifier
         .weight(0.36f)
@@ -327,9 +333,11 @@ private fun DraftScreen(
     onPoolChange
   )
   Spacer(Modifier.height(12.dp))
+  val handFull = selectedMeta.size + selectedPool.size == handSize
   CardGameAction(
     text = "Собрать руку (${selectedMeta.size + selectedPool.size}/$handSize)",
-    enabled = selectedMeta.size + selectedPool.size == handSize,
+    enabled = handFull,
+    highlighted = handFull,
     onClick = onConfirm
   )
 }
@@ -351,7 +359,7 @@ private fun ClashPickScreen(
   CardGameAction("К бою", enabled = selected.size == 3, onClick = onConfirm)
 }
 
-/** Один экран боя: карты обеих сторон + разбор на том же месте. */
+/** Один экран боя: карты обеих сторон (кнопки — в правой панели). */
 @Composable
 private fun BattleArenaScreen(
   output: EngineOutput.ShowCardGame,
@@ -359,21 +367,11 @@ private fun BattleArenaScreen(
   cardH: Dp,
   cardPainter: @Composable (String) -> BitmapPainter?,
   onCardClick: (EngineOutput.CardGameUiCard) -> Unit,
-  onBattleContinue: () -> Unit,
-  onBreakdownNext: () -> Unit
 ) {
   val showEffective = output.phase == CardGamePhase.SCORE_BREAKDOWN
   LabeledCardRow("Ваши карты", output.playerPlayed, cardW, cardH, cardPainter, showEffective, onCardClick)
   Spacer(Modifier.height(12.dp))
   LabeledCardRow("Карты противника", output.enemyPlayed, cardW, cardH, cardPainter, showEffective, onCardClick)
-
-  if (output.phase == CardGamePhase.BATTLE_REVEAL && output.vnPlaybackComplete) {
-    Spacer(Modifier.height(16.dp))
-    CardGameAction("Разбор боя", onClick = onBattleContinue)
-  } else if (output.phase == CardGamePhase.SCORE_BREAKDOWN) {
-    Spacer(Modifier.height(16.dp))
-    CardGameAction("К результату", onClick = onBreakdownNext)
-  }
 }
 
 /** Увеличенная карта на весь экран; повторное нажатие закрывает. */
@@ -427,80 +425,91 @@ private fun CounterGuidePanel(
   battleTone: String,
   showToneHint: Boolean,
   clashResolution: ClashResolution? = null,
+  footerAction: Pair<String, () -> Unit>? = null,
   modifier: Modifier = Modifier
 ) {
   Column(
     modifier
       .background(PanelBg, RoundedCornerShape(12.dp))
       .padding(14.dp)
-      .verticalScroll(rememberScrollState())
   ) {
-    SkikoSafeText(
-      "Контр (основные)",
-      fontSize = 15.sp,
-      fontWeight = FontWeight.Bold,
-      color = Color.White,
-      modifier = Modifier.padding(bottom = 10.dp)
-    )
-    SkikoSafeText(
-      "Стрелка: левый тег бьёт правый → value обнуляется.",
-      fontSize = 11.sp,
-      color = Color(0x99FFFFFF),
-      modifier = Modifier.padding(bottom = 12.dp)
-    )
-    COUNTER_CHAIN.forEach { (attacker, defender) ->
-      CounterChainRow(attacker, defender)
-      Spacer(Modifier.height(10.dp))
-    }
-
-    if (showToneHint) {
-      Spacer(Modifier.height(8.dp))
+    Column(
+      Modifier
+        .weight(1f, fill = true)
+        .verticalScroll(rememberScrollState())
+    ) {
       SkikoSafeText(
-        "Тон боя",
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        color = Accent,
-        modifier = Modifier.padding(bottom = 8.dp)
-      )
-      val toneStat = StatType.fromKey(battleTone)
-      Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 6.dp)) {
-        toneStat?.let {
-          Image(painterResource(it.image), it.title, Modifier.size(24.dp))
-          Spacer(Modifier.width(8.dp))
-        }
-        SkikoSafeText(toneStat?.title ?: battleTone, fontSize = 13.sp, color = Color.White)
-      }
-      SkikoSafeText(
-        "Совпадающий тон: база × (value+1).\nПротивоположный тон: 0 очков.",
-        fontSize = 11.sp,
-        color = Color(0x99FFFFFF),
-        modifier = Modifier.padding(bottom = 10.dp)
-      )
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        ToneLegendChip(StatType.DARK)
-        ToneLegendChip(StatType.LIGHT)
-      }
-    }
-
-    clashResolution?.let { resolution ->
-      Spacer(Modifier.height(16.dp))
-      SkikoSafeText(
-        "Как получился итог",
+        "Контр (основные)",
         fontSize = 15.sp,
         fontWeight = FontWeight.Bold,
-        color = Accent,
-        modifier = Modifier.padding(bottom = 10.dp),
-      )
-      ScoreSummaryBlock("Вы", resolution.playerScore, resolution.playerTotal)
-      Spacer(Modifier.height(12.dp))
-      ScoreSummaryBlock("Противник", resolution.enemyScore, resolution.enemyTotal)
-      Spacer(Modifier.height(12.dp))
-      SkikoSafeText(
-        text = "Счёт: ${resolution.playerTotal} — ${resolution.enemyTotal}",
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Bold,
         color = Color.White,
+        modifier = Modifier.padding(bottom = 10.dp)
       )
+      SkikoSafeText(
+        "Стрелка: левый тег бьёт правый → value обнуляется.",
+        fontSize = 11.sp,
+        color = Color(0x99FFFFFF),
+        modifier = Modifier.padding(bottom = 12.dp)
+      )
+      COUNTER_CHAIN.forEach { (attacker, defender) ->
+        CounterChainRow(attacker, defender)
+        Spacer(Modifier.height(10.dp))
+      }
+
+      if (showToneHint) {
+        Spacer(Modifier.height(8.dp))
+        SkikoSafeText(
+          "Тон боя",
+          fontSize = 14.sp,
+          fontWeight = FontWeight.Bold,
+          color = Accent,
+          modifier = Modifier.padding(bottom = 8.dp)
+        )
+        val toneStat = StatType.fromKey(battleTone)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 6.dp)) {
+          toneStat?.let {
+            Image(painterResource(it.image), it.title, Modifier.size(24.dp))
+            Spacer(Modifier.width(8.dp))
+          }
+          SkikoSafeText(toneStat?.title ?: battleTone, fontSize = 13.sp, color = Color.White)
+        }
+        SkikoSafeText(
+          "Совпадающий тон: база × (value+1).\nПротивоположный тон: 0 очков.",
+          fontSize = 11.sp,
+          color = Color(0x99FFFFFF),
+          modifier = Modifier.padding(bottom = 10.dp)
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+          ToneLegendChip(StatType.DARK)
+          ToneLegendChip(StatType.LIGHT)
+        }
+      }
+
+      clashResolution?.let { resolution ->
+        Spacer(Modifier.height(16.dp))
+        SkikoSafeText(
+          "Как получился итог",
+          fontSize = 15.sp,
+          fontWeight = FontWeight.Bold,
+          color = Accent,
+          modifier = Modifier.padding(bottom = 10.dp),
+        )
+        ScoreSummaryBlock("Вы", resolution.playerScore, resolution.playerTotal)
+        Spacer(Modifier.height(12.dp))
+        ScoreSummaryBlock("Противник", resolution.enemyScore, resolution.enemyTotal)
+        Spacer(Modifier.height(12.dp))
+        SkikoSafeText(
+          text = "Счёт: ${resolution.playerTotal} — ${resolution.enemyTotal}",
+          fontSize = 16.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White,
+        )
+      }
+    }
+
+    footerAction?.let { (label, onClick) ->
+      Spacer(Modifier.height(12.dp))
+      CardGameAction(label, onClick = onClick)
     }
   }
 }
@@ -643,8 +652,19 @@ private fun CardGameVnOverlay(speaker: String?, text: String, onNext: () -> Unit
 }
 
 @Composable
-private fun CardGameAction(text: String, enabled: Boolean = true, onClick: () -> Unit) {
-  VnOutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.padding(top = 4.dp)) {
+private fun CardGameAction(
+  text: String,
+  enabled: Boolean = true,
+  highlighted: Boolean = false,
+  onClick: () -> Unit,
+) {
+  VnOutlinedButton(
+    onClick = onClick,
+    enabled = enabled,
+    selected = highlighted,
+    surface = VnButtonSurface.Dark,
+    modifier = Modifier.padding(top = 4.dp),
+  ) {
     SkikoSafeText(text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
   }
 }
