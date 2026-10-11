@@ -31,9 +31,10 @@ internal fun VnEngine.handleCardGameNode(node: SceneNode.CardGame): EngineOutput
       }
       buildCardGameOutput(node, gs)
     }
-    CardGamePhase.SELECT_CLASH -> buildCardGameOutput(node, gs)
-    CardGamePhase.BATTLE_REVEAL -> buildCardGameOutput(node, gs)
-    CardGamePhase.SCORE_BREAKDOWN -> buildCardGameOutput(node, gs)
+    CardGamePhase.SELECT_CLASH,
+    CardGamePhase.BATTLE_REVEAL,
+    CardGamePhase.SCORE_BREAKDOWN,
+    CardGamePhase.PICK_REWARD,
     CardGamePhase.RESULT -> buildCardGameOutput(node, gs)
   }
 }
@@ -115,7 +116,7 @@ fun VnEngine.cardGameBattleContinue() {
   gs.phase = CardGamePhase.SCORE_BREAKDOWN
 }
 
-/** Один шаг: весь разбор уже на экране → результат. */
+/** Один шаг: весь разбор уже на экране → выбор награды (победа) или результат. */
 fun VnEngine.cardGameBreakdownNext() {
   val gs = state.cardGame ?: return
   if (gs.phase != CardGamePhase.SCORE_BREAKDOWN) return
@@ -125,7 +126,31 @@ fun VnEngine.cardGameBreakdownNext() {
     resolution.playerTotal < resolution.enemyTotal -> CardGameOutcome.LOSE
     else -> CardGameOutcome.DRAW
   }
+  gs.selectedReward = null
+  val rewards = cardGameRewardPool(gs)
+  gs.phase = if (gs.outcome == CardGameOutcome.WIN && rewards.isNotEmpty()) {
+    CardGamePhase.PICK_REWARD
+  } else {
+    CardGamePhase.RESULT
+  }
+}
+
+/** Подтвердить выбранную карту-награду → экран результата. */
+fun VnEngine.cardGameConfirmReward(cardId: String) {
+  val gs = state.cardGame ?: return
+  if (gs.phase != CardGamePhase.PICK_REWARD) return
+  if (gs.outcome != CardGameOutcome.WIN) return
+  val card = cardGameRewardPool(gs).find { it.instanceId == cardId } ?: return
+  gs.selectedReward = card
   gs.phase = CardGamePhase.RESULT
+}
+
+/** Карты противника + карты с драфта игрока (не из meta). */
+internal fun cardGameRewardPool(gs: CardGameState): List<HandCard> {
+  val byId = LinkedHashMap<String, HandCard>()
+  gs.enemyClash.forEach { byId[it.instanceId] = it }
+  gs.poolPicked.forEach { byId[it.instanceId] = it }
+  return byId.values.toList()
 }
 
 fun VnEngine.cardGameVnNext() {
@@ -160,7 +185,7 @@ fun VnEngine.cardGameFinish(): CardGameFinishResult? {
   if (gs.phase != CardGamePhase.RESULT) return null
 
   val outcome = gs.outcome ?: return null
-  val discard = gs.discard.toList()
+  val reward = if (outcome == CardGameOutcome.WIN) gs.selectedReward else null
 
   val targetScene = when (outcome) {
     CardGameOutcome.WIN -> node.transitions.winScene
@@ -173,13 +198,13 @@ fun VnEngine.cardGameFinish(): CardGameFinishResult? {
 
   return CardGameFinishResult(
     outcome = outcome,
-    discardForReward = if (outcome == CardGameOutcome.WIN) discard else emptyList()
+    rewardCard = reward,
   )
 }
 
 data class CardGameFinishResult(
   val outcome: CardGameOutcome,
-  val discardForReward: List<HandCard>
+  val rewardCard: HandCard? = null,
 )
 
 fun VnEngine.currentCardGameNode(): SceneNode.CardGame? =
@@ -231,7 +256,14 @@ fun VnEngine.buildCardGameOutput(node: SceneNode.CardGame, gs: CardGameState): S
       CardGameOutcome.DRAW -> "Ничья"
       null -> null
     }
+    CardGamePhase.PICK_REWARD -> "Выберите карту в награду"
     else -> null
+  }
+
+  val rewardCards = if (gs.phase == CardGamePhase.PICK_REWARD) {
+    cardGameRewardPool(gs).map { it.toUi() }
+  } else {
+    emptyList()
   }
 
   return ShowCardGame(
@@ -258,7 +290,8 @@ fun VnEngine.buildCardGameOutput(node: SceneNode.CardGame, gs: CardGameState): S
     vnText = vnLine?.let { resolveTextVariables(it.text) },
     vnPlaybackComplete = cardGameVnPlaybackComplete(node, gs),
     outcome = gs.outcome,
-    resultText = resultText
+    resultText = resultText,
+    rewardCards = rewardCards,
   )
 }
 

@@ -237,6 +237,12 @@
       currentNode = node
     }
 
+    fun cardGameConfirmReward(cardId: String) {
+      val (output, node) = controller.cardGameConfirmReward(cardId)
+      currentOutput = output
+      currentNode = node
+    }
+
     fun cardGameVnNext() {
       val (output, node) = controller.cardGameVnNext()
       currentOutput = output

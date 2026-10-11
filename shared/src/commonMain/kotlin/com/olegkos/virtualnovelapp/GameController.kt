@@ -40,6 +40,7 @@ import com.olegkos.vnengine.engine.cardGameBattleContinue
 import com.olegkos.vnengine.engine.cardGameBreakdownNext
 import com.olegkos.vnengine.engine.cardGameConfirmClash
 import com.olegkos.vnengine.engine.cardGameConfirmDraft
+import com.olegkos.vnengine.engine.cardGameConfirmReward
 import com.olegkos.vnengine.engine.cardGameFinish
 import com.olegkos.vnengine.engine.cardGameVnNext
 import com.olegkos.vnengine.engine.processTargetTapContinueSpawn
@@ -749,7 +750,24 @@ class GameController(
 
   fun cardGameBreakdownNext(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
+    val node = engine.currentNode() as? SceneNode.CardGame
+    val nodeId = buildNodeMetaId()
     engine.cardGameBreakdownNext()
+    val gs = engine.state.cardGame
+    // Уже получали награду с этой ноды — пропускаем выбор.
+    if (
+      gs?.phase == CardGamePhase.PICK_REWARD &&
+      (node?.addToMeta != false) &&
+      metaManager.getDrawCardResult(nodeId) != null
+    ) {
+      gs.phase = CardGamePhase.RESULT
+    }
+    return step()
+  }
+
+  fun cardGameConfirmReward(cardId: String): Pair<EngineOutput, SceneNode?> {
+    val engine = engine ?: return EngineOutput.Loading to null
+    engine.cardGameConfirmReward(cardId)
     return step()
   }
 
@@ -765,10 +783,10 @@ class GameController(
     val nodeId = buildNodeMetaId()
     val addToMeta = node?.addToMeta ?: true
     val result: CardGameFinishResult? = engine.cardGameFinish()
-    if (result != null && result.discardForReward.isNotEmpty()) {
+    val reward = result?.rewardCard
+    if (reward != null) {
       val alreadyAwarded = addToMeta && metaManager.getDrawCardResult(nodeId) != null
       if (!alreadyAwarded) {
-        val reward = result.discardForReward.random()
         val instance = metaManager.addCard(
           CardData(
             value = reward.value,

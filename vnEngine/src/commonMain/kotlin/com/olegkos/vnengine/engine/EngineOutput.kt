@@ -294,7 +294,9 @@ sealed interface EngineOutput {
     /** Все реплики после clash (win/lose/draw) показаны (фаза BATTLE_REVEAL). */
     val vnPlaybackComplete: Boolean = true,
     val outcome: CardGameOutcome? = null,
-    val resultText: String? = null
+    val resultText: String? = null,
+    /** Кандидаты награды (фаза PICK_REWARD): противник + драфт игрока. */
+    val rewardCards: List<CardGameUiCard> = emptyList(),
   ) : EngineOutput
 
   data class CardGameUiCard(

@@ -41,6 +41,8 @@ enum class CardGamePhase {
   /** Карты открыты; здесь же проигрывается vnAfterClashWin/Lose/Draw. */
   BATTLE_REVEAL,
   SCORE_BREAKDOWN,
+  /** Победа: выбор награды из карт противника + карт с драфта (не meta). */
+  PICK_REWARD,
   RESULT
 }
 
@@ -66,7 +68,9 @@ data class CardGameState(
   var breakdownStepIndex: Int = 0,
   var vnIndex: Int = 0,
   var outcome: CardGameOutcome? = null,
-  var cardsRevealed: Boolean = false
+  var cardsRevealed: Boolean = false,
+  /** Выбранная награда на [CardGamePhase.PICK_REWARD]. */
+  var selectedReward: HandCard? = null,
 )
 
 enum class BreakdownSide {

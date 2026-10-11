@@ -98,6 +98,7 @@ fun CardGameScreen(
       CardGamePhase.SELECT_CLASH -> selectedClash = emptySet()
       CardGamePhase.BATTLE_REVEAL,
       CardGamePhase.SCORE_BREAKDOWN,
+      CardGamePhase.PICK_REWARD,
       CardGamePhase.RESULT -> Unit
     }
   }
@@ -120,6 +121,12 @@ fun CardGameScreen(
         CardGameAction("Продолжить (в сцену)") { viewModel.cardGameFinish() }
       }
     }
+
+    CardGamePhase.PICK_REWARD -> RewardPickScreen(
+      output = output,
+      cardPainter = cardPainter,
+      onConfirm = { viewModel.cardGameConfirmReward(it) },
+    )
 
     CardGamePhase.DRAFT -> BoxWithConstraints(Modifier.fillMaxSize().background(Bg)) {
       val (cardW, cardH) = cardGameTileSizeByHeight(maxHeight, heightFraction = 0.40f)
@@ -340,6 +347,76 @@ private fun DraftScreen(
     highlighted = handFull,
     onClick = onConfirm
   )
+}
+
+/** Выбор награды: карты по центру, 70% высоты; скролл по ширине; кнопка снизу. */
+@Composable
+private fun RewardPickScreen(
+  output: EngineOutput.ShowCardGame,
+  cardPainter: @Composable (String) -> BitmapPainter?,
+  onConfirm: (String) -> Unit,
+) {
+  var selectedId by remember(output.gameId, output.phase) { mutableStateOf<String?>(null) }
+
+  BoxWithConstraints(Modifier.fillMaxSize().background(Bg)) {
+    val cardH = maxHeight * 0.70f
+    val fallbackW = cardH * CARD_ART_ASPECT_FALLBACK
+    val scrollState = rememberScrollState()
+
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 16.dp, vertical = 20.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+      SkikoSafeText(
+        text = output.resultText ?: "Выберите карту в награду",
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+      )
+      Spacer(Modifier.height(16.dp))
+
+      Box(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+      ) {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .horizontalWheelScroll(scrollState)
+            .horizontalScroll(scrollState),
+          horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Spacer(Modifier.width(8.dp))
+          output.rewardCards.forEach { card ->
+            GameCardTile(
+              card = card,
+              selected = card.id == selectedId,
+              cardW = fallbackW,
+              cardH = cardH,
+              painter = cardPainter(card.image),
+              onClick = { selectedId = card.id },
+              showEffective = false,
+              showTagAndValue = true,
+            )
+          }
+          Spacer(Modifier.width(8.dp))
+        }
+      }
+
+      Spacer(Modifier.height(16.dp))
+      CardGameAction(
+        text = "Взять карту",
+        enabled = selectedId != null,
+        highlighted = selectedId != null,
+        onClick = { selectedId?.let(onConfirm) },
+      )
+    }
+  }
 }
 
 @Composable
