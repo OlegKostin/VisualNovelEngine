@@ -38,11 +38,19 @@ class CardManager {
 
   fun allCards(): List<CardData> = cards
 
-  /** Несколько уникальных карт по image (взвешенная выборка без повторов). */
-  fun drawUniqueWeighted(count: Int): List<CardData> {
+  /**
+   * Несколько уникальных карт (взвешенная выборка без повторов).
+   * [maxValue] — если задан, только карты с value ≤ maxValue.
+   */
+  fun drawUniqueWeighted(count: Int, maxValue: Int? = null): List<CardData> {
     require(cards.isNotEmpty()) { "Cards not loaded!" }
     require(count > 0)
-    val pool = cards.toMutableList()
+    val pool = cards
+      .filter { maxValue == null || it.value <= maxValue }
+      .toMutableList()
+    require(pool.isNotEmpty()) {
+      if (maxValue != null) "Нет карт с value ≤ $maxValue" else "Cards not loaded!"
+    }
     val result = mutableListOf<CardData>()
     repeat(count.coerceAtMost(pool.size)) {
       val picked = drawFromPool(pool)

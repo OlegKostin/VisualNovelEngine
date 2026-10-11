@@ -362,6 +362,7 @@ class JsonScenarioParser : ScenarioParser {
                   offerCount = nodeJson.draft.offerCount,
                   handSize = nodeJson.draft.resolvedHandSize(),
                 ),
+                value = nodeJson.value,
                 vnAfterClash = nodeJson.vnAfterClash.map {
                   BattleVnLine(text = it.text, speaker = it.speaker)
                 },
@@ -872,6 +873,8 @@ data class CardGameNode(
   val speaker: String? = null,
   val opponent: CardGameOpponentJson,
   val draft: CardGameDraftJson = CardGameDraftJson(),
+  /** Игрок: value ≤ N; противник: value ≤ N+1. null — без лимита. */
+  val value: Int? = null,
   /** Общий fallback; лучше задавать win/lose/draw отдельно. */
   val vnAfterClash: List<BattleVnLineJson> = emptyList(),
   val vnAfterClashWin: List<BattleVnLineJson> = emptyList(),

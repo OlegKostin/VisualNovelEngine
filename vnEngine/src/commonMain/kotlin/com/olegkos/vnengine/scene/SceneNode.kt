@@ -304,6 +304,12 @@ sealed interface SceneNode {
     val opponent: CardGameOpponent,
     val draft: CardGameDraftConfig = CardGameDraftConfig(),
     /**
+     * Опциональный потолок value на драфте:
+     * игроку — карты с value ≤ [value], противнику — value ≤ [value]+1.
+     * null — без ограничения.
+     */
+    val value: Int? = null,
+    /**
      * Устаревшее: общие реплики после clash, если нет outcome-specific списков.
      * Предпочтительно [vnAfterClashWin] / [vnAfterClashLose] / [vnAfterClashDraw].
      */

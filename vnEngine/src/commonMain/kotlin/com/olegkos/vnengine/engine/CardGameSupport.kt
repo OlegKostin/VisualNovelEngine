@@ -24,8 +24,10 @@ internal fun VnEngine.handleCardGameNode(node: SceneNode.CardGame): EngineOutput
   return when (gs.phase) {
     CardGamePhase.DRAFT -> {
       if (gs.offerCards.isEmpty()) {
-        gs.offerCards = deck.drawUniqueWeighted(node.draft.offerCount)
-          .map { HandCard.fromDeck(it) }
+        gs.offerCards = deck.drawUniqueWeighted(
+          count = node.draft.offerCount,
+          maxValue = node.value,
+        ).map { HandCard.fromDeck(it) }
       }
       buildCardGameOutput(node, gs)
     }
@@ -67,7 +69,11 @@ private fun VnEngine.prepareEnemyClash(gs: CardGameState, node: SceneNode.CardGa
   if (gs.enemyClash.isNotEmpty()) return
   val deck = cards ?: return
   val draft = node.draft
-  val pool = deck.drawUniqueWeighted(draft.offerCount).map { HandCard.fromDeck(it) }
+  val enemyMaxValue = node.value?.let { it + 1 }
+  val pool = deck.drawUniqueWeighted(
+    count = draft.offerCount,
+    maxValue = enemyMaxValue,
+  ).map { HandCard.fromDeck(it) }
   gs.enemyClash = CardGameLogic.pickEnemyClash(
     pool = pool,
     handSize = draft.handSize,
