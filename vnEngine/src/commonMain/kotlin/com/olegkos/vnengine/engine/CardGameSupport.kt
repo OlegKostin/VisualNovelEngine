@@ -71,14 +71,17 @@ private fun VnEngine.prepareEnemyClash(gs: CardGameState, node: SceneNode.CardGa
   val deck = cards ?: return
   val draft = node.draft
   val enemyMaxValue = node.value?.let { it + 1 }
+  val clashSize = 3
+  val poolCount = (node.enemyOfferCount ?: draft.offerCount).coerceAtLeast(clashSize)
   val pool = deck.drawUniqueWeighted(
-    count = draft.offerCount,
+    count = poolCount,
     maxValue = enemyMaxValue,
   ).map { HandCard.fromDeck(it) }
+  // Лучшие clashSize карт напрямую из пула (все N карт доступны для выбора).
   gs.enemyClash = CardGameLogic.pickEnemyClash(
     pool = pool,
-    handSize = draft.handSize,
-    clashSize = 3,
+    handSize = pool.size.coerceAtLeast(clashSize),
+    clashSize = clashSize,
     battleTone = gs.battleTone,
   )
 }

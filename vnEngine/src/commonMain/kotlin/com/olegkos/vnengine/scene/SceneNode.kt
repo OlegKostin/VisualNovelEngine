@@ -310,6 +310,11 @@ sealed interface SceneNode {
      */
     val value: Int? = null,
     /**
+     * Из скольких карт ИИ выбирает лучший clash (3 карты).
+     * null — как [CardGameDraftConfig.offerCount] у игрока.
+     */
+    val enemyOfferCount: Int? = null,
+    /**
      * true (по умолчанию) — награда за победу один раз за игру с этой ноды (как drawCard).
      * false — не запоминать выдачу; карту можно получить снова при каждой победе.
      */
