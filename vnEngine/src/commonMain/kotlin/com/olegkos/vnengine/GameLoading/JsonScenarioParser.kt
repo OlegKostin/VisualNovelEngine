@@ -363,6 +363,7 @@ class JsonScenarioParser : ScenarioParser {
                   handSize = nodeJson.draft.resolvedHandSize(),
                 ),
                 value = nodeJson.value,
+                addToMeta = nodeJson.addToMeta,
                 vnAfterClash = nodeJson.vnAfterClash.map {
                   BattleVnLine(text = it.text, speaker = it.speaker)
                 },
@@ -875,6 +876,11 @@ data class CardGameNode(
   val draft: CardGameDraftJson = CardGameDraftJson(),
   /** Игрок: value ≤ N; противник: value ≤ N+1. null — без лимита. */
   val value: Int? = null,
+  /**
+   * true — награда за победу один раз с этой ноды за игру.
+   * false — не писать в meta факт выдачи (можно получить снова).
+   */
+  val addToMeta: Boolean = true,
   /** Общий fallback; лучше задавать win/lose/draw отдельно. */
   val vnAfterClash: List<BattleVnLineJson> = emptyList(),
   val vnAfterClashWin: List<BattleVnLineJson> = emptyList(),

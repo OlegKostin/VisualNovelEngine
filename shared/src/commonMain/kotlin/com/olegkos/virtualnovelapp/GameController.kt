@@ -761,17 +761,26 @@ class GameController(
 
   fun cardGameFinish(): Pair<EngineOutput, SceneNode?> {
     val engine = engine ?: return EngineOutput.Loading to null
+    val node = engine.currentNode() as? SceneNode.CardGame
+    val nodeId = buildNodeMetaId()
+    val addToMeta = node?.addToMeta ?: true
     val result: CardGameFinishResult? = engine.cardGameFinish()
     if (result != null && result.discardForReward.isNotEmpty()) {
-      val reward = result.discardForReward.random()
-      metaManager.addCard(
-        CardData(
-          value = reward.value,
-          image = reward.image,
-          weight = 1,
-          tag = reward.tag
+      val alreadyAwarded = addToMeta && metaManager.getDrawCardResult(nodeId) != null
+      if (!alreadyAwarded) {
+        val reward = result.discardForReward.random()
+        val instance = metaManager.addCard(
+          CardData(
+            value = reward.value,
+            image = reward.image,
+            weight = 1,
+            tag = reward.tag
+          )
         )
-      )
+        if (addToMeta) {
+          metaManager.saveDrawCardResult(nodeId, instance)
+        }
+      }
     }
     return step()
   }

@@ -310,6 +310,11 @@ sealed interface SceneNode {
      */
     val value: Int? = null,
     /**
+     * true (по умолчанию) — награда за победу один раз за игру с этой ноды (как drawCard).
+     * false — не запоминать выдачу; карту можно получить снова при каждой победе.
+     */
+    val addToMeta: Boolean = true,
+    /**
      * Устаревшее: общие реплики после clash, если нет outcome-specific списков.
      * Предпочтительно [vnAfterClashWin] / [vnAfterClashLose] / [vnAfterClashDraw].
      */

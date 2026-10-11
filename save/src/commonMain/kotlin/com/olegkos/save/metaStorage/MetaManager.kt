@@ -47,7 +47,7 @@ class MetaManager(
   fun getDrawCardResult(nodeId: String): CardInstance? =
     state.drawCardNodes[nodeId]
 
-  /** Фиксирует выдачу карты с ноды drawCard (повторно не выдаётся за игру). */
+  /** Фиксирует выдачу карты с ноды drawCard / cardGame (повторно не выдаётся за игру). */
   fun saveDrawCardResult(nodeId: String, card: CardInstance) {
     if (state.drawCardNodes.containsKey(nodeId)) return
     state = state.copy(drawCardNodes = state.drawCardNodes + (nodeId to card))
